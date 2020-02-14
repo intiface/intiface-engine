@@ -627,7 +627,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "intiface-cli-rs"
+name = "intiface-cli"
 version = "0.0.1"
 dependencies = [
  "argh",

@@ -1,5 +1,5 @@
 [package]
-name = "intiface-cli-rs"
+name = "intiface-cli"
 version = "0.0.1"
 authors = ["Nonpolynomial Labs, LLC <kyle@nonpolynomial.com>"]
 license = "BSD-3-Clause"
