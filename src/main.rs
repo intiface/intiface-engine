@@ -1,10 +1,14 @@
 use buttplug::{
     server::{ButtplugServer},
-    core::messages::ButtplugMessageUnion,
+    core::messages::{ButtplugMessage, ButtplugMessageUnion},
 };
 use argh::FromArgs;
 use ws::{self, Message, CloseCode, Handler, Handshake};
-use async_std::sync::{Sender, Receiver, channel};
+use async_std::{
+    prelude::StreamExt,
+    sync::{Sender, Receiver, channel},
+    task,
+};
 
 /// command line interface for intiface/buttplug. 
 ///
@@ -81,17 +85,32 @@ struct IntifaceCLIArguments {
 
 struct Server {
     out: ws::Sender,
-    server: ButtplugServer,
-    event_receiver: Receiver<ButtplugMessageUnion>
+    server: ButtplugServer
 }
 
 impl Server {
     pub fn new(out: ws::Sender, name: &str, max_ping_time: u32) -> Self{
-        let (sender, receiver) = channel(256);
+        let (sender, mut receiver) = channel(256);
+        let mut server = ButtplugServer::new(name, max_ping_time as u128, sender);
+        server.add_comm_manager::<buttplug::server::comm_managers::btleplug::BtlePlugCommunicationManager>();
+        let out_clone = out.clone();
+        task::spawn(async move {
+            loop {
+                match receiver.next().await {
+                    Some(msg) => {
+                        let out_msg = msg.as_protocol_json();
+                        println!("{}", &out_msg);
+                        out_clone.send(out_msg).unwrap();
+                    },
+                    None => {
+                        break;
+                    }
+                }
+            }
+        });
         Self {
             out,
-            server: ButtplugServer::new(name, max_ping_time as u128, sender),
-            event_receiver: receiver
+            server
         }
     }
 }
@@ -108,6 +127,13 @@ impl Handler for Server {
         println!("Got message!");
         println!("{}", &msg_str);
         let union: ButtplugMessageUnion = ButtplugMessageUnion::try_deserialize(&msg_str).unwrap();
+        task::block_on(async {
+            let ret = self.server.parse_message(&union).await.unwrap();
+            let out_msg = ret.as_protocol_json(); //ret.try_serialize();
+            println!("{}", &out_msg);
+            self.out.send(out_msg).unwrap();
+        });
+
         Ok(())
     }
 
