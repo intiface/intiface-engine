@@ -6,18 +6,18 @@ use argh::FromArgs;
 use ws::{self, Message, CloseCode, Handler, Handshake};
 use async_std::{
     prelude::StreamExt,
-    sync::{Sender, Receiver, channel},
+    sync::{channel},
     task,
 };
 
-/// command line interface for intiface/buttplug. 
+/// command line interface for intiface/buttplug.
 ///
 /// Note: Commands are one word to keep compat with C#/JS executables currently.
 #[derive(FromArgs)]
 struct IntifaceCLIArguments {
     /// name of server to pass to connecting clients.
     #[argh(option)]
-    #[argh(default = "\"Buttplug Server\".to_owned()")]    
+    #[argh(default = "\"Buttplug Server\".to_owned()")]
     servername: String,
 
     /// print version and exit.
