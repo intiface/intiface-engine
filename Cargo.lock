@@ -203,13 +203,17 @@ dependencies = [
 
 [[package]]
 name = "buttplug"
-version = "0.0.2"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2f5f05cd9234fa9fb90b3e19e7e784311734e3b6eb80a0c07d5785392ef04bbb"
 dependencies = [
  "async-std",
  "async-trait",
+ "broadcaster",
  "btleplug",
  "buttplug_derive",
  "futures",
+ "futures-channel",
  "futures-util",
  "log 0.4.8",
  "once_cell",
@@ -224,7 +228,9 @@ dependencies = [
 
 [[package]]
 name = "buttplug_derive"
-version = "0.0.2"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7c4d9cbf70d5d6e7f7fb17f85d02e4608c4cff413d42c8339c7e17e7f25397a9"
 dependencies = [
  "quote",
  "syn",
