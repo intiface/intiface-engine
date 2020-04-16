@@ -21,3 +21,4 @@ env_logger = "0.7.1"
 # sure we're compiling the correct thing. Using VSPKGRS_DYNAMIC here
 # would require us to also redistribute the openssl DLL.
 openssl = { version = "^0.10", features = ["vendored"]}
+rcgen = "0.8.1"

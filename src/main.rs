@@ -1,16 +1,20 @@
 use buttplug::{
     server::wrapper::{ButtplugJSONServerWrapper, ButtplugServerWrapper},
-    core::messages::{ButtplugMessage},
 };
 use argh::FromArgs;
 use ws::{self, Message, CloseCode, Handler, Handshake};
 use async_std::{
     prelude::StreamExt,
-    sync::{channel},
     task,
 };
-
+use rcgen::generate_simple_self_signed;
 use env_logger;
+use std::{
+    fs::File,
+    io::Write,
+    path::PathBuf,
+    process
+};
 
 /// command line interface for intiface/buttplug. 
 ///
@@ -27,8 +31,8 @@ struct IntifaceCLIArguments {
     serverversion: bool,
 
     /// generate certificate file at the path specified, then exit.
-    #[argh(switch)]
-    generatecert: bool,
+    #[argh(option)]
+    generatecert: Option<String>,
 
     /// path to the device configuration file
     #[argh(option)]
@@ -149,10 +153,29 @@ impl Handler for Server {
     }
 }
 
-fn main() {
+fn main() -> Result<(), std::io::Error> {
     let _ = env_logger::builder().is_test(true).try_init();
     let args: IntifaceCLIArguments = argh::from_env();
+
+    if let Some(path) = args.generatecert {
+        let subject_alt_names = vec!["localhost".to_string()];
+        let cert = generate_simple_self_signed(subject_alt_names).unwrap();
+        let mut base_path = PathBuf::new();
+        base_path.push(&path);
+        if !base_path.is_dir() {
+            println!("Certificate write path {} does not exist or is not a directory.", path);
+            process::exit(1);      
+        }
+        base_path.set_file_name("cert.pem");
+        let mut pem_out = File::create(&base_path)?;
+        base_path.set_file_name("key.pem");
+        let mut key_out = File::create(&base_path)?;
+        write!(pem_out, "{}", cert.serialize_pem().unwrap())?;
+        write!(key_out, "{}", cert.serialize_private_key_pem())?;
+        return Ok(());
+    }
     if let Some(port) = args.wsinsecureport {
         ws::listen(format!("127.0.0.1:{}", port), |out| Server::new(out, &args.servername, args.pingtime)).unwrap();
     }
+    Ok(())
 }
