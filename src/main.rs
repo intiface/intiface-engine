@@ -16,6 +16,8 @@ use std::{
     process
 };
 
+const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+
 /// command line interface for intiface/buttplug. 
 ///
 /// Note: Commands are one word to keep compat with C#/JS executables currently.
@@ -157,6 +159,10 @@ fn main() -> Result<(), std::io::Error> {
     let _ = env_logger::builder().is_test(true).try_init();
     let args: IntifaceCLIArguments = argh::from_env();
 
+    if args.serverversion {
+        println!("Intiface CLI (Rust Edition) Version {}", VERSION);
+        return Ok(());
+    }
     if let Some(path) = args.generatecert {
         let subject_alt_names = vec!["localhost".to_string()];
         let cert = generate_simple_self_signed(subject_alt_names).unwrap();
