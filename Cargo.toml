@@ -11,8 +11,8 @@ keywords = ["usb", "serial", "hardware", "bluetooth", "teledildonics"]
 edition = "2018"
 
 [dependencies]
-#buttplug = { path = "../buttplug-rs/buttplug", features = [ "linux-ble" ] }
-buttplug = "0.1.0"
+#buttplug = { path = "../buttplug-rs/buttplug", features = [ "btleplug-manager", "client-ws", "xinput" ] }
+buttplug = { version = "0.2.1", features = [ "xinput" ] }
 argh = "0.1.3"
 ws = "0.9.1"
 async-std = { version = "1.5.0", features = ["unstable"] }
