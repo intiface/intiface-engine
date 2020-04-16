@@ -12,7 +12,7 @@ edition = "2018"
 
 [dependencies]
 #buttplug = { path = "../buttplug-rs/buttplug", features = [ "btleplug-manager", "client-ws", "xinput" ] }
-buttplug = { version = "0.2.1", features = [ "xinput" ] }
+buttplug = { version = "0.2.2" }
 argh = "0.1.3"
 ws = "0.9.1"
 async-std = { version = "1.5.0", features = ["unstable"] }
