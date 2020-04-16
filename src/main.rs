@@ -1,6 +1,6 @@
 use buttplug::{
-    server::{ButtplugServer},
-    core::messages::{ButtplugMessage, ButtplugMessageUnion},
+    server::wrapper::{ButtplugJSONServerWrapper, ButtplugServerWrapper},
+    core::messages::{ButtplugMessage},
 };
 use argh::FromArgs;
 use ws::{self, Message, CloseCode, Handler, Handshake};
@@ -10,7 +10,9 @@ use async_std::{
     task,
 };
 
-/// command line interface for intiface/buttplug.
+use env_logger;
+
+/// command line interface for intiface/buttplug. 
 ///
 /// Note: Commands are one word to keep compat with C#/JS executables currently.
 #[derive(FromArgs)]
@@ -85,22 +87,22 @@ struct IntifaceCLIArguments {
 
 struct Server {
     out: ws::Sender,
-    server: ButtplugServer
+    server: ButtplugJSONServerWrapper
 }
 
 impl Server {
     pub fn new(out: ws::Sender, name: &str, max_ping_time: u32) -> Self{
-        let (sender, mut receiver) = channel(256);
-        let mut server = ButtplugServer::new(name, max_ping_time as u128, sender);
-        server.add_comm_manager::<buttplug::server::comm_managers::btleplug::BtlePlugCommunicationManager>();
+        let _ = env_logger::builder().try_init();
+        let (mut server, mut receiver) = ButtplugJSONServerWrapper::new(name, max_ping_time as u128);
+        server.server_ref().add_comm_manager::<buttplug::server::comm_managers::btleplug::BtlePlugCommunicationManager>();
+        server.server_ref().add_comm_manager::<buttplug::server::comm_managers::xinput::XInputDeviceCommunicationManager>();
         let out_clone = out.clone();
         task::spawn(async move {
             loop {
                 match receiver.next().await {
                     Some(msg) => {
-                        let out_msg = msg.as_protocol_json();
-                        println!("{}", &out_msg);
-                        out_clone.send(out_msg).unwrap();
+                        println!("{}", &msg);
+                        out_clone.send(msg).unwrap();
                     },
                     None => {
                         break;
@@ -126,14 +128,9 @@ impl Handler for Server {
         let msg_str = &msg.into_text().unwrap();
         println!("Got message!");
         println!("{}", &msg_str);
-        let union: ButtplugMessageUnion = ButtplugMessageUnion::try_deserialize(&msg_str).unwrap();
         task::block_on(async {
-            let ret = self.server.parse_message(&union).await.unwrap();
-            let out_msg = ret.as_protocol_json(); //ret.try_serialize();
-            println!("{}", &out_msg);
-            self.out.send(out_msg).unwrap();
+            self.server.parse_message(msg_str.to_string()).await;
         });
-
         Ok(())
     }
 
