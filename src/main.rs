@@ -95,6 +95,7 @@ impl Server {
         let _ = env_logger::builder().try_init();
         let (mut server, mut receiver) = ButtplugJSONServerWrapper::new(name, max_ping_time as u128);
         server.server_ref().add_comm_manager::<buttplug::server::comm_managers::btleplug::BtlePlugCommunicationManager>();
+        #[cfg(target_os="windows")]
         server.server_ref().add_comm_manager::<buttplug::server::comm_managers::xinput::XInputDeviceCommunicationManager>();
         let out_clone = out.clone();
         task::spawn(async move {
