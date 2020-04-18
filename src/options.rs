@@ -98,7 +98,7 @@ pub fn parse_options() -> Result<Option<(ConnectorOptions, ButtplugServerFactory
     }
     if let Some(path) = args.generatecert {
         return generate_certificate(path)
-        .and_then(|x| Ok(None));
+        .and_then(|_| Ok(None));
     }
 
     // Options that set up the server networking
@@ -214,7 +214,7 @@ pub fn parse_options() -> Result<Option<(ConnectorOptions, ButtplugServerFactory
         let cfg = fs::read_to_string(deviceconfig).unwrap();
         set_external_device_config(Some(cfg));
         // Make an unused DeviceConfigurationManager here, as it'll panic if it's invalid.
-        let manager = DeviceConfigurationManager::new();
+        let _manager = DeviceConfigurationManager::new();
     }
 
     if let Some(userdeviceconfig) = &args.userdeviceconfig {
@@ -224,7 +224,7 @@ pub fn parse_options() -> Result<Option<(ConnectorOptions, ButtplugServerFactory
         );
         let cfg = fs::read_to_string(userdeviceconfig).unwrap();
         set_user_device_config(Some(cfg));
-        let manager = DeviceConfigurationManager::new();
+        let _manager = DeviceConfigurationManager::new();
     }
 
     let server_factory = create_server_factory(server_info);

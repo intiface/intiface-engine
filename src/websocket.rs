@@ -1,6 +1,5 @@
 use super::{
   ConnectorOptions, 
-  ServerOptions,
   IntifaceCLIErrorEnum,
   server::ButtplugServerFactory,
 };
