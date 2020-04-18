@@ -27,3 +27,7 @@ log = "0.4.8"
 futures = "0.3.4"
 async-tls = "0.7.0"
 rustls = "0.17.0"
+prost = "0.6.1"
+
+[build-dependencies]
+prost-build = "0.6.1"
