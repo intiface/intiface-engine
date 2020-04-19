@@ -11,10 +11,9 @@ keywords = ["usb", "serial", "hardware", "bluetooth", "teledildonics"]
 edition = "2018"
 
 [dependencies]
-buttplug = { path = "../buttplug-rs/buttplug" }
-#buttplug = { version = "0.2.2" }
+# buttplug = { path = "../buttplug-rs/buttplug" }
+buttplug = { version = "0.2.3" }
 argh = "0.1.3"
-# ws = "0.9.1"
 async-std = { version = "1.5.0", features = ["unstable", "attributes"] }
 env_logger = "0.7.1"
 # This needs to match the version of openssl in ws, so we can make

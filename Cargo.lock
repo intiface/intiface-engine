@@ -221,9 +221,9 @@ dependencies = [
 
 [[package]]
 name = "btleplug"
-version = "0.4.1"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e288a4286345a9c5c46c1d59cc658affc2992f9d59b1011652f9998d81413fe6"
+checksum = "6989e6b2088f42366f6cecf2e1e5146467ee0eb17a37b99710e846e72f856fb4"
 dependencies = [
  "async-std",
  "backtrace",
@@ -251,7 +251,9 @@ checksum = "12ae9db68ad7fac5fe51304d20f016c911539251075a214f8e663babefa35187"
 
 [[package]]
 name = "buttplug"
-version = "0.2.2"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "89644244dfef5b5b4636bdffd835ad3b5d79b42898f7c4c2324175fa13b7f432"
 dependencies = [
  "async-std",
  "async-trait",
