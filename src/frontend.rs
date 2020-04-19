@@ -67,7 +67,7 @@ pub fn run_frontend_task() -> FrontendPBufSender {
     }
     #[cfg(target_os="windows")]
     unsafe {
-      let h = kernel32::GetStdHandle(winapi::winbase::STD_OUTPUT_HANDLE);
+      let h = kernel32::GetStdHandle(winapi::um::winbase::STD_OUTPUT_HANDLE);
       out = File::from_raw_handle(h);
     }
     loop {
