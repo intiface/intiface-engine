@@ -1,0 +1,19 @@
+trigger:
+  branches:
+    include: ['*']
+  tags:
+    include: ['*']
+
+jobs:
+ - template: default.yml@templates
+   parameters:
+     cross: true
+     minrust: false
+
+resources:
+  repositories:
+    - repository: templates
+      type: github
+      name: crate-ci/azure-pipelines
+      ref: refs/heads/master
+      endpoint: qdot
