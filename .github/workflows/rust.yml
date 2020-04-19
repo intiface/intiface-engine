@@ -1,0 +1,177 @@
+name: Intiface CLI Build
+
+on: push
+
+jobs:
+  build-nightly:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Rust toolchain fetch
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: nightly
+        override: true
+    - name: Fix ~/.cargo directory permissions
+      run: sudo chown -R $(whoami):$(id -ng) ~/.cargo/
+    - name: Cache cargo registry
+      uses: actions/cache@v1
+      with:
+        path: ~/.cargo/registry
+        key: ${{ runner.os }}-nightly-cargo-registry-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('.github/workflows/cache_version') }}
+    - name: Cache cargo build
+      uses: actions/cache@v1
+      with:
+        path: target
+        key: ${{ runner.os }}-nightly-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('.github/workflows/cache_version') }}
+    - name: Build
+      run: cargo +nightly build
+    - name: Run tests
+      run: cargo +nightly test
+  build-beta:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Rust toolchain fetch
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: beta
+        override: true
+    - name: Fix ~/.cargo directory permissions
+      run: sudo chown -R $(whoami):$(id -ng) ~/.cargo/
+    - name: Cache cargo registry
+      uses: actions/cache@v1
+      with:
+        path: ~/.cargo/registry
+        key: ${{ runner.os }}-beta-cargo-registry-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('.github/workflows/cache_version') }}
+    - name: Cache cargo build
+      uses: actions/cache@v1
+      with:
+        path: target
+        key: ${{ runner.os }}-beta-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('.github/workflows/cache_version') }}
+    - name: Build
+      run: cargo +beta build
+    - name: Run tests
+      run: cargo +beta test
+  build-stable:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Fix ~/.cargo directory permissions
+      if: startsWith(matrix.os, 'ubuntu') || startsWith(matrix.os, 'macos')
+      run: sudo chown -R $(whoami):$(id -ng) ~/.cargo/
+    - name: Cache cargo registry
+      uses: actions/cache@v1
+      with:
+        path: ~/.cargo/registry
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('.github/workflows/cache_version') }}
+    - name: Cache cargo build
+      uses: actions/cache@v1
+      with:
+        path: target
+        key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('.github/workflows/cache_version') }}
+    - name: Rust toolchain fetch
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: nightly
+        override: true
+        components: rustfmt, clippy
+    - name: Formatting check
+      continue-on-error: true
+      uses: actions-rs/cargo@v1
+      with:
+        command: fmt
+        args: --all -- --check
+    - name: Build Debug
+      run: cargo build
+    - name: Run tests
+      run: cargo test
+    - name: Run doc gen
+      run: cargo doc --no-deps
+    - name: Build Release
+      run: cargo build --release
+    - name: Copy executable (Linux, MacOS)
+      if: startsWith(matrix.os, 'ubuntu') || startsWith(matrix.os, 'macos')
+      run: |
+        mkdir ci-output-debug
+        cp target/debug/intiface-cli ci-output-debug/IntifaceCLI
+        mkdir ci-output-release
+        cp target/release/intiface-cli ci-output-release/IntifaceCLI
+    - name: Copy executable (Windows)
+      if: startsWith(matrix.os, 'windows')
+      run: |
+        mkdir ci-output-debug
+        copy target\debug\intiface-cli.exe ci-output-debug\IntifaceCLI.exe
+        mkdir ci-output-release
+        copy target\release\intiface-cli.exe ci-output-release\IntifaceCLI.exe
+    - name: Upload artifacts (debug)
+      uses: actions/upload-artifact@v1
+      with:
+        name: intiface-cli-rs-${{ runner.os }}-debug
+        path: ci-output-debug
+    - name: Upload artifacts (release)
+      uses: actions/upload-artifact@v1
+      with:
+        name: intiface-cli-rs-${{ runner.os }}-release
+        path: ci-output-release
+  release:
+    name: Release artifacts
+    needs: build-stable
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+    - uses: actions/checkout@v2
+    - name: Download Artifact (Linux)
+      uses: actions/download-artifact@v1
+      with:
+        name: intiface-cli-rs-Linux-debug
+    - name: Download Artifact (Windows)
+      uses: actions/download-artifact@v1
+      with:
+        name: intiface-cli-rs-Windows-debug
+    - name: Download Artifact (MacOS)
+      uses: actions/download-artifact@v1
+      with:
+        name: intiface-cli-rs-macOS-debug
+    - name: Download Artifact (Linux)
+      uses: actions/download-artifact@v1
+      with:
+        name: intiface-cli-rs-Linux-release
+    - name: Download Artifact (Windows)
+      uses: actions/download-artifact@v1
+      with:
+        name: intiface-cli-rs-Windows-release
+    - name: Download Artifact (MacOS)
+      uses: actions/download-artifact@v1
+      with:
+        name: intiface-cli-rs-macOS-release
+    - name: Zip executables
+      # This follows the naming convention from C# and JS.
+      run: |
+        zip intiface-cli-rs-linux-x64-Debug.zip intiface-cli-rs-Linux-debug/IntifaceCLI README.md CHANGELOG.md
+        zip intiface-cli-rs-win-x64-Debug.zip intiface-cli-rs-Windows-debug/IntifaceCLI.exe README.md CHANGELOG.md
+        zip intiface-cli-rs-mac-x64-Debug.zip intiface-cli-rs-macOS-debug/IntifaceCLI README.md CHANGELOG.md
+        zip intiface-cli-rs-linux-x64-Release.zip intiface-cli-rs-Linux-release/IntifaceCLI README.md CHANGELOG.md
+        zip intiface-cli-rs-win-x64-Release.zip intiface-cli-rs-Windows-release/IntifaceCLI.exe README.md CHANGELOG.md
+        zip intiface-cli-rs-mac-x64-Release.zip intiface-cli-rs-macOS-release/IntifaceCLI README.md CHANGELOG.md
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: |
+          intiface-cli-rs-Linux-debug.zip
+          intiface-cli-rs-Windows-debug.zip
+          intiface-cli-rs-macOS-debug.zip
+          intiface-cli-rs-Linux-release.zip
+          intiface-cli-rs-Windows-release.zip
+          intiface-cli-rs-macOS-release.zip
+          README.md
+          CHANGELOG.md
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
