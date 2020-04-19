@@ -7,6 +7,7 @@ use super::{
   utils::generate_certificate,
 };
 
+use super::frontend::{self, FrontendPBufSender};
 use std::fs;
 use argh::FromArgs;
 use buttplug::device::configuration_manager::{
@@ -82,10 +83,23 @@ struct IntifaceCLIArguments {
     /// if passed, server will stay running after client disconnection
     #[argh(switch)]
     stayopen: bool,
+
+    /// unused but needed for compat
+    #[argh(option)]
+    log: String,
 }
 
-pub fn parse_options() -> Result<Option<(ConnectorOptions, ButtplugServerFactory)>, IntifaceCLIErrorEnum> {
-  let args: IntifaceCLIArguments = argh::from_env();
+pub fn check_options_and_pipe() -> FrontendPBufSender {
+    let args: IntifaceCLIArguments = argh::from_env();
+    if args.frontendpipe {
+        frontend::run_frontend_task()
+    } else {
+        FrontendPBufSender::default()
+    }
+}
+
+pub fn parse_options(sender: FrontendPBufSender) -> Result<Option<(ConnectorOptions, ButtplugServerFactory)>, IntifaceCLIErrorEnum> {
+    let args: IntifaceCLIArguments = argh::from_env();
 
     // Options that will do a thing then exit:
     //
@@ -227,7 +241,7 @@ pub fn parse_options() -> Result<Option<(ConnectorOptions, ButtplugServerFactory
         let _manager = DeviceConfigurationManager::new();
     }
 
-    let server_factory = create_server_factory(server_info);
+    let server_factory = create_server_factory(server_info, sender);
 
     Ok(Some((connector_info.unwrap(), server_factory)))
 }

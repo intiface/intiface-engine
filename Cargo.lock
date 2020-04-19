@@ -755,14 +755,18 @@ dependencies = [
  "async-tls",
  "async-tungstenite",
  "buttplug",
+ "bytes 0.5.4",
  "env_logger",
  "futures",
+ "kernel32-sys",
+ "lazy_static",
  "log",
  "openssl",
  "prost",
  "prost-build",
  "rcgen",
  "rustls",
+ "winapi 0.3.8",
 ]
 
 [[package]]

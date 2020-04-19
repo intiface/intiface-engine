@@ -4,6 +4,7 @@
 #[macro_use]
 extern crate log;
 
+mod frontend;
 mod options;
 mod server;
 mod utils;
@@ -11,6 +12,9 @@ mod websocket;
 
 use buttplug::{
     core::errors::ButtplugError,
+};
+use frontend::intiface_gui::{
+    server_process_message::{Msg, ProcessStarted, ProcessEnded, ProcessLog},
 };
 use env_logger;
 use std::{
@@ -89,9 +93,28 @@ impl From<IntifaceError> for IntifaceCLIErrorEnum {
 
 #[async_std::main]
 async fn main() -> Result<(), IntifaceCLIErrorEnum> {
-    let _ = env_logger::builder().is_test(true).try_init();
+
+    // Intiface GUI communicates with its child process via protobufs through
+    // stdin/stdout. Checking for this is the first thing we should do, as any
+    // output after this either needs to be printed strings or pbuf messages.
+    //
+    // Only set up the env logger if we're not outputting pbufs to a frontend
+    // pipe.
+    let frontend_sender = options::check_options_and_pipe();
+    #[allow(unused_variables)]
+    let mut env_log = None;
+    if !frontend_sender.is_active() {
+        env_log = Some(env_logger::builder().is_test(true).try_init());
+    }
+
+    frontend_sender.send(Msg::ProcessLog(ProcessLog {
+        message: "Testing message".to_string()
+    })).await;
+    frontend_sender.send(Msg::ProcessStarted(ProcessStarted::default())).await;
     
-    let (connector_opts, server_factory) = match options::parse_options() {
+    // Parse options, get back our connection information and a curried server
+    // factory closure.
+    let (connector_opts, server_factory) = match options::parse_options(frontend_sender.clone()) {
         Ok(opts) => {
             match opts {
                 Some(o) => o,
@@ -101,15 +124,18 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
         Err(e) => return Err(e)
     };
 
+    // Spin up our listeners.
     let tasks = match websocket::create_websocket_listeners(connector_opts, server_factory) {
         Ok(t) => t,
         Err(e) => return Err(e)
     };
 
+    // Hang out until those listeners get sick of listening.
     info!("Intiface CLI Setup finished, running server tasks until all joined.");
     for t in tasks {
         t.await;
     }
     info!("Exiting");
+    frontend_sender.send(Msg::ProcessEnded(ProcessEnded::default())).await;
     Ok(())
 }

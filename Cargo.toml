@@ -28,6 +28,12 @@ futures = "0.3.4"
 async-tls = "0.7.0"
 rustls = "0.17.0"
 prost = "0.6.1"
+lazy_static = "1.4.0"
+bytes = "0.5.4"
+
+[target.'cfg(windows)'.dependencies]
+kernel32-sys = "0.2.1"
+winapi = "0.3.8"
 
 [build-dependencies]
 prost-build = "0.6.1"
