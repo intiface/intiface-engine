@@ -85,8 +85,9 @@ struct IntifaceCLIArguments {
     stayopen: bool,
 
     /// unused but needed for compat
+    #[allow(dead_code)]
     #[argh(option)]
-    log: String,
+    log: Option<String>,
 }
 
 pub fn check_options_and_pipe() -> FrontendPBufSender {
