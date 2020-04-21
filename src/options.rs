@@ -24,6 +24,10 @@ struct IntifaceCLIArguments {
     // Options that do something then exit
     /// print version and exit.
     #[argh(switch)]
+    version: bool,
+
+    /// print version and exit.
+    #[argh(switch)]
     serverversion: bool,
 
     /// generate certificate file at the path specified, then exit.
@@ -106,9 +110,12 @@ pub fn parse_options(sender: FrontendPBufSender) -> Result<Option<(ConnectorOpti
     //
     // - serverversion
     // - generatecert
-    if args.serverversion {
+    if args.serverversion || args.version {
         debug!("Server version command sent, printing and exiting.");
-        println!("Intiface CLI (Rust Edition) Version {}", VERSION);
+        println!("Intiface CLI (Rust Edition) Version {}, Commit {}, Built {}", 
+                 VERSION,
+                 env!("VERGEN_SHA_SHORT"),
+                 env!("VERGEN_BUILD_TIMESTAMP"));
         return Ok(None);
     }
     if let Some(path) = args.generatecert {

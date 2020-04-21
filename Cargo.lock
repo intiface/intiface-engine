@@ -768,6 +768,7 @@ dependencies = [
  "prost-build",
  "rcgen",
  "rustls",
+ "vergen",
  "winapi 0.3.8",
 ]
 
@@ -1845,6 +1846,16 @@ name = "vcpkg"
 version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3fc439f2794e98976c88a2a2dafce96b930fe8010b0a256b3c2199a773933168"
+
+[[package]]
+name = "vergen"
+version = "3.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ce50d8996df1f85af15f2cd8d33daae6e479575123ef4314a51a70a230739cb"
+dependencies = [
+ "bitflags",
+ "chrono",
+]
 
 [[package]]
 name = "version_check"
