@@ -165,12 +165,12 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/')
       with:
         files: |
-          intiface-cli-rs-Linux-debug.zip
-          intiface-cli-rs-Windows-debug.zip
-          intiface-cli-rs-macOS-debug.zip
-          intiface-cli-rs-Linux-release.zip
-          intiface-cli-rs-Windows-release.zip
-          intiface-cli-rs-macOS-release.zip
+          intiface-cli-rs-linux-x64-Debug.zip
+          intiface-cli-rs-win-x64-Debug.zip
+          intiface-cli-rs-mac-x64-Debug.zip
+          intiface-cli-rs-linux-x64-Release.zip
+          intiface-cli-rs-win-x64-Release.zip
+          intiface-cli-rs-mac-x64-Release.zip
           README.md
           CHANGELOG.md
       env:
