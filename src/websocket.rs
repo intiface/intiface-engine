@@ -82,8 +82,16 @@ where
                         async_tungstenite::tungstenite::Message::Close(_) => {
                             break;
                         }
-                        _ => {
-                            panic!("Don't know how to handle this message type!");
+                        async_tungstenite::tungstenite::Message::Ping(_) => {
+                            // noop
+                            continue;
+                        }
+                        async_tungstenite::tungstenite::Message::Pong(_) => {
+                            // noop
+                            continue;
+                        }
+                        async_tungstenite::tungstenite::Message::Binary(_) => {
+                            panic!("Don't know how to handle binary message types!");
                         }
                     },
                     StreamOutput::ButtplugMessage(msg) => {
