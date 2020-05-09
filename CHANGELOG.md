@@ -1,3 +1,15 @@
+# v3 (2020/05/09)
+
+## Features
+
+- Added protobuf basis for hooking CLI into Intiface Desktop
+
+## Bugfixes
+
+- Fixed bug where receiving ping message from async_tungstenite would
+  panic server
+- Update to buttplug 0.2.4, which fixes ServerInfo message ID matching
+
 # v2 (2020/02/15)
 
 ## Features
