@@ -1,3 +1,10 @@
+# v4 (2020/05/10)
+
+## Features
+
+- --stayopen option now actually works, reusing the server between
+  client connections.
+
 # v3 (2020/05/09)
 
 ## Features
