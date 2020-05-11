@@ -102,10 +102,13 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
     // pipe.
     let frontend_sender = options::check_options_and_pipe();
     #[allow(unused_variables)]
+        /*
     let mut env_log = None;
+
     if !frontend_sender.is_active() {
         env_log = Some(env_logger::builder().is_test(true).try_init());
     }
+    */
 
     frontend_sender.send(Msg::ProcessLog(ProcessLog {
         message: "Testing message".to_string()
