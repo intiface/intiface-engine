@@ -36,11 +36,6 @@ async fn accept_connection<S>(stream: S, server_factory: ButtplugServerFactory)
 where
     S: AsyncRead + AsyncWrite + Unpin,
 {
-    /*     let addr = stream
-          .peer_addr()
-          .expect("connected streams should have a peer address");
-      info!("Peer address: {}", addr);
-    */
     let ws_stream = async_tungstenite::accept_async(stream)
         .await
         .expect("Error during the websocket handshake occurred");
