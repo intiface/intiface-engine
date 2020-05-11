@@ -1,7 +1,7 @@
 use super::{
   ConnectorOptions, 
   IntifaceCLIErrorEnum,
-  server::ButtplugServerFactory,
+  server::{ButtplugServerFactory, store_server}
 };
 use buttplug::server::wrapper::ButtplugServerWrapper;
 use futures::prelude::{
@@ -103,6 +103,10 @@ where
             }
         }
     }
+
+    let mut bare_server = server.take_server();
+    bare_server.disconnect().await;
+    store_server(bare_server);
 }
 
 pub fn create_websocket_listeners(

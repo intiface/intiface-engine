@@ -3,7 +3,7 @@ use super::{
   ServerOptions, 
   IntifaceCLIErrorEnum,
   IntifaceError,
-  server::{ButtplugServerFactory, create_server_factory},
+  server::{ButtplugServerFactory, create_server_factory, create_single_server_factory},
   utils::generate_certificate,
 };
 
@@ -249,7 +249,12 @@ pub fn parse_options(sender: FrontendPBufSender) -> Result<Option<(ConnectorOpti
         let _manager = DeviceConfigurationManager::new();
     }
 
-    let server_factory = create_server_factory(server_info, sender);
+    let server_factory;
+    if args.stayopen {
+        server_factory = create_single_server_factory(server_info, sender);
+    } else {
+        server_factory = create_server_factory(server_info, sender);
+    }
 
     Ok(Some((connector_info.unwrap(), server_factory)))
 }
