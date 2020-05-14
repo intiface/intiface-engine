@@ -1,3 +1,9 @@
+# v5 (2020/05/13)
+
+## Bugfixes
+
+- Move to buttplug-rs 0.3.1, with a couple of unwrap fixes
+
 # v4 (2020/05/10)
 
 ## Features
