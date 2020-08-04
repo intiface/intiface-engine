@@ -26,11 +26,12 @@ use buttplug::{
         LovenseHIDDongleCommunicationManager, LovenseSerialDongleCommunicationManager,
       },
       serialport::SerialPortCommunicationManager,
-      xinput::XInputDeviceCommunicationManager,
     },
     ButtplugRemoteServer,
   },
 };
+#[cfg(target_os = "windows")]
+use buttplug::server::comm_managers::xinput::XInputDeviceCommunicationManager;
 use frontend::intiface_gui::server_process_message::{
   Msg, ProcessEnded, ProcessLog, ProcessStarted,
 };
@@ -185,8 +186,9 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
       server.add_comm_manager::<BtlePlugCommunicationManager>();
       server.add_comm_manager::<LovenseHIDDongleCommunicationManager>();
       server.add_comm_manager::<LovenseSerialDongleCommunicationManager>();
-      server.add_comm_manager::<XInputDeviceCommunicationManager>();
       server.add_comm_manager::<SerialPortCommunicationManager>();
+      #[cfg(target_os = "windows")]
+      server.add_comm_manager::<XInputDeviceCommunicationManager>();
       info!("Starting new stay open loop");
       loop {
         info!("Creating new stay open connector");
@@ -209,8 +211,9 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
         server.add_comm_manager::<BtlePlugCommunicationManager>();
         server.add_comm_manager::<LovenseHIDDongleCommunicationManager>();
         server.add_comm_manager::<LovenseSerialDongleCommunicationManager>();
-        server.add_comm_manager::<XInputDeviceCommunicationManager>();
         server.add_comm_manager::<SerialPortCommunicationManager>();
+        #[cfg(target_os = "windows")]
+        server.add_comm_manager::<XInputDeviceCommunicationManager>();
         let connector = ButtplugRemoteServerConnector::<
           ButtplugWebsocketServerTransport,
           ButtplugServerJSONSerializer,
