@@ -1,9 +1,7 @@
 use super::{
   ConnectorOptions, 
-  ServerOptions, 
   IntifaceCLIErrorEnum,
   IntifaceError,
-  server::{ButtplugServerFactory, create_server_factory, create_single_server_factory},
   utils::generate_certificate,
 };
 
@@ -82,7 +80,7 @@ struct IntifaceCLIArguments {
     /// ping timeout maximum for server (in milliseconds)
     #[argh(option)]
     #[argh(default = "0")]
-    pingtime: u32,
+    pingtime: u64,
 
     /// if passed, server will stay running after client disconnection
     #[argh(switch)]
@@ -103,7 +101,7 @@ pub fn check_options_and_pipe() -> FrontendPBufSender {
     }
 }
 
-pub fn parse_options(sender: FrontendPBufSender) -> Result<Option<(ConnectorOptions, ButtplugServerFactory)>, IntifaceCLIErrorEnum> {
+pub fn parse_options() -> Result<Option<ConnectorOptions>, IntifaceCLIErrorEnum> {
     let args: IntifaceCLIArguments = argh::from_env();
 
     // Options that will do a thing then exit:
@@ -125,16 +123,13 @@ pub fn parse_options(sender: FrontendPBufSender) -> Result<Option<(ConnectorOpti
 
     // Options that set up the server networking
 
-    let mut connector_info = None;
+    let mut connector_info = ConnectorOptions::default();
+    let mut connector_info_set = false;
 
     if args.wsallinterfaces {
         info!("Intiface CLI Options: Websocket Use All Interfaces option passed.");
-        if connector_info.is_none() {
-            connector_info = Some(ConnectorOptions::default());
-        }
-        if let Some(info) = &mut connector_info {
-            info.ws_listen_on_all_interfaces = true;
-        }
+        connector_info.ws_listen_on_all_interfaces = true;
+        connector_info_set = true;
     }
 
     if let Some(wsinsecureport) = &args.wsinsecureport {
@@ -142,12 +137,8 @@ pub fn parse_options(sender: FrontendPBufSender) -> Result<Option<(ConnectorOpti
             "Intiface CLI Options: Websocket Insecure Port {}",
             wsinsecureport
         );
-        if connector_info.is_none() {
-            connector_info = Some(ConnectorOptions::default());
-        }
-        if let Some(info) = &mut connector_info {
-            info.ws_insecure_port = Some(*wsinsecureport);
-        }
+        connector_info.ws_insecure_port = Some(*wsinsecureport);
+        connector_info_set = true;
     }
 
     if let Some(wscertfile) = &args.wscertfile {
@@ -155,12 +146,8 @@ pub fn parse_options(sender: FrontendPBufSender) -> Result<Option<(ConnectorOpti
             "Intiface CLI Options: Websocket Certificate File {}",
             wscertfile
         );
-        if connector_info.is_none() {
-            connector_info = Some(ConnectorOptions::default());
-        }
-        if let Some(info) = &mut connector_info {
-            info.ws_cert_file = Some((*wscertfile).clone());
-        }
+        connector_info.ws_cert_file = Some((*wscertfile).clone());
+        connector_info_set = true;
     }
 
     if let Some(wsprivfile) = &args.wsprivfile {
@@ -168,12 +155,8 @@ pub fn parse_options(sender: FrontendPBufSender) -> Result<Option<(ConnectorOpti
             "Intiface CLI Options: Websocket Private Key File {}",
             wsprivfile
         );
-        if connector_info.is_none() {
-            connector_info = Some(ConnectorOptions::default());
-        }
-        if let Some(info) = &mut connector_info {
-            info.ws_priv_file = Some((*wsprivfile).clone());
-        }
+        connector_info.ws_priv_file = Some((*wsprivfile).clone());
+        connector_info_set = true;
     }
 
     if let Some(wssecureport) = &args.wssecureport {
@@ -183,47 +166,39 @@ pub fn parse_options(sender: FrontendPBufSender) -> Result<Option<(ConnectorOpti
         );
         // After this point, we should definitely already know we're connecting
         // because we need both cert options. If they aren't there, exit.
-        if let Some(info) = &mut connector_info {
-            if info.ws_cert_file.is_none() || info.ws_priv_file.is_none() {
-                return Err(IntifaceCLIErrorEnum::IntifaceError(IntifaceError::new(
-                    "Must have certificate and private key file to run secure server",
-                )));
-            }
-            info.ws_secure_port = Some(*wssecureport);
-        } else {
+        if connector_info.ws_cert_file.is_none() || connector_info.ws_priv_file.is_none() {
             return Err(IntifaceCLIErrorEnum::IntifaceError(IntifaceError::new(
                 "Must have certificate and private key file to run secure server",
             )));
         }
+        connector_info.ws_secure_port = Some(*wssecureport);
     }
 
     if let Some(ipcpipe) = &args.ipcpipe {
+        // TODO We should actually implement pipes :(
         info!("Intiface CLI Options: IPC Pipe Name {}", ipcpipe);
     }
 
     // If we don't have a device configuration by this point, panic.
 
-    if connector_info.is_none() {
+    if !connector_info_set {
         return Err(IntifaceError::new(
-            "Must have a connection argument (wsinscureport, wssecureport, ipcport) to run!",
+            "Must have a connection argument (wsinsecureport, wssecureport, ipcport) to run!",
         )
         .into());
     }
 
-    // Options that set up communications with intiface GUI
-    let mut server_info = ServerOptions::default();
-
-    server_info.server_name = args.servername;
-    server_info.max_ping_time = args.pingtime;
+    connector_info.server_name = args.servername;
+    connector_info.max_ping_time = args.pingtime;
 
     if args.frontendpipe {
         info!("Intiface CLI Options: Using frontend pipe");
-        server_info.use_frontend_pipe = true;
+        connector_info.use_frontend_pipe = true;
     }
     
     if args.stayopen {
       info!("Intiface CLI Options: Leave server open after disconnect.");
-      server_info.stay_open = true;
+      connector_info.stay_open = true;
     }
 
     // Options that set up Buttplug server parameters
@@ -236,7 +211,7 @@ pub fn parse_options(sender: FrontendPBufSender) -> Result<Option<(ConnectorOpti
         let cfg = fs::read_to_string(deviceconfig).unwrap();
         set_external_device_config(Some(cfg));
         // Make an unused DeviceConfigurationManager here, as it'll panic if it's invalid.
-        let _manager = DeviceConfigurationManager::new();
+        let _manager = DeviceConfigurationManager::default();
     }
 
     if let Some(userdeviceconfig) = &args.userdeviceconfig {
@@ -246,15 +221,8 @@ pub fn parse_options(sender: FrontendPBufSender) -> Result<Option<(ConnectorOpti
         );
         let cfg = fs::read_to_string(userdeviceconfig).unwrap();
         set_user_device_config(Some(cfg));
-        let _manager = DeviceConfigurationManager::new();
+        let _manager = DeviceConfigurationManager::default();
     }
 
-    let server_factory;
-    if args.stayopen {
-        server_factory = create_single_server_factory(server_info, sender);
-    } else {
-        server_factory = create_server_factory(server_info, sender);
-    }
-
-    Ok(Some((connector_info.unwrap(), server_factory)))
+    Ok(Some(connector_info))
 }

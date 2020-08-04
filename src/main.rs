@@ -6,139 +6,225 @@ extern crate log;
 
 mod frontend;
 mod options;
-mod server;
 mod utils;
-mod websocket;
 
+use async_channel::{bounded, Receiver};
+use async_std::task;
 use buttplug::{
-    core::errors::ButtplugError,
+  connector::{
+    ButtplugRemoteServerConnector, ButtplugWebsocketServerTransport,
+    ButtplugWebsocketServerTransportOptions,
+  },
+  core::{
+    errors::ButtplugError,
+    messages::{serializer::ButtplugServerJSONSerializer, ButtplugServerMessage},
+  },
+  server::{
+    comm_managers::{
+      btleplug::BtlePlugCommunicationManager,
+      lovense_dongle::{
+        LovenseHIDDongleCommunicationManager, LovenseSerialDongleCommunicationManager,
+      },
+      serialport::SerialPortCommunicationManager,
+      xinput::XInputDeviceCommunicationManager,
+    },
+    ButtplugRemoteServer,
+  },
 };
-use frontend::intiface_gui::{
-    server_process_message::{Msg, ProcessStarted, ProcessEnded, ProcessLog},
+use frontend::intiface_gui::server_process_message::{
+  Msg, ProcessEnded, ProcessLog, ProcessStarted,
 };
-use env_logger;
-use std::{
-    error::Error,
-    fmt,
-};
+use frontend::{intiface_gui::server_process_message::ClientConnected, FrontendPBufSender};
+use futures::StreamExt;
+use std::{error::Error, fmt};
 
 #[derive(Default, Clone)]
 pub struct ConnectorOptions {
-    ws_listen_on_all_interfaces: bool,
-    ws_insecure_port: Option<u16>,
-    ws_secure_port: Option<u16>,
-    ws_cert_file: Option<String>,
-    ws_priv_file: Option<String>,
-    ipc_pipe_name: Option<String>,
+  server_name: String,
+  max_ping_time: u64,
+  stay_open: bool,
+  use_frontend_pipe: bool,
+  ws_listen_on_all_interfaces: bool,
+  ws_insecure_port: Option<u16>,
+  ws_secure_port: Option<u16>,
+  ws_cert_file: Option<String>,
+  ws_priv_file: Option<String>,
+  ipc_pipe_name: Option<String>,
 }
 
-#[derive(Default, Clone)]
-pub struct ServerOptions {
-    server_name: String,
-    max_ping_time: u32,
-    stay_open: bool,
-    use_frontend_pipe: bool,
+impl From<ConnectorOptions> for ButtplugWebsocketServerTransportOptions {
+  fn from(options: ConnectorOptions) -> ButtplugWebsocketServerTransportOptions {
+    ButtplugWebsocketServerTransportOptions {
+      ws_cert_file: options.ws_cert_file,
+      ws_priv_file: options.ws_priv_file,
+      ws_insecure_port: options.ws_insecure_port,
+      ws_secure_port: options.ws_secure_port,
+      ws_listen_on_all_interfaces: options.ws_listen_on_all_interfaces,
+    }
+  }
 }
 
 #[derive(Debug)]
 pub struct IntifaceError {
-    reason: String,
+  reason: String,
 }
 
 impl IntifaceError {
-    pub fn new(error_msg: &str) -> Self {
-        Self {
-            reason: error_msg.to_owned(),
-        }
+  pub fn new(error_msg: &str) -> Self {
+    Self {
+      reason: error_msg.to_owned(),
     }
+  }
 }
 
 impl fmt::Display for IntifaceError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "self.reason")
-    }
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "self.reason")
+  }
 }
 
 impl Error for IntifaceError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        None
-    }
+  fn source(&self) -> Option<&(dyn Error + 'static)> {
+    None
+  }
 }
 
 #[derive(Debug)]
 pub enum IntifaceCLIErrorEnum {
-    IoError(std::io::Error),
-    ButtplugError(ButtplugError),
-    IntifaceError(IntifaceError),
+  IoError(std::io::Error),
+  ButtplugError(ButtplugError),
+  IntifaceError(IntifaceError),
 }
 
 impl From<std::io::Error> for IntifaceCLIErrorEnum {
-    fn from(err: std::io::Error) -> Self {
-        IntifaceCLIErrorEnum::IoError(err)
-    }
+  fn from(err: std::io::Error) -> Self {
+    IntifaceCLIErrorEnum::IoError(err)
+  }
 }
 
 impl From<ButtplugError> for IntifaceCLIErrorEnum {
-    fn from(err: ButtplugError) -> Self {
-        IntifaceCLIErrorEnum::ButtplugError(err)
-    }
+  fn from(err: ButtplugError) -> Self {
+    IntifaceCLIErrorEnum::ButtplugError(err)
+  }
 }
 
 impl From<IntifaceError> for IntifaceCLIErrorEnum {
-    fn from(err: IntifaceError) -> Self {
-        IntifaceCLIErrorEnum::IntifaceError(err)
-    }
+  fn from(err: IntifaceError) -> Self {
+    IntifaceCLIErrorEnum::IntifaceError(err)
+  }
 }
 
+fn setup_frontend_filter_channel<T>(
+  mut receiver: Receiver<ButtplugServerMessage>,
+  frontend_sender: FrontendPBufSender,
+) -> Receiver<ButtplugServerMessage> {
+  let (sender_filtered, recv_filtered) = bounded(256);
+
+  task::spawn(async move {
+    loop {
+      match receiver.next().await {
+        Some(msg) => {
+          match msg {
+            ButtplugServerMessage::ServerInfo(_) => {
+              let msg = ClientConnected {
+                client_name: "Unknown Name".to_string(),
+              };
+              frontend_sender.send(Msg::ClientConnected(msg)).await;
+            }
+            _ => {}
+          }
+          sender_filtered.send(msg).await;
+        }
+        None => break,
+      }
+    }
+  });
+
+  recv_filtered
+}
 
 #[async_std::main]
 async fn main() -> Result<(), IntifaceCLIErrorEnum> {
+  // Intiface GUI communicates with its child process via protobufs through
+  // stdin/stdout. Checking for this is the first thing we should do, as any
+  // output after this either needs to be printed strings or pbuf messages.
+  //
+  // Only set up the env logger if we're not outputting pbufs to a frontend
+  // pipe.
+  let frontend_sender = options::check_options_and_pipe();
+  #[allow(unused_variables)]
+  if !frontend_sender.is_active() {
+    tracing_subscriber::fmt::init();
+  } else {
+    frontend_sender
+      .send(Msg::ProcessLog(ProcessLog {
+        message: "Testing message".to_string(),
+      }))
+      .await;
+    frontend_sender
+      .send(Msg::ProcessStarted(ProcessStarted::default()))
+      .await;
+  }
+  // Parse options, get back our connection information and a curried server
+  // factory closure.
+  let connector_opts = match options::parse_options() {
+    Ok(opts) => match opts {
+      Some(o) => o,
+      None => return Ok(()),
+    },
+    Err(e) => return Err(e),
+  };
 
-    // Intiface GUI communicates with its child process via protobufs through
-    // stdin/stdout. Checking for this is the first thing we should do, as any
-    // output after this either needs to be printed strings or pbuf messages.
-    //
-    // Only set up the env logger if we're not outputting pbufs to a frontend
-    // pipe.
-    let frontend_sender = options::check_options_and_pipe();
-    #[allow(unused_variables)]
-        /*
-    let mut env_log = None;
+  // Hang out until those listeners get sick of listening.
+  info!("Intiface CLI Setup finished, running server tasks until all joined.");
 
-    if !frontend_sender.is_active() {
-        env_log = Some(env_logger::builder().is_test(true).try_init());
-    }
-    */
+  if connector_opts.stay_open {
+    task::block_on(async move {
+      let server =
+        ButtplugRemoteServer::new(&connector_opts.server_name, connector_opts.max_ping_time);
+      server.add_comm_manager::<BtlePlugCommunicationManager>();
+      server.add_comm_manager::<LovenseHIDDongleCommunicationManager>();
+      server.add_comm_manager::<LovenseSerialDongleCommunicationManager>();
+      server.add_comm_manager::<XInputDeviceCommunicationManager>();
+      server.add_comm_manager::<SerialPortCommunicationManager>();
+      info!("Starting new stay open loop");
+      loop {
+        info!("Creating new stay open connector");
+        let connector = ButtplugRemoteServerConnector::<
+          ButtplugWebsocketServerTransport,
+          ButtplugServerJSONSerializer,
+        >::new(ButtplugWebsocketServerTransport::new(
+          connector_opts.clone().into(),
+        ));
+        info!("Starting server");
+        server.start(connector).await.unwrap();
+        info!("Server connection dropped, restarting");
+      }
+    });
+  } else {
+    task::block_on(async move {
+      loop {
+        let server =
+          ButtplugRemoteServer::new(&connector_opts.server_name, connector_opts.max_ping_time);
+        server.add_comm_manager::<BtlePlugCommunicationManager>();
+        server.add_comm_manager::<LovenseHIDDongleCommunicationManager>();
+        server.add_comm_manager::<LovenseSerialDongleCommunicationManager>();
+        server.add_comm_manager::<XInputDeviceCommunicationManager>();
+        server.add_comm_manager::<SerialPortCommunicationManager>();
+        let connector = ButtplugRemoteServerConnector::<
+          ButtplugWebsocketServerTransport,
+          ButtplugServerJSONSerializer,
+        >::new(ButtplugWebsocketServerTransport::new(
+          connector_opts.clone().into(),
+        ));
+        server.start(connector).await.unwrap();
+      }
+    });
+  }
 
-    frontend_sender.send(Msg::ProcessLog(ProcessLog {
-        message: "Testing message".to_string()
-    })).await;
-    frontend_sender.send(Msg::ProcessStarted(ProcessStarted::default())).await;
-    
-    // Parse options, get back our connection information and a curried server
-    // factory closure.
-    let (connector_opts, server_factory) = match options::parse_options(frontend_sender.clone()) {
-        Ok(opts) => {
-            match opts {
-                Some(o) => o,
-                None => return Ok(())
-            }
-        },
-        Err(e) => return Err(e)
-    };
-
-    // Spin up our listeners.
-    let tasks = match websocket::create_websocket_listeners(connector_opts, server_factory) {
-        Ok(t) => t,
-        Err(e) => return Err(e)
-    };
-
-    // Hang out until those listeners get sick of listening.
-    info!("Intiface CLI Setup finished, running server tasks until all joined.");
-    for t in tasks {
-        t.await;
-    }
-    info!("Exiting");
-    frontend_sender.send(Msg::ProcessEnded(ProcessEnded::default())).await;
-    Ok(())
+  info!("Exiting");
+  frontend_sender
+    .send(Msg::ProcessEnded(ProcessEnded::default()))
+    .await;
+  Ok(())
 }
