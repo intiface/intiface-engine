@@ -21,6 +21,8 @@ use buttplug::{
   },
   server::{
     comm_managers::{
+      DeviceCommunicationManager,
+      DeviceCommunicationManagerCreator,
       btleplug::BtlePlugCommunicationManager,
       lovense_dongle::{
         LovenseHIDDongleCommunicationManager, LovenseSerialDongleCommunicationManager,
@@ -115,6 +117,21 @@ impl From<IntifaceError> for IntifaceCLIErrorEnum {
   }
 }
 
+fn try_add_comm_manager<T>(server: &ButtplugRemoteServer) where T: 'static + DeviceCommunicationManager + DeviceCommunicationManagerCreator {
+  if let Err(e) = server.add_comm_manager::<T>() {
+    info!("Can't add Btleplug Comm Manager: {:?}", e);
+  }
+}
+
+fn setup_server_device_comm_managers(server: &ButtplugRemoteServer) {
+  try_add_comm_manager::<BtlePlugCommunicationManager>(server);
+  try_add_comm_manager::<LovenseHIDDongleCommunicationManager>(server);
+  try_add_comm_manager::<LovenseSerialDongleCommunicationManager>(server);
+  try_add_comm_manager::<SerialPortCommunicationManager>(server);
+  try_add_comm_manager::<XInputDeviceCommunicationManager>(server);
+}
+
+#[allow(dead_code)]
 fn setup_frontend_filter_channel<T>(
   mut receiver: Receiver<ButtplugServerMessage>,
   frontend_sender: FrontendPBufSender,
@@ -134,7 +151,7 @@ fn setup_frontend_filter_channel<T>(
             }
             _ => {}
           }
-          sender_filtered.send(msg).await;
+          sender_filtered.send(msg).await.unwrap();
         }
         None => break,
       }
@@ -183,12 +200,7 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
     task::block_on(async move {
       let server =
         ButtplugRemoteServer::new(&connector_opts.server_name, connector_opts.max_ping_time);
-      server.add_comm_manager::<BtlePlugCommunicationManager>();
-      server.add_comm_manager::<LovenseHIDDongleCommunicationManager>();
-      server.add_comm_manager::<LovenseSerialDongleCommunicationManager>();
-      server.add_comm_manager::<SerialPortCommunicationManager>();
-      #[cfg(target_os = "windows")]
-      server.add_comm_manager::<XInputDeviceCommunicationManager>();
+        setup_server_device_comm_managers(&server);
       info!("Starting new stay open loop");
       loop {
         info!("Creating new stay open connector");
@@ -208,12 +220,7 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
       loop {
         let server =
           ButtplugRemoteServer::new(&connector_opts.server_name, connector_opts.max_ping_time);
-        server.add_comm_manager::<BtlePlugCommunicationManager>();
-        server.add_comm_manager::<LovenseHIDDongleCommunicationManager>();
-        server.add_comm_manager::<LovenseSerialDongleCommunicationManager>();
-        server.add_comm_manager::<SerialPortCommunicationManager>();
-        #[cfg(target_os = "windows")]
-        server.add_comm_manager::<XInputDeviceCommunicationManager>();
+        setup_server_device_comm_managers(&server);          
         let connector = ButtplugRemoteServerConnector::<
           ButtplugWebsocketServerTransport,
           ButtplugServerJSONSerializer,

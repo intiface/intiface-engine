@@ -23,5 +23,5 @@ pub fn generate_certificate(path: String) -> Result<(), IntifaceCLIErrorEnum> {
         .map_err(|x| IntifaceCLIErrorEnum::from(x))?;
     write!(key_out, "{}", cert.serialize_private_key_pem())
         .map_err(|x| IntifaceCLIErrorEnum::from(x))?;
-    return Ok(());
+    Ok(())
 }

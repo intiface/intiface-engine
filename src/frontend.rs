@@ -8,10 +8,6 @@ use async_std::{
 use async_std::os::unix::io::FromRawFd;
 #[cfg(target_os="windows")]
 use async_std::os::windows::io::FromRawHandle;
-#[cfg(target_os="windows")]
-use winapi;
-#[cfg(target_os="windows")]
-use kernel32;
 
 use prost::Message;
 
