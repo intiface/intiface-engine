@@ -10,6 +10,8 @@ mod utils;
 
 use async_channel::{bounded, Receiver};
 use async_std::task;
+#[cfg(target_os = "windows")]
+use buttplug::server::comm_managers::xinput::XInputDeviceCommunicationManager;
 use buttplug::{
   connector::{
     ButtplugRemoteServerConnector, ButtplugWebsocketServerTransport,
@@ -21,19 +23,16 @@ use buttplug::{
   },
   server::{
     comm_managers::{
-      DeviceCommunicationManager,
-      DeviceCommunicationManagerCreator,
       btleplug::BtlePlugCommunicationManager,
       lovense_dongle::{
         LovenseHIDDongleCommunicationManager, LovenseSerialDongleCommunicationManager,
       },
       serialport::SerialPortCommunicationManager,
+      DeviceCommunicationManager, DeviceCommunicationManagerCreator,
     },
     ButtplugRemoteServer,
   },
 };
-#[cfg(target_os = "windows")]
-use buttplug::server::comm_managers::xinput::XInputDeviceCommunicationManager;
 use frontend::intiface_gui::server_process_message::{
   Msg, ProcessEnded, ProcessLog, ProcessStarted,
 };
@@ -117,7 +116,10 @@ impl From<IntifaceError> for IntifaceCLIErrorEnum {
   }
 }
 
-fn try_add_comm_manager<T>(server: &ButtplugRemoteServer) where T: 'static + DeviceCommunicationManager + DeviceCommunicationManagerCreator {
+fn try_add_comm_manager<T>(server: &ButtplugRemoteServer)
+where
+  T: 'static + DeviceCommunicationManager + DeviceCommunicationManagerCreator,
+{
   if let Err(e) = server.add_comm_manager::<T>() {
     info!("Can't add Btleplug Comm Manager: {:?}", e);
   }
@@ -200,7 +202,7 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
     task::block_on(async move {
       let server =
         ButtplugRemoteServer::new(&connector_opts.server_name, connector_opts.max_ping_time);
-        setup_server_device_comm_managers(&server);
+      setup_server_device_comm_managers(&server);
       info!("Starting new stay open loop");
       loop {
         info!("Creating new stay open connector");
@@ -220,7 +222,7 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
       loop {
         let server =
           ButtplugRemoteServer::new(&connector_opts.server_name, connector_opts.max_ping_time);
-        setup_server_device_comm_managers(&server);          
+        setup_server_device_comm_managers(&server);
         let connector = ButtplugRemoteServerConnector::<
           ButtplugWebsocketServerTransport,
           ButtplugServerJSONSerializer,
