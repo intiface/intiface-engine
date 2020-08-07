@@ -130,6 +130,7 @@ fn setup_server_device_comm_managers(server: &ButtplugRemoteServer) {
   try_add_comm_manager::<LovenseHIDDongleCommunicationManager>(server);
   try_add_comm_manager::<LovenseSerialDongleCommunicationManager>(server);
   try_add_comm_manager::<SerialPortCommunicationManager>(server);
+  #[cfg(target_os = "windows")]
   try_add_comm_manager::<XInputDeviceCommunicationManager>(server);
 }
 
