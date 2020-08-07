@@ -1,3 +1,11 @@
+# v6 (2020/08/06)
+
+## Features
+
+- Move to buttplug-rs 0.6.0, which integrates websockets and server lifetime
+  handling. intiface-cli-rs is now a very thin wrapper around buttplug-rs,
+  handling system bringup and frontend communication and that's about it.
+
 # v5 (2020/05/13)
 
 ## Bugfixes
