@@ -225,8 +225,9 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
       let (server, event_receiver) =
         ButtplugRemoteServer::new(&connector_opts.server_name, connector_opts.max_ping_time);
       if frontend_sender_clone.is_some() {
+        let fscc = frontend_sender_clone.clone().unwrap();
         task::spawn(async move {
-          server_event_receiver(event_receiver, frontend_sender_clone.unwrap()).await;
+          server_event_receiver(event_receiver, fscc).await;
         });
       }
       setup_server_device_comm_managers(&server);
@@ -242,6 +243,11 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
         info!("Starting server");
         server.start(connector).await.unwrap();
         info!("Server connection dropped, restarting");
+        if let Some(sender) = &frontend_sender_clone {
+          sender
+            .send(Msg::ClientDisconnected(ClientDisconnected::default()))
+            .await;
+        }
       }
     });
   } else {
@@ -264,6 +270,11 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
           connector_opts.clone().into(),
         ));
         server.start(connector).await.unwrap();
+        if let Some(sender) = &frontend_sender_clone {
+          sender
+            .send(Msg::ClientDisconnected(ClientDisconnected::default()))
+            .await;
+        }
       }
     });
   }
