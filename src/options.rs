@@ -1,6 +1,6 @@
 use super::{utils::generate_certificate, ConnectorOptions, IntifaceCLIErrorEnum, IntifaceError};
 
-use super::frontend::{self, FrontendPBufSender};
+use super::frontend::{self, FrontendPBufChannel};
 use argh::FromArgs;
 use buttplug::device::configuration_manager::{
   set_external_device_config, set_user_device_config, DeviceConfigurationManager,
@@ -87,12 +87,12 @@ struct IntifaceCLIArguments {
   log: Option<String>,
 }
 
-pub fn check_options_and_pipe() -> FrontendPBufSender {
+pub fn check_options_and_pipe() -> Option<FrontendPBufChannel> {
   let args: IntifaceCLIArguments = argh::from_env();
   if args.frontendpipe {
-    frontend::run_frontend_task()
+    Some(frontend::run_frontend_task())
   } else {
-    FrontendPBufSender::default()
+    None
   }
 }
 

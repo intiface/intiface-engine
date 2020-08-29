@@ -1,3 +1,5 @@
+#![recursion_limit = "256"]
+
 /// command line interface for intiface/buttplug.
 ///
 
@@ -31,12 +33,13 @@ use buttplug::{
       DeviceCommunicationManager, DeviceCommunicationManagerCreator,
     },
     ButtplugRemoteServer,
+    remote_server::ButtplugRemoteServerEvent
   },
 };
 use frontend::intiface_gui::server_process_message::{
   Msg, ProcessEnded, ProcessLog, ProcessStarted,
 };
-use frontend::{intiface_gui::server_process_message::ClientConnected, FrontendPBufSender};
+use frontend::{intiface_gui::server_process_message::{ClientConnected, ClientDisconnected}, FrontendPBufChannel};
 use futures::StreamExt;
 use std::{error::Error, fmt};
 
@@ -137,7 +140,7 @@ fn setup_server_device_comm_managers(server: &ButtplugRemoteServer) {
 #[allow(dead_code)]
 fn setup_frontend_filter_channel<T>(
   mut receiver: Receiver<ButtplugServerMessage>,
-  frontend_sender: FrontendPBufSender,
+  frontend_channel: FrontendPBufChannel,
 ) -> Receiver<ButtplugServerMessage> {
   let (sender_filtered, recv_filtered) = bounded(256);
 
@@ -150,7 +153,7 @@ fn setup_frontend_filter_channel<T>(
               let msg = ClientConnected {
                 client_name: "Unknown Name".to_string(),
               };
-              frontend_sender.send(Msg::ClientConnected(msg)).await;
+              frontend_channel.send(Msg::ClientConnected(msg)).await;
             }
             _ => {}
           }
@@ -164,6 +167,29 @@ fn setup_frontend_filter_channel<T>(
   recv_filtered
 }
 
+async fn server_event_receiver(mut receiver: Receiver<ButtplugRemoteServerEvent>, frontend_sender: FrontendPBufChannel) {
+  while let Some(event) = receiver.next().await {
+    match event {
+      ButtplugRemoteServerEvent::Connected(client_name) => {
+        frontend_sender
+          .send(Msg::ClientConnected(ClientConnected {
+            client_name: client_name
+          })).await;
+      },
+      ButtplugRemoteServerEvent::Disconnected => {
+        frontend_sender
+          .send(Msg::ClientDisconnected(ClientDisconnected {
+          })).await;
+      },
+      _ => {
+      }
+    }
+  }
+  frontend_sender
+  .send(Msg::ClientDisconnected(ClientDisconnected {
+  })).await;
+}
+
 #[async_std::main]
 async fn main() -> Result<(), IntifaceCLIErrorEnum> {
   // Intiface GUI communicates with its child process via protobufs through
@@ -174,17 +200,12 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
   // pipe.
   let frontend_sender = options::check_options_and_pipe();
   #[allow(unused_variables)]
-  if !frontend_sender.is_active() {
-    tracing_subscriber::fmt::init();
-  } else {
-    frontend_sender
-      .send(Msg::ProcessLog(ProcessLog {
-        message: "Testing message".to_string(),
-      }))
-      .await;
-    frontend_sender
+  if let Some(sender) = &frontend_sender {
+    sender
       .send(Msg::ProcessStarted(ProcessStarted::default()))
-      .await;
+      .await;  
+  } else {
+    tracing_subscriber::fmt::init();
   }
   // Parse options, get back our connection information and a curried server
   // factory closure.
@@ -198,11 +219,16 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
 
   // Hang out until those listeners get sick of listening.
   info!("Intiface CLI Setup finished, running server tasks until all joined.");
-
-  if connector_opts.stay_open {
+  let frontend_sender_clone = frontend_sender.clone();    
+  if connector_opts.stay_open {  
     task::block_on(async move {
-      let server =
+      let (server, event_receiver) =
         ButtplugRemoteServer::new(&connector_opts.server_name, connector_opts.max_ping_time);
+      if frontend_sender_clone.is_some() {
+        task::spawn(async move {
+          server_event_receiver(event_receiver, frontend_sender_clone.unwrap()).await;
+        });
+      }
       setup_server_device_comm_managers(&server);
       info!("Starting new stay open loop");
       loop {
@@ -221,11 +247,18 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
   } else {
     task::block_on(async move {
       loop {
-        let server =
-          ButtplugRemoteServer::new(&connector_opts.server_name, connector_opts.max_ping_time);
+        let (server, event_receiver) =
+        ButtplugRemoteServer::new(&connector_opts.server_name, connector_opts.max_ping_time);
+        let fscc = frontend_sender_clone.clone();
+        if fscc.is_some() {
+          task::spawn(async move {
+            server_event_receiver(event_receiver, fscc.unwrap()).await;
+          });
+        }
         setup_server_device_comm_managers(&server);
         let connector = ButtplugRemoteServerConnector::<
           ButtplugWebsocketServerTransport,
+
           ButtplugServerJSONSerializer,
         >::new(ButtplugWebsocketServerTransport::new(
           connector_opts.clone().into(),
@@ -236,8 +269,10 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
   }
 
   info!("Exiting");
-  frontend_sender
-    .send(Msg::ProcessEnded(ProcessEnded::default()))
-    .await;
+  if let Some(sender) = &frontend_sender {
+    sender
+      .send(Msg::ProcessEnded(ProcessEnded::default()))
+      .await;
+  }
   Ok(())
 }
