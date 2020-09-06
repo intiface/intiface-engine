@@ -1,3 +1,13 @@
+# v7 (2020/09/06)
+
+## Features
+
+- Move to buttplug-rs 0.7.1, which includes status emitting features and way
+  more device protocol support.
+- Allow frontend to trigger process stop
+- Send disconnect to frontend when client disconnects
+- Can now relay connected/disconnected devices to GUIs via PBuf protocol
+
 # v6 (2020/08/06)
 
 ## Features
