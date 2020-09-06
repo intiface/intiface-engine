@@ -39,7 +39,7 @@ use buttplug::{
 use frontend::intiface_gui::server_process_message::{
   Msg, ProcessEnded, ProcessLog, ProcessStarted,
 };
-use frontend::{intiface_gui::server_process_message::{ClientConnected, ClientDisconnected}, FrontendPBufChannel};
+use frontend::{intiface_gui::server_process_message::{ClientConnected, ClientDisconnected, DeviceConnected, DeviceDisconnected}, FrontendPBufChannel};
 use futures::StreamExt;
 use std::{error::Error, fmt};
 
@@ -181,6 +181,19 @@ async fn server_event_receiver(mut receiver: Receiver<ButtplugRemoteServerEvent>
           .send(Msg::ClientDisconnected(ClientDisconnected {
           })).await;
       },
+      ButtplugRemoteServerEvent::DeviceAdded(device_id, device_name) => {
+        frontend_sender
+          .send(Msg::DeviceConnected(DeviceConnected {
+            device_name,
+            device_id
+          })).await;
+      }
+      ButtplugRemoteServerEvent::DeviceRemoved(device_id) => {
+        frontend_sender
+          .send(Msg::DeviceDisconnected(DeviceDisconnected {
+            device_id
+          })).await;
+      }
       _ => {
       }
     }
