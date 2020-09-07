@@ -1,3 +1,10 @@
+# v8 (2020/09/07)
+
+## Bugfixes
+
+- Move to buttplug-rs 0.7.2, which adds more device configurations and fixes
+  websocket listening on all interfaces.
+
 # v7 (2020/09/06)
 
 ## Features
