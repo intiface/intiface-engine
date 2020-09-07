@@ -25,6 +25,8 @@ as a backend/engine for Intiface Desktop.
 
 ## Running
 
+Command line options are as follows:
+
 | Option | Description |
 | --------- | --------- |
 | `version` | Print version and exit |
@@ -43,6 +45,10 @@ as a backend/engine for Intiface Desktop.
 | `pingtime [number]` | Milliseconds for ping time limit of server (if omitted, set to 0) |
 | `stayopen` | Stay open between connections (needed for Windows due to device disconnect issues) |
 | `log` | Level of logs to output by default (if omitted, set to None) |
+
+For example, to run the server on an insecure websocket at port 12345:
+
+`intiface-cli --wsinsecureport 12345`
 
 ## Compiling
 
