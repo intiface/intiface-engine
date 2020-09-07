@@ -9,6 +9,7 @@ repository = "https://github.com/intiface/intiface-cli-rs.git"
 readme = "README.md"
 keywords = ["usb", "serial", "hardware", "bluetooth", "teledildonics"]
 edition = "2018"
+exclude = [".vscode/**"]
 
 [dependencies]
 # buttplug = { path = "../buttplug-rs/buttplug", features = ["async-std-runtime", "client", "server", "serialize-json", "btleplug-manager", "websockets", "xinput-manager", "serial-manager", "lovense-dongle-manager"] }
