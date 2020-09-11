@@ -1,3 +1,10 @@
+# v9 (2020/09/11)
+
+## Bugfixes
+
+- Moves to buttplug-0.7.3, which loads both RSA and pkcs8 certificates. This
+  allows us to load the certs that come from Intiface Desktop.
+
 # v8 (2020/09/07)
 
 ## Bugfixes
