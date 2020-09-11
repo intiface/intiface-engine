@@ -37,7 +37,7 @@ use buttplug::{
   },
 };
 use frontend::intiface_gui::server_process_message::{
-  Msg, ProcessEnded, ProcessLog, ProcessStarted,
+  Msg, ProcessEnded, ProcessLog, ProcessStarted, ProcessError,
 };
 use frontend::{intiface_gui::server_process_message::{ClientConnected, ClientDisconnected, DeviceConnected, DeviceDisconnected}, FrontendPBufChannel};
 use futures::StreamExt;
@@ -254,7 +254,16 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
           connector_opts.clone().into(),
         ));
         info!("Starting server");
-        server.start(connector).await.unwrap();
+        if let Err(e) = server.start(connector).await {
+          if let Some(sender) = &frontend_sender_clone {
+            sender
+              .send(Msg::ProcessError(ProcessError { message: format!("Process Error: {:?}", e).to_owned() }))
+              .await;
+          } else {
+            println!("{}", format!("Process Error: {:?}", e));
+          }
+          break;
+        }        
         info!("Server connection dropped, restarting");
         if let Some(sender) = &frontend_sender_clone {
           sender
@@ -282,7 +291,16 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
         >::new(ButtplugWebsocketServerTransport::new(
           connector_opts.clone().into(),
         ));
-        server.start(connector).await.unwrap();
+        if let Err(e) = server.start(connector).await {
+          if let Some(sender) = &frontend_sender_clone {
+            sender
+              .send(Msg::ProcessError(ProcessError { message: format!("Process Error: {:?}", e.source()).to_owned() }))
+              .await;
+          } else {
+            println!("{}", format!("Process Error: {:?}", e));
+          }
+          break;
+        }
         if let Some(sender) = &frontend_sender_clone {
           sender
             .send(Msg::ClientDisconnected(ClientDisconnected::default()))
