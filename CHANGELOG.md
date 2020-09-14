@@ -1,3 +1,15 @@
+# v10 (2020/09/13)
+
+## Features
+
+- Added log handling from Buttplug library. Still needs protocol/CLI setting,
+  currently outputs everything INFO or higher.
+
+## Bugfixes
+
+- Moves to buttplug-0.8.2, fixing Lovense rotation and adding log output
+  support.
+
 # v9 (2020/09/11)
 
 ## Bugfixes
