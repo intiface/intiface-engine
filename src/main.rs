@@ -33,14 +33,17 @@ use buttplug::{
       DeviceCommunicationManager, DeviceCommunicationManagerCreator,
     },
     ButtplugRemoteServer,
-    remote_server::ButtplugRemoteServerEvent
+    remote_server::ButtplugRemoteServerEvent,
   },
+  util::logging::ChannelWriter
 };
 use frontend::intiface_gui::server_process_message::{
   Msg, ProcessEnded, ProcessLog, ProcessStarted, ProcessError,
+  ClientConnected, ClientDisconnected, DeviceConnected, DeviceDisconnected,
 };
-use frontend::{intiface_gui::server_process_message::{ClientConnected, ClientDisconnected, DeviceConnected, DeviceDisconnected}, FrontendPBufChannel};
+use frontend::FrontendPBufChannel;
 use futures::StreamExt;
+use tracing_subscriber::{prelude::*, filter::LevelFilter};
 use std::{error::Error, fmt};
 
 #[derive(Default, Clone)]
@@ -210,15 +213,28 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
   // output after this either needs to be printed strings or pbuf messages.
   //
   // Only set up the env logger if we're not outputting pbufs to a frontend
-  // pipe.
+  // pipe.  
   let frontend_sender = options::check_options_and_pipe();
   #[allow(unused_variables)]
   if let Some(sender) = &frontend_sender {
     sender
-      .send(Msg::ProcessStarted(ProcessStarted::default()))
-      .await;  
+    .send(Msg::ProcessStarted(ProcessStarted::default()))
+    .await;
+    let (bp_log_sender, mut receiver) = bounded::<Vec<u8>>(256);
+    let log_sender = sender.clone();
+    async_std::task::spawn(async move {
+      while let Some(log) = receiver.next().await {
+        log_sender
+          .send(Msg::ProcessLog(ProcessLog {
+            message: std::str::from_utf8(&log).unwrap().to_owned()
+          }))
+          .await;
+      }
+    });
+    let sub = tracing_subscriber::fmt::layer().with_ansi(false).with_writer(ChannelWriter::new(bp_log_sender));
+    tracing_subscriber::registry().with(LevelFilter::INFO).with(sub).init();
   } else {
-    tracing_subscriber::fmt::init();
+    tracing_subscriber::fmt::init();    
   }
   // Parse options, get back our connection information and a curried server
   // factory closure.
