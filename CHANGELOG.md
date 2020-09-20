@@ -1,3 +1,11 @@
+# v11 (2020/09/20)
+
+## Bugfixes
+
+- Moves to buttplug-0.8.3, which fixes support for some programs using older
+  APIs (FleshlightLaunchFW12Cmd) for Kiiroo stroking products (Onyx, Fleshlight
+  Launch, etc).
+
 # v10 (2020/09/13)
 
 ## Features
