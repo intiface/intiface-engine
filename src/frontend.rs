@@ -4,7 +4,7 @@ use async_std::os::unix::io::FromRawFd;
 #[cfg(target_os = "windows")]
 use async_std::os::windows::io::FromRawHandle;
 use async_std::{fs::File, io::stdin, task};
-use super::frontend::intiface_gui::{
+use intiface_gui::{
   server_process_message::{Msg, ProcessEnded, self},
   ServerControlMessage, ServerProcessMessage,
 };
