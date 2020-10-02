@@ -43,7 +43,7 @@ use frontend::intiface_gui::server_process_message::{
 };
 use frontend::FrontendPBufChannel;
 use futures::StreamExt;
-use tracing_subscriber::{prelude::*, filter::LevelFilter};
+use tracing_subscriber::{prelude::*, filter::{LevelFilter, EnvFilter}};
 use std::{error::Error, fmt};
 
 #[derive(Default, Clone)]
@@ -234,7 +234,9 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
     let sub = tracing_subscriber::fmt::layer().with_ansi(false).with_writer(ChannelWriter::new(bp_log_sender));
     tracing_subscriber::registry().with(LevelFilter::INFO).with(sub).init();
   } else {
-    tracing_subscriber::fmt::init();    
+    let filter = EnvFilter::try_from_default_env().or_else(|_| EnvFilter::try_new("info")).unwrap();
+    tracing_subscriber::fmt().with_env_filter(filter).init();
+    println!("Intiface Server, starting up with stdout output.");
   }
   // Parse options, get back our connection information and a curried server
   // factory closure.
