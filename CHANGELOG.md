@@ -1,3 +1,15 @@
+# v12 (2020/10/02)
+
+## Features
+
+- Update to Buttplug-rs 0.8.4, fixing a bunch of device issues.
+- Default to outputting info level logs if no env log var set. (Should pick this
+  up from command line argument in future version)
+
+## Bugfixes
+
+- Only run for one connection attempt if --stayopen isn't passed in.
+
 # v11 (2020/09/20)
 
 ## Bugfixes
