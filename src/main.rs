@@ -292,38 +292,34 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
     });
   } else {
     task::block_on(async move {
-      loop {
-        let (server, event_receiver) =
-        ButtplugRemoteServer::new(&connector_opts.server_name, connector_opts.max_ping_time);
-        let fscc = frontend_sender_clone.clone();
-        if fscc.is_some() {
-          task::spawn(async move {
-            server_event_receiver(event_receiver, fscc.unwrap()).await;
-          });
-        }
-        setup_server_device_comm_managers(&server);
-        let connector = ButtplugRemoteServerConnector::<
-          ButtplugWebsocketServerTransport,
-
-          ButtplugServerJSONSerializer,
-        >::new(ButtplugWebsocketServerTransport::new(
-          connector_opts.clone().into(),
-        ));
-        if let Err(e) = server.start(connector).await {
-          if let Some(sender) = &frontend_sender_clone {
-            sender
-              .send(Msg::ProcessError(ProcessError { message: format!("Process Error: {:?}", e.source()).to_owned() }))
-              .await;
-          } else {
-            println!("{}", format!("Process Error: {:?}", e));
-          }
-          break;
-        }
+      let (server, event_receiver) =
+      ButtplugRemoteServer::new(&connector_opts.server_name, connector_opts.max_ping_time);
+      let fscc = frontend_sender_clone.clone();
+      if fscc.is_some() {
+        task::spawn(async move {
+          server_event_receiver(event_receiver, fscc.unwrap()).await;
+        });
+      }
+      setup_server_device_comm_managers(&server);
+      let connector = ButtplugRemoteServerConnector::<
+        ButtplugWebsocketServerTransport,
+        ButtplugServerJSONSerializer,
+      >::new(ButtplugWebsocketServerTransport::new(
+        connector_opts.clone().into(),
+      ));
+      if let Err(e) = server.start(connector).await {
         if let Some(sender) = &frontend_sender_clone {
           sender
-            .send(Msg::ClientDisconnected(ClientDisconnected::default()))
+            .send(Msg::ProcessError(ProcessError { message: format!("Process Error: {:?}", e.source()).to_owned() }))
             .await;
+        } else {
+          println!("{}", format!("Process Error: {:?}", e));
         }
+      }
+      if let Some(sender) = &frontend_sender_clone {
+        sender
+          .send(Msg::ClientDisconnected(ClientDisconnected::default()))
+          .await;
       }
     });
   }
