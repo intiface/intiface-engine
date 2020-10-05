@@ -1,3 +1,15 @@
+# v13 (2020/10/04)
+
+## Features
+
+- Update to buttplug-rs 0.9.0, which now has Battery level reading capabilites
+  for some hardware.
+
+## Bugfixes
+
+- Update to buttplug-rs 0.9.0, which now does not crash when 2 devices are
+  connected and one disconnects.
+
 # v12 (2020/10/02)
 
 ## Features

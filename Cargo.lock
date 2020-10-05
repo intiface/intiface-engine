@@ -337,9 +337,9 @@ dependencies = [
 
 [[package]]
 name = "btleplug"
-version = "0.5.1"
+version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07d5352a51320ed1962c14a7cc50a2e589ab8460cb4725dff1e85c0bb66a1d5c"
+checksum = "a70d0e044676b0cd16ff3f19cd814707c0df0e8fe5b3a0aa01c4b3ae6077a1a9"
 dependencies = [
  "async-std",
  "backtrace",
@@ -352,7 +352,7 @@ dependencies = [
  "failure_derive",
  "libc",
  "log",
- "nix 0.17.0",
+ "nix 0.18.0",
  "nom",
  "num",
  "objc",
@@ -368,9 +368,9 @@ checksum = "2e8c087f005730276d1096a652e92a8bacee2e2472bcc9715a74d2bec38b5820"
 
 [[package]]
 name = "buttplug"
-version = "0.8.4"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "51a4f8eeef817f4553c013f6ebbcb1cb081ab043ac922019562e1e15feed8bad"
+checksum = "d656893b5ded4920419640359f0b8a422c41b90b6961f28980cf0a9801df4409"
 dependencies = [
  "async-channel",
  "async-mutex",
@@ -475,9 +475,9 @@ dependencies = [
 
 [[package]]
 name = "cocoa"
-version = "0.23.0"
+version = "0.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c54201c07dcf3a5ca33fececb8042aed767ee4bfd5a0235a8ceabcda956044b2"
+checksum = "6f63902e9223530efb4e26ccd0cf55ec30d592d3b42e21a28defc42a9586e832"
 dependencies = [
  "bitflags",
  "block",
@@ -1037,9 +1037,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
-version = "0.2.78"
+version = "0.2.79"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa7087f49d294270db4e1928fc110c976cd4b9e5a16348e0a1df09afa99e6c98"
+checksum = "2448f6066e80e3bfc792e9c98bf705b4b0fc6e8ef5b43e5889aff0eaa9c58743"
 
 [[package]]
 name = "libudev"
@@ -1174,15 +1174,14 @@ dependencies = [
 
 [[package]]
 name = "nix"
-version = "0.17.0"
+version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50e4785f2c3b7589a0d0c1dd60285e1188adac4006e8abd6dd578e1567027363"
+checksum = "83450fe6a6142ddd95fb064b746083fc4ef1705fe81f64a64e1d4b39f54a1055"
 dependencies = [
  "bitflags",
  "cc",
  "cfg-if",
  "libc",
- "void",
 ]
 
 [[package]]

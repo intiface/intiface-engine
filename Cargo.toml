@@ -1,6 +1,6 @@
 [package]
 name = "intiface-cli"
-version = "12.0.0"
+version = "13.0.0"
 authors = ["Nonpolynomial Labs, LLC <kyle@nonpolynomial.com>"]
 description = "Command Line Interface frontend for the Buttplug sex toy control library"
 license = "BSD-3-Clause"
@@ -12,8 +12,8 @@ edition = "2018"
 exclude = [".vscode/**"]
 
 [dependencies]
-# buttplug = { path = "../buttplug-rs/buttplug", features = ["async-std-runtime", "client", "server", "serialize-json", "btleplug-manager", "websockets", "xinput-manager", "serial-manager", "lovense-dongle-manager"] }
-buttplug = { version = "0.8.4", features = ["async-std-runtime", "client", "server", "serialize-json", "btleplug-manager", "websockets", "xinput-manager", "serial-manager", "lovense-dongle-manager"] }
+#buttplug = { path = "../buttplug-rs/buttplug", features = ["async-std-runtime", "client", "server", "serialize-json", "btleplug-manager", "websockets", "xinput-manager", "serial-manager", "lovense-dongle-manager"] }
+buttplug = { version = "0.9.0", features = ["async-std-runtime", "client", "server", "serialize-json", "btleplug-manager", "websockets", "xinput-manager", "serial-manager", "lovense-dongle-manager"] }
 argh = "0.1.3"
 async-std = { version = "1.6.5", features = ["attributes"] }
 rcgen = "0.8.5"
