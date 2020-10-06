@@ -1,3 +1,10 @@
+# v14 (2020/10/05)
+
+## Bugfixes
+
+- Update to buttplug-rs 0.9.1 w/ btleplug 0.5.3, fixing an issue with macOS
+  panicing whenever it writes to write to a BLE device.
+
 # v13 (2020/10/04)
 
 ## Features
