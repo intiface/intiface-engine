@@ -1,9 +1,16 @@
+# v15 (2020/10/05)
+
+## Bugfixes
+
+- Update to buttplug-rs 0.9.2 w/ btleplug 0.5.4, fixing an issue with macOS
+  panicing whenever it tries to read from a BLE device.
+
 # v14 (2020/10/05)
 
 ## Bugfixes
 
 - Update to buttplug-rs 0.9.1 w/ btleplug 0.5.3, fixing an issue with macOS
-  panicing whenever it writes to write to a BLE device.
+  panicing whenever it tries to write to a BLE device.
 
 # v13 (2020/10/04)
 
