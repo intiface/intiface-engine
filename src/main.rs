@@ -280,7 +280,6 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
           } else {
             println!("{}", format!("Process Error: {:?}", e));
           }
-          break;
         }        
         info!("Server connection dropped, restarting");
         if let Some(sender) = &frontend_sender_clone {
