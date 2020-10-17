@@ -33,6 +33,7 @@ use buttplug::{
       DeviceCommunicationManager, DeviceCommunicationManagerCreator,
     },
     ButtplugRemoteServer,
+    ButtplugServerOptions,
     remote_server::ButtplugRemoteServerEvent,
   },
   util::logging::ChannelWriter
@@ -48,8 +49,7 @@ use std::{error::Error, fmt};
 
 #[derive(Default, Clone)]
 pub struct ConnectorOptions {
-  server_name: String,
-  max_ping_time: u64,
+  server_options: ButtplugServerOptions,
   stay_open: bool,
   use_frontend_pipe: bool,
   ws_listen_on_all_interfaces: bool,
@@ -254,7 +254,7 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
   if connector_opts.stay_open {  
     task::block_on(async move {
       let (server, event_receiver) =
-        ButtplugRemoteServer::new(&connector_opts.server_name, connector_opts.max_ping_time);
+        ButtplugRemoteServer::new_with_options(&connector_opts.server_options).unwrap();
       if frontend_sender_clone.is_some() {
         let fscc = frontend_sender_clone.clone().unwrap();
         task::spawn(async move {
@@ -292,7 +292,7 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
   } else {
     task::block_on(async move {
       let (server, event_receiver) =
-      ButtplugRemoteServer::new(&connector_opts.server_name, connector_opts.max_ping_time);
+        ButtplugRemoteServer::new_with_options(&connector_opts.server_options).unwrap();
       let fscc = frontend_sender_clone.clone();
       if fscc.is_some() {
         task::spawn(async move {

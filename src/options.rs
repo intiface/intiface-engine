@@ -3,7 +3,7 @@ use super::{utils::generate_certificate, ConnectorOptions, IntifaceCLIErrorEnum,
 use super::frontend::{self, FrontendPBufChannel};
 use argh::FromArgs;
 use buttplug::device::configuration_manager::{
-  set_external_device_config, set_user_device_config, DeviceConfigurationManager,
+  DeviceConfigurationManager,
 };
 use std::fs;
 
@@ -85,6 +85,10 @@ struct IntifaceCLIArguments {
   #[allow(dead_code)]
   #[argh(option)]
   log: Option<String>,
+
+  /// allow raw messages (dangerous, only use for development)
+  #[argh(switch)]
+  allowraw: bool,  
 }
 
 pub fn check_options_and_pipe() -> Option<FrontendPBufChannel> {
@@ -186,8 +190,9 @@ pub fn parse_options() -> Result<Option<ConnectorOptions>, IntifaceCLIErrorEnum>
     );
   }
 
-  connector_info.server_name = args.servername;
-  connector_info.max_ping_time = args.pingtime;
+  connector_info.server_options.name = args.servername;
+  connector_info.server_options.max_ping_time = args.pingtime;
+  connector_info.server_options.allow_raw_messages = args.allowraw;
 
   if args.frontendpipe {
     info!("Intiface CLI Options: Using frontend pipe");
@@ -206,10 +211,10 @@ pub fn parse_options() -> Result<Option<ConnectorOptions>, IntifaceCLIErrorEnum>
       "Intiface CLI Options: External Device Config {}",
       deviceconfig
     );
-    let cfg = fs::read_to_string(deviceconfig).unwrap();
-    set_external_device_config(Some(cfg));
-    // Make an unused DeviceConfigurationManager here, as it'll panic if it's invalid.
-    let _manager = DeviceConfigurationManager::default();
+    match fs::read_to_string(deviceconfig) {
+      Ok(cfg) => connector_info.server_options.device_configuration_json = Some(cfg),
+      Err(err) => panic!("Error opening external device configuration: {:?}", err)
+    };
   }
 
   if let Some(userdeviceconfig) = &args.userdeviceconfig {
@@ -217,9 +222,20 @@ pub fn parse_options() -> Result<Option<ConnectorOptions>, IntifaceCLIErrorEnum>
       "Intiface CLI Options: User Device Config {}",
       userdeviceconfig
     );
-    let cfg = fs::read_to_string(userdeviceconfig).unwrap();
-    set_user_device_config(Some(cfg));
-    let _manager = DeviceConfigurationManager::default();
+    match fs::read_to_string(userdeviceconfig) {
+      Ok(cfg) => connector_info.server_options.user_device_configuration_json = Some(cfg),
+      Err(err) => panic!("Error opening user device configuration: {:?}", err)
+    };
+  }
+
+  // Make sure we can bring up a DeviceConfigurationManager before handing back
+  // to the server to start the listener.
+
+  if let Err(err) = DeviceConfigurationManager::new_with_options(
+    connector_info.server_options.allow_raw_messages, 
+    &connector_info.server_options.device_configuration_json, 
+    &connector_info.server_options.user_device_configuration_json) {
+    panic!("Error in creation of Device Configuration Manager: {:?}", err);
   }
 
   Ok(Some(connector_info))
