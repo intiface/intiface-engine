@@ -30,10 +30,6 @@ impl FrontendPBufChannel {
     Self { sender, receiver }
   }
 
-  pub fn get_receiver(&self) -> Receiver<ServerControlMessage> {
-    self.receiver.clone()
-  }
-
   pub async fn send(&self, msg: server_process_message::Msg) {
     let server_msg = ServerProcessMessage { msg: Some(msg) };
     self.sender.send(server_msg).await;

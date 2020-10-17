@@ -197,8 +197,6 @@ async fn server_event_receiver(mut receiver: Receiver<ButtplugRemoteServerEvent>
             device_id
           })).await;
       }
-      _ => {
-      }
     }
   }
   frontend_sender
