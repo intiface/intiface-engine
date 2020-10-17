@@ -1,3 +1,16 @@
+# v16 (2020/10/17)
+
+## Features
+
+- Update to buttplug-rs 0.10.0
+  - Kiiroo Keon Support
+  - New raw device commands (use --allowraw option for access)
+
+## Bugfixes
+
+- Update to buttplug-rs 0.10.0
+  - Lots of websocket crash fixes
+
 # v15 (2020/10/05)
 
 ## Bugfixes
