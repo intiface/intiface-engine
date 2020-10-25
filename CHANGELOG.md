@@ -1,3 +1,14 @@
+# v17 (2020/10/25)
+
+## Features
+
+- Update to buttplug-rs 0.10.1
+  - Lovense Dongle Bugfixes
+  - BLE Toy Connection Bugfixes
+- Fix logging output
+  - Pay attention to log option on command line again
+  - Outputs full tracing JSON to frontend
+
 # v16 (2020/10/17)
 
 ## Features
