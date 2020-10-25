@@ -6,6 +6,7 @@ use buttplug::device::configuration_manager::{
   DeviceConfigurationManager,
 };
 use std::fs;
+use tracing::Level;
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
@@ -81,17 +82,22 @@ struct IntifaceCLIArguments {
   #[argh(switch)]
   stayopen: bool,
 
-  /// unused but needed for compat
+  /// set log level for output
   #[allow(dead_code)]
   #[argh(option)]
-  log: Option<String>,
+  log: Option<Level>,
 
   /// allow raw messages (dangerous, only use for development)
   #[argh(switch)]
   allowraw: bool,  
 }
 
-pub fn check_options_and_pipe() -> Option<FrontendPBufChannel> {
+pub fn check_log_level() -> Option<Level> {
+  let args: IntifaceCLIArguments = argh::from_env();
+  args.log
+}
+
+pub fn check_frontend_pipe() -> Option<FrontendPBufChannel> {
   let args: IntifaceCLIArguments = argh::from_env();
   if args.frontendpipe {
     Some(frontend::run_frontend_task())

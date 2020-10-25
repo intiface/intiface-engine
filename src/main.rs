@@ -44,7 +44,7 @@ use frontend::intiface_gui::server_process_message::{
 };
 use frontend::FrontendPBufChannel;
 use futures::StreamExt;
-use tracing_subscriber::{prelude::*, filter::{LevelFilter, EnvFilter}};
+use tracing_subscriber::{filter::{LevelFilter, EnvFilter}};
 use std::{error::Error, fmt};
 
 #[derive(Default, Clone)]
@@ -212,7 +212,8 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
   //
   // Only set up the env logger if we're not outputting pbufs to a frontend
   // pipe.  
-  let frontend_sender = options::check_options_and_pipe();
+  let frontend_sender = options::check_frontend_pipe();
+  let log_level = options::check_log_level();
   #[allow(unused_variables)]
   if let Some(sender) = &frontend_sender {
     sender
@@ -229,11 +230,19 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
           .await;
       }
     });
-    let sub = tracing_subscriber::fmt::layer().with_ansi(false).with_writer(ChannelWriter::new(bp_log_sender));
-    tracing_subscriber::registry().with(LevelFilter::INFO).with(sub).init();
+    tracing_subscriber::fmt()
+      .json()
+      .with_max_level(log_level)
+      .with_ansi(false)
+      .with_writer(ChannelWriter::new(bp_log_sender))
+      .init();
   } else {
-    let filter = EnvFilter::try_from_default_env().or_else(|_| EnvFilter::try_new("info")).unwrap();
-    tracing_subscriber::fmt().with_env_filter(filter).init();
+    if log_level.is_some() {
+      tracing_subscriber::fmt().with_max_level(log_level.unwrap()).init();
+    } else {
+      let filter = EnvFilter::try_from_default_env().or_else(|_| EnvFilter::try_new("info")).unwrap();
+      tracing_subscriber::fmt().with_env_filter(filter).init();
+    }
     println!("Intiface Server, starting up with stdout output.");
   }
   // Parse options, get back our connection information and a curried server
