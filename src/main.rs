@@ -44,7 +44,7 @@ use frontend::intiface_gui::server_process_message::{
 };
 use frontend::FrontendPBufChannel;
 use futures::StreamExt;
-use tracing_subscriber::{filter::{LevelFilter, EnvFilter}};
+use tracing_subscriber::filter::EnvFilter;
 use std::{error::Error, fmt};
 
 #[derive(Default, Clone)]
@@ -260,8 +260,7 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
   let frontend_sender_clone = frontend_sender.clone();    
   if connector_opts.stay_open {  
     task::block_on(async move {
-      let (server, event_receiver) =
-        ButtplugRemoteServer::new_with_options(&connector_opts.server_options).unwrap();
+      let (server, event_receiver) = ButtplugRemoteServer::new_with_options(&connector_opts.server_options).unwrap();
       if frontend_sender_clone.is_some() {
         let fscc = frontend_sender_clone.clone().unwrap();
         task::spawn(async move {
@@ -280,14 +279,14 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
         ));
         info!("Starting server");
         if let Err(e) = server.start(connector).await {
+          error!("{}", format!("Process Error: {:?}", e));
           if let Some(sender) = &frontend_sender_clone {
             sender
               .send(Msg::ProcessError(ProcessError { message: format!("Process Error: {:?}", e).to_owned() }))
               .await;
-          } else {
-            println!("{}", format!("Process Error: {:?}", e));
           }
-        }        
+        }
+
         info!("Server connection dropped, restarting");
         if let Some(sender) = &frontend_sender_clone {
           sender
@@ -298,8 +297,7 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
     });
   } else {
     task::block_on(async move {
-      let (server, event_receiver) =
-        ButtplugRemoteServer::new_with_options(&connector_opts.server_options).unwrap();
+      let (server, event_receiver) = ButtplugRemoteServer::new_with_options(&connector_opts.server_options).unwrap();
       let fscc = frontend_sender_clone.clone();
       if fscc.is_some() {
         task::spawn(async move {
@@ -314,12 +312,11 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
         connector_opts.clone().into(),
       ));
       if let Err(e) = server.start(connector).await {
+        error!("{}", format!("Process Error: {:?}", e));
         if let Some(sender) = &frontend_sender_clone {
           sender
             .send(Msg::ProcessError(ProcessError { message: format!("Process Error: {:?}", e.source()).to_owned() }))
             .await;
-        } else {
-          println!("{}", format!("Process Error: {:?}", e));
         }
       }
       if let Some(sender) = &frontend_sender_clone {
