@@ -1,3 +1,11 @@
+# v18 (2020/11/27)
+
+## Features
+
+- Update to buttplug-rs 0.11.1
+  - System bugfixes
+  - Mysteryvibe support
+
 # v17 (2020/10/25)
 
 ## Features
