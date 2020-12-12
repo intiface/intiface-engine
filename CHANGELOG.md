@@ -1,3 +1,10 @@
+# v19 (2020/12/11)
+
+## Bugfixes
+
+- Update to Buttplug 0.11.2
+  - Emits Scanningfinished when scanning is finished. Finally.
+
 # v18 (2020/11/27)
 
 ## Features
