@@ -1,3 +1,10 @@
+# v20 (2020/12/22)
+
+## Bugfixes
+
+- Update to Buttplug 0.11.3
+  - Fixes security issues and a memory leak when scanning is called often.
+
 # v19 (2020/12/11)
 
 ## Bugfixes
