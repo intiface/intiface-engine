@@ -3,66 +3,6 @@ name: Intiface CLI Build
 on: push
 
 jobs:
-  build-nightly:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Rust toolchain fetch
-      uses: actions-rs/toolchain@v1
-      with:
-        profile: minimal
-        toolchain: nightly
-        override: true
-    - name: Fix ~/.cargo directory permissions
-      run: sudo chown -R $(whoami):$(id -ng) ~/.cargo/
-    - name: Update package list
-      run: sudo apt-get -y update
-    - name: Install required packages
-      run: sudo apt-get -y install libudev-dev libusb-1.0-0-dev
-    - name: Cache cargo registry
-      uses: actions/cache@v1
-      with:
-        path: ~/.cargo/registry
-        key: ${{ runner.os }}-nightly-cargo-registry-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('.github/workflows/cache_version') }}
-    - name: Cache cargo build
-      uses: actions/cache@v1
-      with:
-        path: target
-        key: ${{ runner.os }}-nightly-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('.github/workflows/cache_version') }}
-    - name: Build
-      run: cargo +nightly build
-    - name: Run tests
-      run: cargo +nightly test
-  build-beta:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Rust toolchain fetch
-      uses: actions-rs/toolchain@v1
-      with:
-        profile: minimal
-        toolchain: beta
-        override: true
-    - name: Fix ~/.cargo directory permissions
-      run: sudo chown -R $(whoami):$(id -ng) ~/.cargo/
-    - name: Update package list
-      run: sudo apt-get -y update
-    - name: Install required packages
-      run: sudo apt-get -y install libudev-dev libusb-1.0-0-dev
-    - name: Cache cargo registry
-      uses: actions/cache@v1
-      with:
-        path: ~/.cargo/registry
-        key: ${{ runner.os }}-beta-cargo-registry-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('.github/workflows/cache_version') }}
-    - name: Cache cargo build
-      uses: actions/cache@v1
-      with:
-        path: target
-        key: ${{ runner.os }}-beta-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('.github/workflows/cache_version') }}
-    - name: Build
-      run: cargo +beta build
-    - name: Run tests
-      run: cargo +beta test
   build-stable:
     runs-on: ${{ matrix.os }}
     strategy:
