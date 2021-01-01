@@ -1,3 +1,10 @@
+# v21 (2020/12/31)
+
+## Bugfixes
+
+- Update to Buttplug 1.0.1
+  - Fixes issue with device scanning races.
+
 # v20 (2020/12/22)
 
 ## Bugfixes
