@@ -1,3 +1,10 @@
+# v22 (2021/01/01)
+
+## Bugfixes
+
+- Update to Buttplug 1.0.3
+  - Fixes issues with BTLE advertisements and adds XInput device rescanning.
+
 # v21 (2020/12/31)
 
 ## Bugfixes
