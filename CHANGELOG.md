@@ -1,3 +1,10 @@
+# v23 (2021/01/01)
+
+## Bugfixes
+
+- Update to Buttplug 1.0.4
+  - Fixes issues with XInput Gamepads causing intiface-cli-rs crashes on reconnect.
+
 # v22 (2021/01/01)
 
 ## Bugfixes
