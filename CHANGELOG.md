@@ -1,3 +1,12 @@
+# v24 (2021/01/18)
+
+## Features
+
+- Update to Buttplug 2.0.0
+  - Event system and API cleanup
+  - Lovense Ferri Support
+- Backtraces now emitted via logging system when using frontend IPC
+
 # v23 (2021/01/01)
 
 ## Bugfixes
