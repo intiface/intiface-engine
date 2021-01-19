@@ -10,7 +10,7 @@ mod frontend;
 mod options;
 mod utils;
 
-use async_channel::{bounded, Receiver};
+use tokio::sync::mpsc::{channel, Receiver};
 use async_std::task;
 #[cfg(target_os = "windows")]
 use buttplug::server::comm_managers::xinput::XInputDeviceCommunicationManager;
@@ -43,7 +43,7 @@ use frontend::intiface_gui::server_process_message::{
   ClientConnected, ClientDisconnected, DeviceConnected, DeviceDisconnected,
 };
 use frontend::FrontendPBufChannel;
-use futures::StreamExt;
+use futures::{pin_mut, Stream, StreamExt};
 use tracing_subscriber::filter::EnvFilter;
 use std::{error::Error, fmt};
 
@@ -145,11 +145,11 @@ fn setup_frontend_filter_channel<T>(
   mut receiver: Receiver<ButtplugServerMessage>,
   frontend_channel: FrontendPBufChannel,
 ) -> Receiver<ButtplugServerMessage> {
-  let (sender_filtered, recv_filtered) = bounded(256);
+  let (sender_filtered, recv_filtered) = channel(256);
 
   task::spawn(async move {
     loop {
-      match receiver.next().await {
+      match receiver.recv().await {
         Some(msg) => {
           match msg {
             ButtplugServerMessage::ServerInfo(_) => {
@@ -170,7 +170,8 @@ fn setup_frontend_filter_channel<T>(
   recv_filtered
 }
 
-async fn server_event_receiver(mut receiver: Receiver<ButtplugRemoteServerEvent>, frontend_sender: FrontendPBufChannel) {
+async fn server_event_receiver(mut receiver: impl Stream<Item=ButtplugRemoteServerEvent>, frontend_sender: FrontendPBufChannel) {
+  pin_mut!(receiver);
   while let Some(event) = receiver.next().await {
     match event {
       ButtplugRemoteServerEvent::Connected(client_name) => {
@@ -219,10 +220,10 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
     sender
     .send(Msg::ProcessStarted(ProcessStarted::default()))
     .await;
-    let (bp_log_sender, mut receiver) = bounded::<Vec<u8>>(256);
+    let (bp_log_sender, mut receiver) = channel::<Vec<u8>>(256);
     let log_sender = sender.clone();
     async_std::task::spawn(async move {
-      while let Some(log) = receiver.next().await {
+      while let Some(log) = receiver.recv().await {
         log_sender
           .send(Msg::ProcessLog(ProcessLog {
             message: std::str::from_utf8(&log).unwrap().to_owned()
@@ -260,7 +261,8 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
   let frontend_sender_clone = frontend_sender.clone();    
   if connector_opts.stay_open {  
     task::block_on(async move {
-      let (server, event_receiver) = ButtplugRemoteServer::new_with_options(&connector_opts.server_options).unwrap();
+      let server = ButtplugRemoteServer::new_with_options(&connector_opts.server_options).unwrap();
+      let event_receiver = server.event_stream();
       if frontend_sender_clone.is_some() {
         let fscc = frontend_sender_clone.clone().unwrap();
         task::spawn(async move {
@@ -297,7 +299,8 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
     });
   } else {
     task::block_on(async move {
-      let (server, event_receiver) = ButtplugRemoteServer::new_with_options(&connector_opts.server_options).unwrap();
+      let server = ButtplugRemoteServer::new_with_options(&connector_opts.server_options).unwrap();
+      let event_receiver = server.event_stream();
       let fscc = frontend_sender_clone.clone();
       if fscc.is_some() {
         task::spawn(async move {
