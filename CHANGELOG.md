@@ -2,7 +2,7 @@
 
 ## Features
 
-- Update to Buttplug 2.0.0
+- Update to Buttplug 2.0.1
   - Event system and API cleanup
   - Lovense Ferri Support
 - Backtraces now emitted via logging system when using frontend IPC
