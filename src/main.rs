@@ -46,6 +46,7 @@ use frontend::FrontendPBufChannel;
 use futures::{pin_mut, Stream, StreamExt};
 use tracing_subscriber::filter::EnvFilter;
 use std::{error::Error, fmt};
+use log_panics;
 
 #[derive(Default, Clone)]
 pub struct ConnectorOptions {
@@ -217,6 +218,8 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
   let log_level = options::check_log_level();
   #[allow(unused_variables)]
   if let Some(sender) = &frontend_sender {
+    // Add panic hook for emitting backtraces through the logging system.
+    log_panics::init();
     sender
     .send(Msg::ProcessStarted(ProcessStarted::default()))
     .await;
