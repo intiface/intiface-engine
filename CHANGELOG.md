@@ -1,4 +1,11 @@
-# v24 (2021/01/18)
+# v25 (2021/01/19)
+
+## Bugfixes
+
+- Update to Buttplug 2.0.2
+  - Fixes issue with scanning status getting stuck on Lovense dongles
+
+# v24 (Yanked) (2021/01/18)
 
 ## Features
 
