@@ -1,3 +1,8 @@
+# v27 (2021/01/24)
+
+- Update to Buttplug 2.0.5
+  - Fixes issue with v2 protocol conflicts in DeviceMessageInfo
+
 # v26 (2021/01/24)
 
 ## Bugfixes
