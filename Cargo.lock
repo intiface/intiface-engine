@@ -388,9 +388,9 @@ checksum = "2e8c087f005730276d1096a652e92a8bacee2e2472bcc9715a74d2bec38b5820"
 
 [[package]]
 name = "buttplug"
-version = "2.0.2"
+version = "2.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "777624b6a2a6edab8dcb8e3af8a2688bb60a24e209ab090b9f19841aca0a924c"
+checksum = "17bd07f7ba9f7fecdfc9eb5c3dd0eaaf335f6811f3e52b51c52e9bd75f91113a"
 dependencies = [
  "async-std",
  "async-stream",
@@ -431,9 +431,9 @@ dependencies = [
 
 [[package]]
 name = "buttplug_derive"
-version = "0.5.0"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e585f964dff70355727bde4bb0a9f753f65a203bcde05be0d3ad87529294c90a"
+checksum = "1ffe40ee10aba7b38cc3026c175db5626ce72bd7ee8380adf596b3c14475848d"
 dependencies = [
  "quote",
  "syn",
@@ -982,7 +982,7 @@ dependencies = [
 
 [[package]]
 name = "intiface-cli"
-version = "25.0.0"
+version = "26.0.0"
 dependencies = [
  "argh",
  "async-channel",
@@ -1594,9 +1594,9 @@ dependencies = [
 
 [[package]]
 name = "quote"
-version = "1.0.7"
+version = "1.0.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa563d17ecb180e500da1cfd2b028310ac758de548efdd203e18f283af693f37"
+checksum = "991431c3519a3f36861882da93630ce66b52918dcf1b8e2fd66b397fc96f28df"
 dependencies = [
  "proc-macro2",
 ]

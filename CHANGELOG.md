@@ -1,3 +1,10 @@
+# v26 (2021/01/24)
+
+## Bugfixes
+
+- Update to Buttplug 2.0.4
+  - Fixes issue with XInput devices being misaddressed and stopping all scanning.
+
 # v25 (2021/01/19)
 
 ## Bugfixes
