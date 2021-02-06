@@ -13,7 +13,7 @@ exclude = [".vscode/**"]
 
 [dependencies]
 # buttplug = { path = "../buttplug-rs/buttplug", features = ["async-std-runtime", "client", "server", "serialize-json", "btleplug-manager", "websockets", "xinput-manager", "serial-manager", "lovense-dongle-manager"] }
-buttplug = { version = "2.1.0", default-features = false, features = ["async-std-runtime", "client", "server", "serialize-json", "btleplug-manager", "websockets", "xinput-manager", "serial-manager", "lovense-dongle-manager"] }
+buttplug = { version = "2.1.1", default-features = false, features = ["async-std-runtime", "client", "server", "serialize-json", "btleplug-manager", "websockets", "xinput-manager", "serial-manager", "lovense-dongle-manager"] }
 argh = "0.1.4"
 async-std = { version = "1.8.0", features = ["attributes"] }
 rcgen = "0.8.9"

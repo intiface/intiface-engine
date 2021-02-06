@@ -396,9 +396,9 @@ checksum = "099e596ef14349721d9016f6b80dd3419ea1bf289ab9b44df8e4dfd3a005d5d9"
 
 [[package]]
 name = "buttplug"
-version = "2.1.0"
+version = "2.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce15caee5f33618f123f7fefb0078cc7a10425bfb302f38e5b7dcdf0ee86d39b"
+checksum = "b5ced01b948a900a6450ddd28048603000000d278af88e3cc01587040b5e8ad7"
 dependencies = [
  "async-std",
  "async-stream",

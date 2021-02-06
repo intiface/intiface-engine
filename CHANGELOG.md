@@ -1,6 +1,6 @@
 # v28 (2021/02/06)
 
-- Update to Buttplug v2.1.0
+- Update to Buttplug v2.1.1
   - Adds Lovense Diamo and Nobra's Silicone Dreams support
   - Lots of bugfixes and more/better errors being emitted
 
