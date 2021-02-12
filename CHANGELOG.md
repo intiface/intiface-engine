@@ -1,10 +1,22 @@
+# v29 (2021/02/06)
+
+## Bugfixes
+
+- Update to Buttplug v2.1.3
+  - Fix StopAllDevices so it actually stops all devices again
+  - Allow for setting device intensity to 1.0
+
 # v28 (2021/02/06)
+
+## Features
 
 - Update to Buttplug v2.1.1
   - Adds Lovense Diamo and Nobra's Silicone Dreams support
   - Lots of bugfixes and more/better errors being emitted
 
 # v27 (2021/01/24)
+
+## Bugfixes
 
 - Update to Buttplug 2.0.5
   - Fixes issue with v2 protocol conflicts in DeviceMessageInfo
