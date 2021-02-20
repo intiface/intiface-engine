@@ -1,7 +1,15 @@
+# v31 (2021/02/20)
+
+## Bugfixes
+
+- Update to Buttplug v2.1.5
+  - Fixes panic in devices that disconnect during initialize().
+
 # v30 (2021/02/13)
 
 ## Features
 
+- Update to Buttplug v2.1.4
 - Added Hardware Support
   - The Handy
 
