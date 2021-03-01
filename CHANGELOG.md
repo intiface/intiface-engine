@@ -1,3 +1,11 @@
+# v32 (2021/02/28)
+
+## Bugfixes
+
+- Update to Buttplug v2.1.6
+  - Fixes issues with log message spamming
+  - Update btleplug to 0.7.0, lots of cleanup
+
 # v31 (2021/02/20)
 
 ## Bugfixes
