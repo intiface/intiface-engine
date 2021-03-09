@@ -1,3 +1,11 @@
+# v33 (2021/03/08)
+
+## Bugfixes
+
+- Udpate to Buttplug v2.1.7
+  - Fixes legacy message issues with The Handy and Vorze toys
+  - Fixes init issues with some Kiiroo vibrators
+
 # v32 (2021/02/28)
 
 ## Bugfixes
