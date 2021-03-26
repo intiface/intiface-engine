@@ -1,8 +1,15 @@
+# v34 (2021/03/25)
+
+## Bugfixes
+
+- Update to Buttplug v2.1.8
+  - Possibly fixes issue with bluetooth devices not registering disconnection on windows.
+
 # v33 (2021/03/08)
 
 ## Bugfixes
 
-- Udpate to Buttplug v2.1.7
+- Update to Buttplug v2.1.7
   - Fixes legacy message issues with The Handy and Vorze toys
   - Fixes init issues with some Kiiroo vibrators
 
