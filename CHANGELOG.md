@@ -1,3 +1,12 @@
+# v35 (2021/04/04)
+
+## Bugfixes
+
+- Update to Buttplug v2.1.9
+  - Reduces error log messages thrown by lovense dongle
+  - Reduces panics in bluetooth handling on windows
+  - Fixes issue with battery checking on lovense devices stalling library on device disconnect
+
 # v34 (2021/03/25)
 
 ## Bugfixes

@@ -1,6 +1,6 @@
 [package]
 name = "intiface-cli"
-version = "34.0.0"
+version = "35.0.0"
 authors = ["Nonpolynomial Labs, LLC <kyle@nonpolynomial.com>"]
 description = "Command Line Interface frontend for the Buttplug sex toy control library"
 license = "BSD-3-Clause"
@@ -13,7 +13,7 @@ exclude = [".vscode/**"]
 
 [dependencies]
 # buttplug = { path = "../buttplug-rs/buttplug", features = ["async-std-runtime", "client", "server", "serialize-json", "btleplug-manager", "websockets", "xinput-manager", "serial-manager", "lovense-dongle-manager"] }
-buttplug = { version = "2.1.8", default-features = false, features = ["async-std-runtime", "client", "server", "serialize-json", "btleplug-manager", "websockets", "xinput-manager", "serial-manager", "lovense-dongle-manager"] }
+buttplug = { version = "2.1.9", default-features = false, features = ["async-std-runtime", "client", "server", "serialize-json", "btleplug-manager", "websockets", "xinput-manager", "serial-manager", "lovense-dongle-manager"] }
 argh = "0.1.4"
 async-std = { version = "1.9.0", features = ["attributes"] }
 rcgen = "0.8.9"
@@ -22,9 +22,9 @@ futures = "0.3.13"
 prost = "0.7.0"
 async-channel = "1.6.1"
 tracing-fmt = "0.1.1"
-tracing-subscriber = "0.2.16"
+tracing-subscriber = "0.2.17"
 tracing = "0.1.25"
-tokio = { version = "1.2.0", features = ["sync"] }
+tokio = { version = "1.4.0", features = ["sync"] }
 log-panics = { version = "2.0.0", features = ["with-backtrace"] }
 backtrace = "0.3.56"
 
