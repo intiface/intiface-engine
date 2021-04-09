@@ -15,8 +15,6 @@ exclude = [".vscode/**"]
 # buttplug = { path = "../buttplug-rs/buttplug", features = ["async-std-runtime", "client", "server", "serialize-json", "btleplug-manager", "websockets", "xinput-manager", "serial-manager", "lovense-dongle-manager"] }
 buttplug = { version = "2.1.9", default-features = false, features = ["async-std-runtime", "client", "server", "serialize-json", "btleplug-manager", "websockets", "xinput-manager", "serial-manager", "lovense-dongle-manager"] }
 argh = "0.1.4"
-async-std = { version = "1.9.0", features = ["attributes"] }
-rcgen = "0.8.9"
 log = "0.4.14"
 futures = "0.3.13"
 prost = "0.7.0"
@@ -24,9 +22,10 @@ async-channel = "1.6.1"
 tracing-fmt = "0.1.1"
 tracing-subscriber = "0.2.17"
 tracing = "0.1.25"
-tokio = { version = "1.4.0", features = ["sync"] }
+tokio = { version = "1.4.0", features = ["sync", "rt-multi-thread", "macros", "io-std", "fs", "signal", "io-util"] }
 log-panics = { version = "2.0.0", features = ["with-backtrace"] }
 backtrace = "0.3.56"
+ctrlc = "3.1.8"
 
 [target.'cfg(windows)'.dependencies]
 kernel32-sys = "0.2.2"

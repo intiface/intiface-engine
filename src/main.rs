@@ -8,10 +8,8 @@ extern crate log;
 
 mod frontend;
 mod options;
-mod utils;
 
-use tokio::sync::mpsc::{channel, Receiver};
-use async_std::task;
+use tokio::{self, sync::mpsc::{channel, Receiver}, signal::ctrl_c};
 #[cfg(target_os = "windows")]
 use buttplug::server::comm_managers::xinput::XInputDeviceCommunicationManager;
 use buttplug::{
@@ -43,7 +41,7 @@ use frontend::intiface_gui::server_process_message::{
   ClientConnected, ClientDisconnected, DeviceConnected, DeviceDisconnected,
 };
 use frontend::FrontendPBufChannel;
-use futures::{pin_mut, Stream, StreamExt};
+use futures::{pin_mut, Stream, FutureExt, select, StreamExt};
 use tracing_subscriber::filter::EnvFilter;
 use std::{error::Error, fmt};
 use log_panics;
@@ -55,19 +53,13 @@ pub struct ConnectorOptions {
   use_frontend_pipe: bool,
   ws_listen_on_all_interfaces: bool,
   ws_insecure_port: Option<u16>,
-  ws_secure_port: Option<u16>,
-  ws_cert_file: Option<String>,
-  ws_priv_file: Option<String>,
   ipc_pipe_name: Option<String>,
 }
 
 impl From<ConnectorOptions> for ButtplugWebsocketServerTransportOptions {
   fn from(options: ConnectorOptions) -> ButtplugWebsocketServerTransportOptions {
     ButtplugWebsocketServerTransportOptions {
-      ws_cert_file: options.ws_cert_file,
-      ws_priv_file: options.ws_priv_file,
-      ws_insecure_port: options.ws_insecure_port,
-      ws_secure_port: options.ws_secure_port,
+      ws_insecure_port: options.ws_insecure_port.unwrap(),
       ws_listen_on_all_interfaces: options.ws_listen_on_all_interfaces,
     }
   }
@@ -148,7 +140,7 @@ fn setup_frontend_filter_channel<T>(
 ) -> Receiver<ButtplugServerMessage> {
   let (sender_filtered, recv_filtered) = channel(256);
 
-  task::spawn(async move {
+  tokio::spawn(async move {
     loop {
       match receiver.recv().await {
         Some(msg) => {
@@ -171,7 +163,7 @@ fn setup_frontend_filter_channel<T>(
   recv_filtered
 }
 
-async fn server_event_receiver(mut receiver: impl Stream<Item=ButtplugRemoteServerEvent>, frontend_sender: FrontendPBufChannel) {
+async fn server_event_receiver(receiver: impl Stream<Item=ButtplugRemoteServerEvent>, frontend_sender: FrontendPBufChannel) {
   pin_mut!(receiver);
   while let Some(event) = receiver.next().await {
     match event {
@@ -206,7 +198,7 @@ async fn server_event_receiver(mut receiver: impl Stream<Item=ButtplugRemoteServ
   })).await;
 }
 
-#[async_std::main]
+#[tokio::main]
 async fn main() -> Result<(), IntifaceCLIErrorEnum> {
   // Intiface GUI communicates with its child process via protobufs through
   // stdin/stdout. Checking for this is the first thing we should do, as any
@@ -225,7 +217,7 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
     .await;
     let (bp_log_sender, mut receiver) = channel::<Vec<u8>>(256);
     let log_sender = sender.clone();
-    async_std::task::spawn(async move {
+    tokio::spawn(async move {
       while let Some(log) = receiver.recv().await {
         log_sender
           .send(Msg::ProcessLog(ProcessLog {
@@ -263,12 +255,11 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
   info!("Intiface CLI Setup finished, running server tasks until all joined.");
   let frontend_sender_clone = frontend_sender.clone();    
   if connector_opts.stay_open {  
-    task::block_on(async move {
       let server = ButtplugRemoteServer::new_with_options(&connector_opts.server_options).unwrap();
       let event_receiver = server.event_stream();
       if frontend_sender_clone.is_some() {
         let fscc = frontend_sender_clone.clone().unwrap();
-        task::spawn(async move {
+        tokio::spawn(async move {
           server_event_receiver(event_receiver, fscc).await;
         });
       }
@@ -283,30 +274,42 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
           connector_opts.clone().into(),
         ));
         info!("Starting server");
-        if let Err(e) = server.start(connector).await {
-          error!("{}", format!("Process Error: {:?}", e));
-          if let Some(sender) = &frontend_sender_clone {
-            sender
-              .send(Msg::ProcessError(ProcessError { message: format!("Process Error: {:?}", e).to_owned() }))
-              .await;
+        let mut control_c_hit = false;
+        select! {
+          _ = ctrl_c().fuse() => {
+            info!("Control-c hit, exiting.");
+            control_c_hit = true;
           }
-        }
-
+          result = server.start(connector).fuse() => {
+            match result {
+              Ok(_) => info!("Connection dropped, restarting stay open loop."),
+              Err(e) => {
+                error!("{}", format!("Process Error: {:?}", e));
+                if let Some(sender) = &frontend_sender_clone {
+                  sender
+                    .send(Msg::ProcessError(ProcessError { message: format!("Process Error: {:?}", e).to_owned() }))
+                    .await;
+                }
+              }
+            }
+          }
+        };
         info!("Server connection dropped, restarting");
         if let Some(sender) = &frontend_sender_clone {
           sender
             .send(Msg::ClientDisconnected(ClientDisconnected::default()))
             .await;
         }
+        if control_c_hit {
+          break;
+        }
       }
-    });
   } else {
-    task::block_on(async move {
       let server = ButtplugRemoteServer::new_with_options(&connector_opts.server_options).unwrap();
       let event_receiver = server.event_stream();
       let fscc = frontend_sender_clone.clone();
       if fscc.is_some() {
-        task::spawn(async move {
+        tokio::spawn(async move {
           server_event_receiver(event_receiver, fscc.unwrap()).await;
         });
       }
@@ -330,7 +333,6 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
           .send(Msg::ClientDisconnected(ClientDisconnected::default()))
           .await;
       }
-    });
   }
 
   info!("Exiting");

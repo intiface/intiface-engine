@@ -1,4 +1,4 @@
-use super::{utils::generate_certificate, ConnectorOptions, IntifaceCLIErrorEnum, IntifaceError};
+use super::{ConnectorOptions, IntifaceCLIErrorEnum, IntifaceError};
 
 use super::frontend::{self, FrontendPBufChannel};
 use argh::FromArgs;
@@ -24,10 +24,6 @@ struct IntifaceCLIArguments {
   #[argh(switch)]
   serverversion: bool,
 
-  /// generate certificate file at the path specified, then exit.
-  #[argh(option)]
-  generatecert: Option<String>,
-
   // Options that set up the server networking
   /// if passed, websocket server listens on all interfaces. Otherwise, only
   /// listen on 127.0.0.1.
@@ -37,18 +33,6 @@ struct IntifaceCLIArguments {
   /// insecure port for websocket servers.
   #[argh(option)]
   wsinsecureport: Option<u16>,
-
-  /// secure port for websocket servers.
-  #[argh(option)]
-  wssecureport: Option<u16>,
-
-  /// certificate file for secure websocket server
-  #[argh(option)]
-  wscertfile: Option<String>,
-
-  /// private key file for secure websocket server
-  #[argh(option)]
-  wsprivfile: Option<String>,
 
   /// pipe name for ipc server
   #[argh(option)]
@@ -123,9 +107,6 @@ pub fn parse_options() -> Result<Option<ConnectorOptions>, IntifaceCLIErrorEnum>
     );
     return Ok(None);
   }
-  if let Some(path) = args.generatecert {
-    return generate_certificate(path).and_then(|_| Ok(None));
-  }
 
   // Options that set up the server networking
 
@@ -145,39 +126,6 @@ pub fn parse_options() -> Result<Option<ConnectorOptions>, IntifaceCLIErrorEnum>
     );
     connector_info.ws_insecure_port = Some(*wsinsecureport);
     connector_info_set = true;
-  }
-
-  if let Some(wscertfile) = &args.wscertfile {
-    info!(
-      "Intiface CLI Options: Websocket Certificate File {}",
-      wscertfile
-    );
-    connector_info.ws_cert_file = Some((*wscertfile).clone());
-    connector_info_set = true;
-  }
-
-  if let Some(wsprivfile) = &args.wsprivfile {
-    info!(
-      "Intiface CLI Options: Websocket Private Key File {}",
-      wsprivfile
-    );
-    connector_info.ws_priv_file = Some((*wsprivfile).clone());
-    connector_info_set = true;
-  }
-
-  if let Some(wssecureport) = &args.wssecureport {
-    info!(
-      "Intiface CLI Options: Websocket Insecure Port {}",
-      wssecureport
-    );
-    // After this point, we should definitely already know we're connecting
-    // because we need both cert options. If they aren't there, exit.
-    if connector_info.ws_cert_file.is_none() || connector_info.ws_priv_file.is_none() {
-      return Err(IntifaceCLIErrorEnum::IntifaceError(IntifaceError::new(
-        "Must have certificate and private key file to run secure server",
-      )));
-    }
-    connector_info.ws_secure_port = Some(*wssecureport);
   }
 
   if let Some(ipcpipe) = &args.ipcpipe {
