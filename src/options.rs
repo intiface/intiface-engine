@@ -7,6 +7,7 @@ use buttplug::device::configuration_manager::{
 };
 use std::fs;
 use tracing::Level;
+use tokio_util::sync::CancellationToken;
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
@@ -81,10 +82,10 @@ pub fn check_log_level() -> Option<Level> {
   args.log
 }
 
-pub fn check_frontend_pipe() -> Option<FrontendPBufChannel> {
+pub fn check_frontend_pipe(token: CancellationToken) -> Option<FrontendPBufChannel> {
   let args: IntifaceCLIArguments = argh::from_env();
   if args.frontendpipe {
-    Some(frontend::run_frontend_task())
+    Some(frontend::run_frontend_task(token))
   } else {
     None
   }

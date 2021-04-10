@@ -1,5 +1,3 @@
-#![recursion_limit = "256"]
-
 /// command line interface for intiface/buttplug.
 ///
 
@@ -45,6 +43,7 @@ use futures::{pin_mut, Stream, FutureExt, select, StreamExt};
 use tracing_subscriber::filter::EnvFilter;
 use std::{error::Error, fmt};
 use log_panics;
+use tokio_util::sync::CancellationToken;
 
 #[derive(Default, Clone)]
 pub struct ConnectorOptions {
@@ -200,13 +199,14 @@ async fn server_event_receiver(receiver: impl Stream<Item=ButtplugRemoteServerEv
 
 #[tokio::main]
 async fn main() -> Result<(), IntifaceCLIErrorEnum> {
+  let process_token = CancellationToken::new();
   // Intiface GUI communicates with its child process via protobufs through
   // stdin/stdout. Checking for this is the first thing we should do, as any
   // output after this either needs to be printed strings or pbuf messages.
   //
   // Only set up the env logger if we're not outputting pbufs to a frontend
-  // pipe.  
-  let frontend_sender = options::check_frontend_pipe();
+  // pipe. 
+  let frontend_sender = options::check_frontend_pipe(process_token.child_token());
   let log_level = options::check_log_level();
   #[allow(unused_variables)]
   if let Some(sender) = &frontend_sender {
@@ -274,11 +274,15 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
           connector_opts.clone().into(),
         ));
         info!("Starting server");
-        let mut control_c_hit = false;
+        let mut exit_requested = false;
         select! {
           _ = ctrl_c().fuse() => {
             info!("Control-c hit, exiting.");
-            control_c_hit = true;
+            exit_requested = true;
+          }
+          _ = process_token.cancelled().fuse() => {
+            info!("Owner requested process exit, exiting.");
+            exit_requested = true;
           }
           result = server.start(connector).fuse() => {
             match result {
@@ -300,7 +304,7 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
             .send(Msg::ClientDisconnected(ClientDisconnected::default()))
             .await;
         }
-        if control_c_hit {
+        if exit_requested {
           break;
         }
       }
@@ -320,14 +324,27 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
       >::new(ButtplugWebsocketServerTransport::new(
         connector_opts.clone().into(),
       ));
-      if let Err(e) = server.start(connector).await {
-        error!("{}", format!("Process Error: {:?}", e));
-        if let Some(sender) = &frontend_sender_clone {
-          sender
-            .send(Msg::ProcessError(ProcessError { message: format!("Process Error: {:?}", e.source()).to_owned() }))
-            .await;
+      select! {
+        _ = ctrl_c().fuse() => {
+          info!("Control-c hit, exiting.");
         }
-      }
+        _ = process_token.cancelled().fuse() => {
+          info!("Owner requested process exit, exiting.");
+        }
+        result = server.start(connector).fuse() => {
+          match result {
+            Ok(_) => info!("Connection dropped, restarting stay open loop."),
+            Err(e) => {
+              error!("{}", format!("Process Error: {:?}", e));
+              if let Some(sender) = &frontend_sender_clone {
+                sender
+                  .send(Msg::ProcessError(ProcessError { message: format!("Process Error: {:?}", e).to_owned() }))
+                  .await;
+              }
+            }
+          }
+        }
+      };
       if let Some(sender) = &frontend_sender_clone {
         sender
           .send(Msg::ClientDisconnected(ClientDisconnected::default()))

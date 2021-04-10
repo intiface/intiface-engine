@@ -1,9 +1,10 @@
-use tokio::{self, sync::mpsc::{channel, Sender, Receiver}, fs::File, io::{stdin, stdout}, task, io::{AsyncReadExt, AsyncWriteExt}};
+use tokio::{self, sync::mpsc::{channel, Sender}, io::{stdin, stdout}, io::{AsyncReadExt, AsyncWriteExt}};
 use intiface_gui::{
   server_process_message::{Msg, ProcessEnded, self},
-  ServerControlMessage, ServerProcessMessage,
+  ServerProcessMessage,
 };
-use futures::{select, FutureExt, StreamExt};
+use futures::{select, FutureExt};
+use tokio_util::sync::CancellationToken;
 
 use prost::Message;
 
@@ -25,11 +26,11 @@ impl FrontendPBufChannel {
 
   pub async fn send(&self, msg: server_process_message::Msg) {
     let server_msg = ServerProcessMessage { msg: Some(msg) };
-    self.sender.send(server_msg).await;
+    self.sender.send(server_msg).await.unwrap();
   }
 }
 
-pub fn run_frontend_task() -> FrontendPBufChannel {
+pub fn run_frontend_task(token: CancellationToken) -> FrontendPBufChannel {
   // TODO check static here to make sure we haven't run already.
   let (outgoing_sender, mut outgoing_receiver) = channel::<ServerProcessMessage>(256);
   tokio::spawn(async move {
@@ -51,16 +52,17 @@ pub fn run_frontend_task() -> FrontendPBufChannel {
         },
         incoming_result = stdin.read(&mut stdin_buf).fuse() => {
           match incoming_result {
-            Ok(size) => {
-              let out_msg = ServerProcessMessage::decode_length_delimited(&stdin_buf[0..size]);
+            Ok(_) => {
+              // We currently assume that the only message we'll get here is that our process should stop.
               let msg = ServerProcessMessage { msg: Some(Msg::ProcessEnded(ProcessEnded::default())) };
               let mut buf = vec![];
               msg.encode_length_delimited(&mut buf).unwrap();
               stdout.write_all(&buf).await.unwrap();
               stdout.flush().await.unwrap();
-              std::process::exit(0);
+              token.cancel();
+              break;
             },
-            Err(err) => break,
+            Err(_) => break,
           };
         },
       }
