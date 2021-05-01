@@ -8,32 +8,13 @@ mod frontend;
 mod options;
 
 use tokio::{self, sync::mpsc::{channel, Receiver}, signal::ctrl_c};
-#[cfg(target_os = "windows")]
-use buttplug::server::comm_managers::xinput::XInputDeviceCommunicationManager;
-use buttplug::{
-  connector::{
+use buttplug::{connector::{
     ButtplugRemoteServerConnector, ButtplugWebsocketServerTransport,
     ButtplugWebsocketServerTransportOptions,
-  },
-  core::{
+  }, core::{
     errors::ButtplugError,
     messages::{serializer::ButtplugServerJSONSerializer, ButtplugServerMessage},
-  },
-  server::{
-    comm_managers::{
-      btleplug::BtlePlugCommunicationManager,
-      lovense_dongle::{
-        LovenseHIDDongleCommunicationManager, LovenseSerialDongleCommunicationManager,
-      },
-      serialport::SerialPortCommunicationManager,
-      DeviceCommunicationManager, DeviceCommunicationManagerCreator,
-    },
-    ButtplugRemoteServer,
-    ButtplugServerOptions,
-    remote_server::ButtplugRemoteServerEvent,
-  },
-  util::logging::ChannelWriter
-};
+  }, server::{ButtplugRemoteServer, ButtplugServerOptions, remote_server::ButtplugRemoteServerEvent}, util::logging::ChannelWriter};
 use frontend::intiface_gui::server_process_message::{
   Msg, ProcessEnded, ProcessLog, ProcessStarted, ProcessError,
   ClientConnected, ClientDisconnected, DeviceConnected, DeviceDisconnected,
@@ -112,24 +93,6 @@ impl From<IntifaceError> for IntifaceCLIErrorEnum {
   fn from(err: IntifaceError) -> Self {
     IntifaceCLIErrorEnum::IntifaceError(err)
   }
-}
-
-fn try_add_comm_manager<T>(server: &ButtplugRemoteServer)
-where
-  T: 'static + DeviceCommunicationManager + DeviceCommunicationManagerCreator,
-{
-  if let Err(e) = server.add_comm_manager::<T>() {
-    info!("Can't add Btleplug Comm Manager: {:?}", e);
-  }
-}
-
-fn setup_server_device_comm_managers(server: &ButtplugRemoteServer) {
-  try_add_comm_manager::<BtlePlugCommunicationManager>(server);
-  try_add_comm_manager::<LovenseHIDDongleCommunicationManager>(server);
-  try_add_comm_manager::<LovenseSerialDongleCommunicationManager>(server);
-  try_add_comm_manager::<SerialPortCommunicationManager>(server);
-  #[cfg(target_os = "windows")]
-  try_add_comm_manager::<XInputDeviceCommunicationManager>(server);
 }
 
 #[allow(dead_code)]
@@ -263,7 +226,7 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
           server_event_receiver(event_receiver, fscc).await;
         });
       }
-      setup_server_device_comm_managers(&server);
+      options::setup_server_device_comm_managers(&server);
       info!("Starting new stay open loop");
       loop {
         info!("Creating new stay open connector");
@@ -317,7 +280,7 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
           server_event_receiver(event_receiver, fscc.unwrap()).await;
         });
       }
-      setup_server_device_comm_managers(&server);
+      options::setup_server_device_comm_managers(&server);
       let connector = ButtplugRemoteServerConnector::<
         ButtplugWebsocketServerTransport,
         ButtplugServerJSONSerializer,

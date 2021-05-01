@@ -5,6 +5,13 @@ use argh::FromArgs;
 use buttplug::device::configuration_manager::{
   DeviceConfigurationManager,
 };
+#[cfg(target_os = "windows")]
+use buttplug::server::comm_managers::xinput::XInputDeviceCommunicationManager;
+use buttplug::{
+  server::{ButtplugRemoteServer, comm_managers::{DeviceCommunicationManager, DeviceCommunicationManagerCreator, btleplug::BtlePlugCommunicationManager, lovense_dongle::{
+        LovenseHIDDongleCommunicationManager, LovenseSerialDongleCommunicationManager,
+      }, lovense_service::LovenseServiceDeviceCommManager, serialport::SerialPortCommunicationManager}}};
+
 use std::fs;
 use tracing::Level;
 use tokio_util::sync::CancellationToken;
@@ -74,7 +81,74 @@ struct IntifaceCLIArguments {
 
   /// allow raw messages (dangerous, only use for development)
   #[argh(switch)]
-  allowraw: bool,  
+  allowraw: bool,
+
+  /// turn off bluetooth le device support
+  #[argh(switch)]
+  without_bluetooth_le: bool,
+
+  /// turn off serial device support
+  #[argh(switch)]
+  without_serial: bool,
+
+  /// turn off hid device support
+  #[argh(switch)]
+  without_hid: bool,
+
+  /// turn off lovense dongle serial device support
+  #[argh(switch)]
+  without_lovense_dongle_serial: bool,
+
+  /// turn off lovense dongle hid device support
+  #[argh(switch)]
+  without_lovense_dongle_hid: bool,
+
+  /// turn off lovense connect app device support
+  #[argh(switch)]
+  without_lovense_connect: bool,
+
+  /// turn off xinput gamepad device support (windows only)
+  #[argh(switch)]
+  without_xinput: bool
+}
+
+
+fn try_add_comm_manager<T>(server: &ButtplugRemoteServer)
+where
+  T: 'static + DeviceCommunicationManager + DeviceCommunicationManagerCreator,
+{
+  if let Err(e) = server.add_comm_manager::<T>() {
+    info!("Can't add Btleplug Comm Manager: {:?}", e);
+  }
+}
+
+pub fn setup_server_device_comm_managers(server: &ButtplugRemoteServer) {
+  let args: IntifaceCLIArguments = argh::from_env();
+  if !args.without_bluetooth_le {
+    info!("Including Bluetooth LE (btleplug) Device Comm Manager Support");
+    try_add_comm_manager::<BtlePlugCommunicationManager>(server);
+  }
+  if !args.without_lovense_dongle_hid {
+    info!("Including Lovense HID Dongle Support");
+    try_add_comm_manager::<LovenseHIDDongleCommunicationManager>(server);
+  }
+  if !args.without_lovense_dongle_serial {
+    info!("Including Lovense Serial Dongle Support");
+    try_add_comm_manager::<LovenseSerialDongleCommunicationManager>(server);
+  }
+  if !args.without_serial {
+    info!("Including Serial Port Support");
+    try_add_comm_manager::<SerialPortCommunicationManager>(server);
+  }
+  if !args.without_lovense_connect {
+    info!("Including Lovense Connect App Support");
+    try_add_comm_manager::<LovenseServiceDeviceCommManager>(server);
+  }
+  #[cfg(target_os = "windows")]
+  if !args.without_xinput {
+    info!("Including XInput Gamepad Support");
+    try_add_comm_manager::<XInputDeviceCommunicationManager>(server);
+  }
 }
 
 pub fn check_log_level() -> Option<Level> {
