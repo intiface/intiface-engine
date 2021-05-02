@@ -8,7 +8,7 @@ use buttplug::device::configuration_manager::{
 #[cfg(target_os = "windows")]
 use buttplug::server::comm_managers::xinput::XInputDeviceCommunicationManagerBuilder;
 use buttplug::{
-  server::{ButtplugRemoteServer, comm_managers::{DeviceCommunicationManager, DeviceCommunicationManagerBuilder, btleplug::BtlePlugCommunicationManagerBuilder, lovense_dongle::{
+  server::{ButtplugRemoteServer, comm_managers::{DeviceCommunicationManagerBuilder, btleplug::BtlePlugCommunicationManagerBuilder, lovense_dongle::{
         LovenseHIDDongleCommunicationManagerBuilder, LovenseSerialDongleCommunicationManagerBuilder,
       }, lovense_connect_service::LovenseConnectServiceCommunicationManagerBuilder, serialport::SerialPortCommunicationManagerBuilder}}};
 
@@ -92,6 +92,7 @@ struct IntifaceCLIArguments {
   without_serial: bool,
 
   /// turn off hid device support
+  #[allow(dead_code)]
   #[argh(switch)]
   without_hid: bool,
 
