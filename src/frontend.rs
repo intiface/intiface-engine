@@ -46,23 +46,21 @@ pub fn run_frontend_task(token: CancellationToken) -> FrontendPBufChannel {
               msg.encode_length_delimited(&mut buf).unwrap();
               stdout.write_all(&buf).await.unwrap();
               stdout.flush().await.unwrap();
+              // ProcessEnded is the last thing we send before exiting, so if we just sent that, bail.
+              if let Some(Msg::ProcessEnded(_)) = msg.msg {
+                return;
+              }
             }
-            None => break,
+            None => return,
           };
         },
         incoming_result = stdin.read(&mut stdin_buf).fuse() => {
           match incoming_result {
             Ok(_) => {
-              // We currently assume that the only message we'll get here is that our process should stop.
-              let msg = ServerProcessMessage { msg: Some(Msg::ProcessEnded(ProcessEnded::default())) };
-              let mut buf = vec![];
-              msg.encode_length_delimited(&mut buf).unwrap();
-              stdout.write_all(&buf).await.unwrap();
-              stdout.flush().await.unwrap();
+              info!("Got incoming data, shutting down process.");
               token.cancel();
-              break;
             },
-            Err(_) => break,
+            Err(_) => return,
           };
         },
       }
