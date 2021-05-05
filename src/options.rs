@@ -104,13 +104,13 @@ struct IntifaceCLIArguments {
   #[argh(switch)]
   without_lovense_dongle_hid: bool,
 
-  /// turn off lovense connect app device support
-  #[argh(switch)]
-  without_lovense_connect: bool,
-
   /// turn off xinput gamepad device support (windows only)
   #[argh(switch)]
-  without_xinput: bool
+  without_xinput: bool,
+
+  /// turn on lovense connect app device support (off by default)
+  #[argh(switch)]
+  with_lovense_connect: bool,
 }
 
 
@@ -141,14 +141,14 @@ pub fn setup_server_device_comm_managers(server: &ButtplugRemoteServer) {
     info!("Including Serial Port Support");
     try_add_comm_manager(server, SerialPortCommunicationManagerBuilder::default());
   }
-  if !args.without_lovense_connect {
-    info!("Including Lovense Connect App Support");
-    try_add_comm_manager(server, LovenseConnectServiceCommunicationManagerBuilder::default());
-  }
   #[cfg(target_os = "windows")]
   if !args.without_xinput {
     info!("Including XInput Gamepad Support");
     try_add_comm_manager(server, XInputDeviceCommunicationManagerBuilder::default());
+  }
+  if args.with_lovense_connect {
+    info!("Including Lovense Connect App Support");
+    try_add_comm_manager(server, LovenseConnectServiceCommunicationManagerBuilder::default());
   }
 }
 
