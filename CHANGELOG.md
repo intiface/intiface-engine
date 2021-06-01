@@ -1,3 +1,10 @@
+# v36 (2021/05/31)
+
+## Features
+
+- Added opt-in/out arguments for all available device communication managers
+- Added support for Lovense Connect Service
+
 # v35 (2021/04/04)
 
 ## Bugfixes
