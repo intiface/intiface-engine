@@ -116,10 +116,10 @@ jobs:
       run: |
         zip -j intiface-cli-rs-linux-x64-Debug.zip intiface-cli-rs-Linux-debug/IntifaceCLI README.md CHANGELOG.md
         zip -j intiface-cli-rs-win-x64-Debug.zip intiface-cli-rs-Windows-debug/IntifaceCLI.exe README.md CHANGELOG.md
-        zip -j intiface-cli-rs-macos-x64-Debug.zip intiface-cli-rs-macOS-debug/IntifaceCLI README.md CHANGELOG.md
+        zip -j intiface-cli-rs-macos-x64-Debug.zip intiface-cli-rs-macOS-debug/IntifaceCLI README.md CHANGELOG.md Info.plist
         zip -j intiface-cli-rs-linux-x64-Release.zip intiface-cli-rs-Linux-release/IntifaceCLI README.md CHANGELOG.md
         zip -j intiface-cli-rs-win-x64-Release.zip intiface-cli-rs-Windows-release/IntifaceCLI.exe README.md CHANGELOG.md
-        zip -j intiface-cli-rs-macos-x64-Release.zip intiface-cli-rs-macOS-release/IntifaceCLI README.md CHANGELOG.md
+        zip -j intiface-cli-rs-macos-x64-Release.zip intiface-cli-rs-macOS-release/IntifaceCLI README.md CHANGELOG.md Info.plist
     - name: Release
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
