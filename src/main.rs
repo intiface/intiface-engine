@@ -26,11 +26,12 @@ use frontend::intiface_gui::server_process_message::{
 use frontend::FrontendPBufChannel;
 use futures::{pin_mut, select, FutureExt, Stream, StreamExt};
 use log_panics;
-use std::{error::Error, fmt};
+use std::{error::Error, fmt, time::Duration};
 use tokio::{
   self,
   signal::ctrl_c,
   sync::mpsc::{channel, Receiver},
+  time::sleep
 };
 use tokio_util::sync::CancellationToken;
 use tracing_subscriber::filter::EnvFilter;
@@ -287,6 +288,9 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
       if exit_requested {
         info!("Breaking out of event loop in order to exit");
         if let Some(sender) = &frontend_sender {
+          // If the ProcessEnded message is sent too soon after client disconnected, electron has a
+          // tendency to miss it completely. This sucks.
+          sleep(Duration::from_millis(100)).await;
           sender
             .send(Msg::ProcessEnded(ProcessEnded::default()))
             .await;

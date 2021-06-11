@@ -1,6 +1,6 @@
 use tokio::{self, sync::mpsc::{channel, Sender}, io::{stdin, stdout}, io::{AsyncReadExt, AsyncWriteExt}};
 use intiface_gui::{
-  server_process_message::{Msg, ProcessEnded, self},
+  server_process_message::{Msg, self},
   ServerProcessMessage,
 };
 use futures::{select, FutureExt};
