@@ -1,4 +1,12 @@
-# v36 (2021/05/31)
+# v37 (2021/06/11)
+
+## Bugfixes
+
+- Fix timing issue where Process Ended message may not be seen by Intiface Desktop
+- Update to buttplug-rs 4.0.2, fixing issue with Intiface Desktop stalling due to logging issues.
+- Add Info.plist file for macOS Big Sur and later compat
+
+# v36 (2021/06/10)
 
 ## Features
 
