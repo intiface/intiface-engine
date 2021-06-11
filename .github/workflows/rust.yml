@@ -60,9 +60,7 @@ jobs:
     - name: Copy Info.plist (MacOS)
       if: startsWith(matrix.os, 'macos')
       run: |
-        mkdir ci-output-debug
         cp src/Info.plist ci-output-debug/Info.plist
-        mkdir ci-output-release
         cp src/Info.plist ci-output-release/Info.plist
     - name: Copy executable (Windows)
       if: startsWith(matrix.os, 'windows')
