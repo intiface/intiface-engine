@@ -1,3 +1,9 @@
+# v38 (2021/06/18)
+
+## Bugfixes
+
+- Update to buttplug-rs 4.0.3, which fixes issues with Android phones using the Lovense Connect app.
+
 # v37 (2021/06/11)
 
 ## Bugfixes
