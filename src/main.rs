@@ -20,8 +20,8 @@ use buttplug::{
   util::logging::ChannelWriter,
 };
 use frontend::intiface_gui::server_process_message::{
-  ClientConnected, ClientDisconnected, DeviceConnected, DeviceDisconnected, Msg, ProcessEnded,
-  ProcessError, ProcessLog, ProcessStarted,
+  ClientConnected, ClientDisconnected, ClientRejected, DeviceConnected, DeviceDisconnected, Msg,
+  ProcessEnded, ProcessError, ProcessLog, ProcessStarted,
 };
 use frontend::FrontendPBufChannel;
 use futures::{pin_mut, select, FutureExt, Stream, StreamExt};
@@ -31,7 +31,8 @@ use tokio::{
   self,
   signal::ctrl_c,
   sync::mpsc::{channel, Receiver},
-  time::sleep
+  time::sleep,
+  net::TcpListener
 };
 use tokio_util::sync::CancellationToken;
 use tracing_subscriber::filter::EnvFilter;
@@ -137,41 +138,105 @@ fn setup_frontend_filter_channel<T>(
 
 async fn server_event_receiver(
   receiver: impl Stream<Item = ButtplugRemoteServerEvent>,
-  frontend_sender: FrontendPBufChannel,
+  frontend_sender: Option<FrontendPBufChannel>,
+  connection_cancellation_token: CancellationToken
 ) {
   pin_mut!(receiver);
-  while let Some(event) = receiver.next().await {
-    match event {
-      ButtplugRemoteServerEvent::Connected(client_name) => {
-        frontend_sender
-          .send(Msg::ClientConnected(ClientConnected {
-            client_name: client_name,
-          }))
-          .await;
-      }
-      ButtplugRemoteServerEvent::Disconnected => {
-        frontend_sender
-          .send(Msg::ClientDisconnected(ClientDisconnected {}))
-          .await;
-      }
-      ButtplugRemoteServerEvent::DeviceAdded(device_id, device_name) => {
-        frontend_sender
-          .send(Msg::DeviceConnected(DeviceConnected {
-            device_name,
-            device_id,
-          }))
-          .await;
-      }
-      ButtplugRemoteServerEvent::DeviceRemoved(device_id) => {
-        frontend_sender
-          .send(Msg::DeviceDisconnected(DeviceDisconnected { device_id }))
-          .await;
+  loop {
+    select! {
+      maybe_event = receiver.next().fuse() => {
+        match maybe_event {
+          Some(event) => match event {
+            ButtplugRemoteServerEvent::Connected(client_name) => {
+              info!("Client connected: {}", client_name);
+              let sender = frontend_sender.clone();
+              let token = connection_cancellation_token.child_token();
+              tokio::spawn(async move {
+                reject_all_incoming(sender, "localhost", 12345, token).await;
+              });
+              if let Some(frontend_sender) = &frontend_sender {
+                frontend_sender
+                  .send(Msg::ClientConnected(ClientConnected {
+                    client_name: client_name,
+                  }))
+                  .await;
+              }
+            }
+            ButtplugRemoteServerEvent::Disconnected => {
+              info!("Client disconnected.");
+              if let Some(frontend_sender) = &frontend_sender {
+                frontend_sender
+                  .send(Msg::ClientDisconnected(ClientDisconnected {}))
+                  .await;
+              }
+            }
+            ButtplugRemoteServerEvent::DeviceAdded(device_id, device_name) => {
+              info!("Device Added: {} - {}", device_id, device_name);
+              if let Some(frontend_sender) = &frontend_sender {
+                frontend_sender
+                  .send(Msg::DeviceConnected(DeviceConnected {
+                    device_name,
+                    device_id,
+                  }))
+                  .await;
+              }
+            }
+            ButtplugRemoteServerEvent::DeviceRemoved(device_id) => {
+              info!("Device Removed: {}", device_id);
+              if let Some(frontend_sender) = &frontend_sender {
+                frontend_sender
+                  .send(Msg::DeviceDisconnected(DeviceDisconnected { device_id }))
+                  .await;
+              }
+            }
+          },
+          None => break,
+        }
+      },
+      _ = connection_cancellation_token.cancelled().fuse() => {
+        break;
       }
     }
   }
-  frontend_sender
-    .send(Msg::ClientDisconnected(ClientDisconnected {}))
-    .await;
+  info!("Exiting server event receiver loop");
+  if let Some(frontend_sender) = &frontend_sender {
+    frontend_sender
+      .send(Msg::ClientDisconnected(ClientDisconnected {}))
+      .await;
+  }
+}
+
+async fn reject_all_incoming(frontend_sender: Option<FrontendPBufChannel>, address: &str, port: u16, token: CancellationToken) {
+  info!("Rejecting all incoming clients while connected");
+  let addr = format!("{}:{}", address, port);
+  let try_socket = TcpListener::bind(&addr).await;
+  let listener = try_socket.expect("Cannot hold port while connected?!");
+
+  loop {
+    select! {
+      _ = token.cancelled().fuse() => {
+        break;
+      }
+      ret = listener.accept().fuse() =>  {
+        match ret {
+          Ok(_) => {
+            error!("Someone tried to connect while we're already connected!!!!");
+            if let Some(frontend_sender) = &frontend_sender {
+              frontend_sender
+                .send(Msg::ClientRejected(ClientRejected {
+                  client_name: "Unknown".to_owned(),
+                }))
+                .await;
+            }
+          }
+          Err(_) => {
+            break;
+          }
+        }
+      }
+    }
+  }
+  info!("Leaving client rejection loop.");
 }
 
 #[tokio::main]
@@ -238,16 +303,16 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
   let frontend_sender_clone = frontend_sender.clone();
   if connector_opts.stay_open {
     let server = ButtplugRemoteServer::new_with_options(&connector_opts.server_options).unwrap();
-    let event_receiver = server.event_stream();
-    if frontend_sender_clone.is_some() {
-      let fscc = frontend_sender_clone.clone().unwrap();
-      tokio::spawn(async move {
-        server_event_receiver(event_receiver, fscc).await;
-      });
-    }
     options::setup_server_device_comm_managers(&server);
     info!("Starting new stay open loop");
     loop {
+      let token = CancellationToken::new();
+      let child_token = token.child_token();
+      let event_receiver = server.event_stream();
+      let fscc = frontend_sender_clone.clone();
+      tokio::spawn(async move {
+        server_event_receiver(event_receiver, fscc, child_token).await;
+      });
       info!("Creating new stay open connector");
       let connector = ButtplugRemoteServerConnector::<
         ButtplugWebsocketServerTransport,
@@ -280,6 +345,7 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
           }
         }
       };
+      token.cancel();
       if let Some(sender) = &frontend_sender_clone {
         sender
           .send(Msg::ClientDisconnected(ClientDisconnected::default()))
@@ -303,11 +369,11 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
     let server = ButtplugRemoteServer::new_with_options(&connector_opts.server_options).unwrap();
     let event_receiver = server.event_stream();
     let fscc = frontend_sender_clone.clone();
-    if fscc.is_some() {
-      tokio::spawn(async move {
-        server_event_receiver(event_receiver, fscc.unwrap()).await;
-      });
-    }
+    let token = CancellationToken::new();
+    let child_token = token.child_token();
+    tokio::spawn(async move {
+      server_event_receiver(event_receiver, fscc, child_token).await;
+    });
     options::setup_server_device_comm_managers(&server);
     let connector = ButtplugRemoteServerConnector::<
       ButtplugWebsocketServerTransport,
@@ -336,6 +402,7 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
         }
       }
     };
+    token.cancel();
     if let Some(sender) = &frontend_sender_clone {
       sender
         .send(Msg::ClientDisconnected(ClientDisconnected::default()))
