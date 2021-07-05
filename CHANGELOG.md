@@ -1,3 +1,16 @@
+# v39 (2021/07/05)
+
+## Features
+
+- Server now throws warnings whenever a client tries to connect when another client is already
+  connected.
+- Update to Buttplug 4.0.4
+  - Added hardware support for TCode devices, Patoo, Vorze Piston SA
+
+## Bugfixes
+
+- Fix cancellation of tasks on shutdown.
+
 # v38 (2021/06/18)
 
 ## Bugfixes
