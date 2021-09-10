@@ -10,13 +10,13 @@ mod options;
 use buttplug::{
   connector::{
     ButtplugRemoteServerConnector, ButtplugWebsocketServerTransport,
-    ButtplugWebsocketServerTransportOptions,
+    ButtplugWebsocketServerTransportBuilder,
   },
   core::{
     errors::ButtplugError,
     messages::{serializer::ButtplugServerJSONSerializer, ButtplugServerMessage},
   },
-  server::{remote_server::ButtplugRemoteServerEvent, ButtplugRemoteServer, ButtplugServerOptions},
+  server::{remote_server::ButtplugRemoteServerEvent, ButtplugRemoteServer, ButtplugServerBuilder},
   util::logging::ChannelWriter,
 };
 use frontend::intiface_gui::server_process_message::{
@@ -39,21 +39,12 @@ use tracing_subscriber::filter::EnvFilter;
 
 #[derive(Default, Clone)]
 pub struct ConnectorOptions {
-  server_options: ButtplugServerOptions,
+  server_builder: ButtplugServerBuilder,
   stay_open: bool,
   use_frontend_pipe: bool,
   ws_listen_on_all_interfaces: bool,
   ws_insecure_port: Option<u16>,
   ipc_pipe_name: Option<String>,
-}
-
-impl From<ConnectorOptions> for ButtplugWebsocketServerTransportOptions {
-  fn from(options: ConnectorOptions) -> ButtplugWebsocketServerTransportOptions {
-    ButtplugWebsocketServerTransportOptions {
-      ws_insecure_port: options.ws_insecure_port.unwrap(),
-      ws_listen_on_all_interfaces: options.ws_listen_on_all_interfaces,
-    }
-  }
 }
 
 #[derive(Debug)]
@@ -302,7 +293,20 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
   info!("Intiface CLI Setup finished, running server tasks until all joined.");
   let frontend_sender_clone = frontend_sender.clone();
   if connector_opts.stay_open {
-    let server = ButtplugRemoteServer::new_with_options(&connector_opts.server_options).unwrap();
+    let core_server = match connector_opts.server_builder.finish() {
+      Ok(server) => server,
+      Err(e) => {
+        process_token.cancel();
+        error!("Error starting server: {:?}", e);
+        if let Some(sender) = &frontend_sender_clone {
+          sender
+            .send(Msg::ProcessError(ProcessError { message: format!("Process Error: {:?}", e).to_owned() }))
+            .await;
+        }
+        return Err(IntifaceCLIErrorEnum::ButtplugError(e));
+      }
+    };
+    let server = ButtplugRemoteServer::new(core_server);
     options::setup_server_device_comm_managers(&server);
     info!("Starting new stay open loop");
     loop {
@@ -314,12 +318,14 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
         server_event_receiver(event_receiver, fscc, child_token).await;
       });
       info!("Creating new stay open connector");
+      let transport = ButtplugWebsocketServerTransportBuilder::default()
+        .port(connector_opts.ws_insecure_port.unwrap())
+        .listen_on_all_interfaces(connector_opts.ws_listen_on_all_interfaces)
+        .finish();
       let connector = ButtplugRemoteServerConnector::<
         ButtplugWebsocketServerTransport,
         ButtplugServerJSONSerializer,
-      >::new(ButtplugWebsocketServerTransport::new(
-        connector_opts.clone().into(),
-      ));
+      >::new(transport);
       info!("Starting server");
       let mut exit_requested = false;
       select! {
@@ -341,6 +347,8 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
                   .send(Msg::ProcessError(ProcessError { message: format!("Process Error: {:?}", e).to_owned() }))
                   .await;
               }
+              exit_requested = true;
+              break;
             }
           }
         }
@@ -366,7 +374,20 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
       info!("Server connection dropped, restarting");
     }
   } else {
-    let server = ButtplugRemoteServer::new_with_options(&connector_opts.server_options).unwrap();
+    let core_server = match connector_opts.server_builder.finish() {
+      Ok(server) => server,
+      Err(e) => {
+        process_token.cancel();
+        error!("Error starting server: {:?}", e);
+        if let Some(sender) = &frontend_sender_clone {
+          sender
+            .send(Msg::ProcessError(ProcessError { message: format!("Process Error: {:?}", e).to_owned() }))
+            .await;
+        }
+        return Err(IntifaceCLIErrorEnum::ButtplugError(e));
+      }
+    };
+    let server = ButtplugRemoteServer::new(core_server);
     let event_receiver = server.event_stream();
     let fscc = frontend_sender_clone.clone();
     let token = CancellationToken::new();
@@ -375,12 +396,14 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
       server_event_receiver(event_receiver, fscc, child_token).await;
     });
     options::setup_server_device_comm_managers(&server);
+    let transport = ButtplugWebsocketServerTransportBuilder::default()
+    .port(connector_opts.ws_insecure_port.unwrap())
+    .listen_on_all_interfaces(connector_opts.ws_listen_on_all_interfaces)
+    .finish();
     let connector = ButtplugRemoteServerConnector::<
       ButtplugWebsocketServerTransport,
       ButtplugServerJSONSerializer,
-    >::new(ButtplugWebsocketServerTransport::new(
-      connector_opts.clone().into(),
-    ));
+    >::new(transport);
     select! {
       _ = ctrl_c().fuse() => {
         info!("Control-c hit, exiting.");

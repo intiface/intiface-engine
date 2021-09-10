@@ -10,7 +10,7 @@ use buttplug::server::comm_managers::xinput::XInputDeviceCommunicationManagerBui
 use buttplug::{
   server::{ButtplugRemoteServer, comm_managers::{DeviceCommunicationManagerBuilder, btleplug::BtlePlugCommunicationManagerBuilder, lovense_dongle::{
         LovenseHIDDongleCommunicationManagerBuilder, LovenseSerialDongleCommunicationManagerBuilder,
-      }, lovense_connect_service::LovenseConnectServiceCommunicationManagerBuilder, serialport::SerialPortCommunicationManagerBuilder}}};
+      }, lovense_connect_service::LovenseConnectServiceCommunicationManagerBuilder, serialport::SerialPortCommunicationManagerBuilder, websocket_server::websocket_server_comm_manager::WebsocketServerDeviceCommunicationManagerBuilder}}};
 
 use std::fs;
 use tracing::Level;
@@ -111,6 +111,10 @@ struct IntifaceCLIArguments {
   /// turn on lovense connect app device support (off by default)
   #[argh(switch)]
   with_lovense_connect: bool,
+
+  /// turn on websocket server device comm manager
+  #[argh(switch)]
+  with_websocket_server_device: bool
 }
 
 
@@ -118,7 +122,7 @@ fn try_add_comm_manager<T>(server: &ButtplugRemoteServer, builder: T)
 where
   T: DeviceCommunicationManagerBuilder
 {
-  if let Err(e) = server.add_comm_manager(builder) {
+  if let Err(e) = server.device_manager().add_comm_manager(builder) {
     info!("Can't add Comm Manager: {:?}", e);
   }
 }
@@ -149,6 +153,10 @@ pub fn setup_server_device_comm_managers(server: &ButtplugRemoteServer) {
   if args.with_lovense_connect {
     info!("Including Lovense Connect App Support");
     try_add_comm_manager(server, LovenseConnectServiceCommunicationManagerBuilder::default());
+  }
+  if args.with_websocket_server_device {
+    info!("Including Websocket Server Device Support");
+    try_add_comm_manager(server, WebsocketServerDeviceCommunicationManagerBuilder::default().listen_on_all_interfaces(true));
   }
 }
 
@@ -220,9 +228,11 @@ pub fn parse_options() -> Result<Option<ConnectorOptions>, IntifaceCLIErrorEnum>
     );
   }
 
-  connector_info.server_options.name = args.servername;
-  connector_info.server_options.max_ping_time = args.pingtime;
-  connector_info.server_options.allow_raw_messages = args.allowraw;
+  connector_info
+    .server_builder
+    .name(&args.servername)
+    .max_ping_time(args.pingtime)
+    .allow_raw_messages(args.allowraw);
 
   if args.frontendpipe {
     info!("Intiface CLI Options: Using frontend pipe");
@@ -242,7 +252,7 @@ pub fn parse_options() -> Result<Option<ConnectorOptions>, IntifaceCLIErrorEnum>
       deviceconfig
     );
     match fs::read_to_string(deviceconfig) {
-      Ok(cfg) => connector_info.server_options.device_configuration_json = Some(cfg),
+      Ok(cfg) => connector_info.server_builder.device_configuration_json(Some(cfg)),
       Err(err) => panic!("Error opening external device configuration: {:?}", err)
     };
   }
@@ -253,19 +263,9 @@ pub fn parse_options() -> Result<Option<ConnectorOptions>, IntifaceCLIErrorEnum>
       userdeviceconfig
     );
     match fs::read_to_string(userdeviceconfig) {
-      Ok(cfg) => connector_info.server_options.user_device_configuration_json = Some(cfg),
+      Ok(cfg) => connector_info.server_builder.user_device_configuration_json(Some(cfg)),
       Err(err) => panic!("Error opening user device configuration: {:?}", err)
     };
-  }
-
-  // Make sure we can bring up a DeviceConfigurationManager before handing back
-  // to the server to start the listener.
-
-  if let Err(err) = DeviceConfigurationManager::new_with_options(
-    connector_info.server_options.allow_raw_messages, 
-    &connector_info.server_options.device_configuration_json, 
-    &connector_info.server_options.user_device_configuration_json) {
-    panic!("Error in creation of Device Configuration Manager: {:?}", err);
   }
 
   Ok(Some(connector_info))
