@@ -1,3 +1,13 @@
+# v40 (2021/09/14)
+
+## Features
+
+- Update to Buttplug 5.0.1
+  - Better MacOS bluetooth support
+  - Better Linux bluetooth support
+  - Tons of device additions (see Buttplug README)
+  - Adds websocket device interface
+
 # v39 (2021/07/05)
 
 ## Features
