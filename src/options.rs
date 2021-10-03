@@ -186,7 +186,7 @@ pub fn parse_options() -> Result<Option<ConnectorOptions>, IntifaceCLIErrorEnum>
     println!(
       "Intiface CLI (Rust Edition) Version {}, Commit {}, Built {}",
       VERSION,
-      env!("VERGEN_SHA_SHORT"),
+      env!("VERGEN_GIT_SHA_SHORT"),
       env!("VERGEN_BUILD_TIMESTAMP")
     );
     return Ok(None);
