@@ -24,13 +24,12 @@ use frontend::FrontendPBufChannel;
 use futures::{pin_mut, select, FutureExt, Stream, StreamExt};
 use log_panics;
 use process_messages::EngineMessage;
-use std::{error::Error, fmt, time::Duration};
+use std::{error::Error, fmt};
 use tokio::{
   self,
   net::TcpListener,
   signal::ctrl_c,
   sync::mpsc::{channel, Receiver},
-  time::sleep,
 };
 use tokio_util::sync::CancellationToken;
 use tracing_subscriber::filter::EnvFilter;
@@ -125,7 +124,7 @@ fn setup_frontend_filter_channel<T>(
 
 async fn server_event_receiver(
   receiver: impl Stream<Item = ButtplugRemoteServerEvent>,
-  frontend_sender: Option<FrontendPBufChannel>,
+  frontend_sender: FrontendPBufChannel,
   connection_cancellation_token: CancellationToken,
 ) {
   pin_mut!(receiver);
@@ -141,33 +140,25 @@ async fn server_event_receiver(
               tokio::spawn(async move {
                 reject_all_incoming(sender, "localhost", 12345, token).await;
               });
-              if let Some(frontend_sender) = &frontend_sender {
-                frontend_sender.send(EngineMessage::ClientConnected(client_name)).await;
-              }
+              frontend_sender.send(EngineMessage::ClientConnected(client_name)).await;
             }
             ButtplugRemoteServerEvent::Disconnected => {
               info!("Client disconnected.");
-              if let Some(frontend_sender) = &frontend_sender {
-                frontend_sender
-                  .send(EngineMessage::ClientDisconnected)
-                  .await;
-              }
+              frontend_sender
+                .send(EngineMessage::ClientDisconnected)
+                .await;
             }
             ButtplugRemoteServerEvent::DeviceAdded(device_id, device_name) => {
               info!("Device Added: {} - {}", device_id, device_name);
-              if let Some(frontend_sender) = &frontend_sender {
-                frontend_sender
-                  .send(EngineMessage::DeviceConnected(device_name, device_id))
-                  .await;
-              }
+              frontend_sender
+                .send(EngineMessage::DeviceConnected(device_name, device_id))
+                .await;
             }
             ButtplugRemoteServerEvent::DeviceRemoved(device_id) => {
               info!("Device Removed: {}", device_id);
-              if let Some(frontend_sender) = &frontend_sender {
-                frontend_sender
-                  .send(EngineMessage::DeviceDisconnected(device_id))
-                  .await;
-              }
+              frontend_sender
+                .send(EngineMessage::DeviceDisconnected(device_id))
+                .await;
             }
           },
           None => {
@@ -183,15 +174,13 @@ async fn server_event_receiver(
     }
   }
   info!("Exiting server event receiver loop");
-  if let Some(frontend_sender) = &frontend_sender {
-    frontend_sender
-      .send(EngineMessage::ClientDisconnected)
-      .await;
-  }
+  frontend_sender
+    .send(EngineMessage::ClientDisconnected)
+    .await;
 }
 
 async fn reject_all_incoming(
-  frontend_sender: Option<FrontendPBufChannel>,
+  frontend_sender: FrontendPBufChannel,
   address: &str,
   port: u16,
   token: CancellationToken,
@@ -210,11 +199,9 @@ async fn reject_all_incoming(
         match ret {
           Ok(_) => {
             error!("Someone tried to connect while we're already connected!!!!");
-            if let Some(frontend_sender) = &frontend_sender {
-              frontend_sender
-                .send(EngineMessage::ClientRejected("Unknown".to_owned()))
-                .await;
-            }
+            frontend_sender
+              .send(EngineMessage::ClientRejected("Unknown".to_owned()))
+              .await;
           }
           Err(_) => {
             break;
@@ -226,29 +213,16 @@ async fn reject_all_incoming(
   info!("Leaving client rejection loop.");
 }
 
-#[tokio::main]
-async fn main() -> Result<(), IntifaceCLIErrorEnum> {
-  let parent_token = CancellationToken::new();
-  let process_token = parent_token.child_token();
-  let finish_token = CancellationToken::new();
-  let log_token = finish_token.child_token();
-  // Intiface GUI communicates with its child process via protobufs through
-  // stdin/stdout. Checking for this is the first thing we should do, as any
-  // output after this either needs to be printed strings or pbuf messages.
-  //
-  // Only set up the env logger if we're not outputting pbufs to a frontend
-  // pipe.
-  let frontend_sender = options::check_frontend_pipe(parent_token);
+fn setup_logging(frontend_sender: FrontendPBufChannel, token: CancellationToken) {
+  // Only set up the env logger if we're not outputting messages to a frontend pipe.
   let log_level = options::check_log_level();
-  log_panics::init();
-  #[allow(unused_variables)]
-  if let Some(sender) = &frontend_sender {
+  if frontend_sender.has_frontend() {
     // Add panic hook for emitting backtraces through the logging system.
     log_panics::init();
-    sender.send(EngineMessage::EngineStarted).await;
     let (bp_log_sender, mut receiver) = channel::<Vec<u8>>(256);
-    let log_sender = sender.clone();
+    let log_sender = frontend_sender.clone();
     tokio::spawn(async move {
+      log_sender.send(EngineMessage::EngineStarted).await;
       loop {
         select! {
           log = receiver.recv().fuse() => {
@@ -257,7 +231,7 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
               .send(EngineMessage::EngineLog(std::str::from_utf8(&log).unwrap().to_owned()))
               .await;
           },
-          _ = log_token.cancelled().fuse() => {
+          _ = token.cancelled().fuse() => {
             break;
           }
         }
@@ -282,6 +256,21 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
     }
     println!("Intiface Server, starting up with stdout output.");
   }
+}
+
+#[tokio::main]
+async fn main() -> Result<(), IntifaceCLIErrorEnum> {
+  let parent_token = CancellationToken::new();
+  let process_token = CancellationToken::new();
+
+  // Intiface GUI communicates with its child process via json through named pipes/domain sockets.
+  // Checking for this is the first thing we should do, as any output after this either needs to be
+  // printed strings or json messages.
+
+  let frontend_sender = frontend::FrontendPBufChannel::create(parent_token.clone());
+
+  setup_logging(frontend_sender.clone(), parent_token.child_token());
+
   // Parse options, get back our connection information and a curried server
   // factory closure.
   let connector_opts = match options::parse_options() {
@@ -299,15 +288,13 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
   let core_server = match connector_opts.server_builder.finish() {
     Ok(server) => server,
     Err(e) => {
-      process_token.cancel();
+      parent_token.cancel();
       error!("Error starting server: {:?}", e);
-      if let Some(sender) = &frontend_sender_clone {
-        sender
-          .send(EngineMessage::EngineError(
-            format!("Process Error: {:?}", e).to_owned(),
-          ))
-          .await;
-      }
+      frontend_sender_clone
+        .send(EngineMessage::EngineError(
+          format!("Process Error: {:?}", e).to_owned(),
+        ))
+        .await;
       return Err(IntifaceCLIErrorEnum::ButtplugError(e));
     }
   };
@@ -347,35 +334,23 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
           Ok(_) => info!("Connection dropped, restarting stay open loop."),
           Err(e) => {
             error!("{}", format!("Process Error: {:?}", e));
-            if let Some(sender) = &frontend_sender_clone {
-              sender
-                .send(EngineMessage::EngineError(format!("Process Error: {:?}", e).to_owned()))
-                .await;
-            }
+            frontend_sender_clone
+              .send(EngineMessage::EngineError(format!("Process Error: {:?}", e).to_owned()))
+              .await;
             exit_requested = true;
-            break;
           }
         }
       }
     };
     token.cancel();
-    if let Some(sender) = &frontend_sender_clone {
-      sender.send(EngineMessage::ClientDisconnected).await;
-    }
+    frontend_sender.send(EngineMessage::ClientDisconnected).await;
     if !connector_opts.stay_open || exit_requested {
       info!("Breaking out of event loop in order to exit");
-      if let Some(sender) = &frontend_sender {
-        // If the ProcessEnded message is sent too soon after client disconnected, electron has a
-        // tendency to miss it completely. This sucks.
-        sleep(Duration::from_millis(100)).await;
-        sender.send(EngineMessage::EngineStopped).await;
-      }
+      frontend_sender.send(EngineMessage::EngineStopped).await;
       break;
     }
     info!("Server connection dropped, restarting");
   }
-
-  finish_token.cancel();
   info!("Exiting");
   Ok(())
 }
