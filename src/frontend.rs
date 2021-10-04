@@ -16,7 +16,7 @@ pub struct FrontendPBufChannel {
 }
 
 impl FrontendPBufChannel {
-  pub fn create(token: CancellationToken) -> Self {
+  pub fn create(frontend_cancellation_token: CancellationToken, process_ended_token: CancellationToken) -> Self {
     let sender = if let Some(pipe_name) = frontend_pipe() {
       let (outgoing_sender, mut outgoing_receiver) = channel::<EngineMessage>(256);
       tokio::spawn(async move {
@@ -33,10 +33,6 @@ impl FrontendPBufChannel {
             outgoing_msg = outgoing_receiver.recv().fuse() => {
               match outgoing_msg {
                 Some(msg) => {
-                  // ProcessEnded is the last thing we send before exiting, so if we just sent that, bail.
-                  if let EngineMessage::EngineStopped = msg {
-                    return;
-                  }
                   if let Err(e) = client.write_all(&serde_json::to_vec(&msg).unwrap()).await {
                     error!("{:?}", e);
                     break;
@@ -49,10 +45,13 @@ impl FrontendPBufChannel {
               match incoming_result {
                 Ok(_) => {
                   info!("Got incoming data, shutting down process.");
-                  token.cancel();
+                  frontend_cancellation_token.cancel();
                 },
                 Err(_) => return,
               };
+            },
+            _ = process_ended_token.cancelled().fuse() => {
+              break;
             }
           }
         }
