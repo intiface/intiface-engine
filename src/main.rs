@@ -260,16 +260,17 @@ fn setup_logging(frontend_sender: FrontendPBufChannel, token: CancellationToken)
 
 #[tokio::main]
 async fn main() -> Result<(), IntifaceCLIErrorEnum> {
-  let parent_token = CancellationToken::new();
-  let process_token = CancellationToken::new();
+  let frontend_cancellation_token = CancellationToken::new();
+  let frontend_cancellation_child_token = frontend_cancellation_token.child_token();
+  let process_ended_token = CancellationToken::new();
 
   // Intiface GUI communicates with its child process via json through named pipes/domain sockets.
   // Checking for this is the first thing we should do, as any output after this either needs to be
   // printed strings or json messages.
 
-  let frontend_sender = frontend::FrontendPBufChannel::create(parent_token.clone());
+  let frontend_sender = frontend::FrontendPBufChannel::create(frontend_cancellation_token, process_ended_token.child_token());
 
-  setup_logging(frontend_sender.clone(), parent_token.child_token());
+  setup_logging(frontend_sender.clone(), process_ended_token.child_token());
 
   // Parse options, get back our connection information and a curried server
   // factory closure.
@@ -288,13 +289,13 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
   let core_server = match connector_opts.server_builder.finish() {
     Ok(server) => server,
     Err(e) => {
-      parent_token.cancel();
       error!("Error starting server: {:?}", e);
       frontend_sender_clone
         .send(EngineMessage::EngineError(
           format!("Process Error: {:?}", e).to_owned(),
         ))
         .await;
+      process_ended_token.cancel();
       return Err(IntifaceCLIErrorEnum::ButtplugError(e));
     }
   };
@@ -325,7 +326,7 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
         info!("Control-c hit, exiting.");
         exit_requested = true;
       }
-      _ = process_token.cancelled().fuse() => {
+      _ = frontend_cancellation_child_token.cancelled().fuse() => {
         info!("Owner requested process exit, exiting.");
         exit_requested = true;
       }
@@ -352,5 +353,6 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
     info!("Server connection dropped, restarting");
   }
   info!("Exiting");
+  process_ended_token.cancel();
   Ok(())
 }
