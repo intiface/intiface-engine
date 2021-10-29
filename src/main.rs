@@ -21,10 +21,10 @@ use buttplug::{
   util::logging::ChannelWriter,
 };
 use frontend::FrontendPBufChannel;
-use futures::{pin_mut, select, FutureExt, Stream, StreamExt};
+use futures::{FutureExt, Stream, StreamExt, TryFutureExt, pin_mut, select};
 use log_panics;
 use process_messages::EngineMessage;
-use std::{error::Error, fmt};
+use std::{error::Error, fmt, sync::Arc};
 use tokio::{
   self,
   net::TcpListener,
@@ -123,6 +123,7 @@ fn setup_frontend_filter_channel<T>(
 }
 
 async fn server_event_receiver(
+  server: Arc<ButtplugRemoteServer>,
   receiver: impl Stream<Item = ButtplugRemoteServerEvent>,
   frontend_sender: FrontendPBufChannel,
   connection_cancellation_token: CancellationToken,
@@ -150,8 +151,10 @@ async fn server_event_receiver(
             }
             ButtplugRemoteServerEvent::DeviceAdded(device_id, device_name) => {
               info!("Device Added: {} - {}", device_id, device_name);
+              let info = server.device_manager().device_info(device_id).unwrap();
+              info!("Device Address: {:?}", info.address);
               frontend_sender
-                .send(EngineMessage::DeviceConnected(device_name, device_id))
+                .send(EngineMessage::DeviceConnected { name: device_name, index: device_id, address: info.address, display_name: info.display_name.unwrap_or("".to_string()) })
                 .await;
             }
             ButtplugRemoteServerEvent::DeviceRemoved(device_id) => {
@@ -295,16 +298,17 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
       return Err(IntifaceCLIErrorEnum::ButtplugError(e));
     }
   };
-  let server = ButtplugRemoteServer::new(core_server);
+  let server = Arc::new(ButtplugRemoteServer::new(core_server));
   options::setup_server_device_comm_managers(&server);
   info!("Starting new stay open loop");
   loop {
-    let token = CancellationToken::new();
-    let child_token = token.child_token();
+    let session_connection_token = CancellationToken::new();
+    let session_connection_child_token = session_connection_token.child_token();
     let event_receiver = server.event_stream();
     let fscc = frontend_sender_clone.clone();
+    let server_clone = server.clone();
     tokio::spawn(async move {
-      server_event_receiver(event_receiver, fscc, child_token).await;
+      server_event_receiver(server_clone, event_receiver, fscc, session_connection_child_token).await;
     });
     info!("Creating new stay open connector");
     let transport = ButtplugWebsocketServerTransportBuilder::default()
@@ -339,7 +343,11 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
         }
       }
     };
-    token.cancel();
+    match server.disconnect().await {
+      Ok(_) => info!("Client forcefully disconnected from server."),
+      Err(_) => info!("Client already disconnected from server.")
+    };
+    session_connection_token.cancel();
     frontend_sender.send(EngineMessage::ClientDisconnected).await;
     if !connector_opts.stay_open || exit_requested {
       info!("Breaking out of event loop in order to exit");
@@ -349,6 +357,10 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
     info!("Server connection dropped, restarting");
   }
   info!("Exiting");
+  if frontend_sender.has_frontend() {
+    // Yield before the exit so that the frontend can finish sending log messages.
+    tokio::time::sleep(std::time::Duration::from_millis(1)).await;
+  }
   process_ended_token.cancel();
   Ok(())
 }
