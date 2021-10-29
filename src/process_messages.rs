@@ -9,7 +9,7 @@ pub enum EngineMessage {
   EngineStopped,
   ClientConnected(String),
   ClientDisconnected,
-  DeviceConnected(String, u32),
+  DeviceConnected { name: String, index: u32, address: String, display_name: String },
   DeviceDisconnected(u32),
   ClientRejected(String)
 }
