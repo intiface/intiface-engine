@@ -45,6 +45,9 @@ impl FrontendPBufChannel {
               match incoming_result {
                 Ok(_) => {
                   info!("Got incoming data, shutting down process.");
+                  // Flush the data.
+                  let mut data = vec![0; 1024];
+                  let _ = client.try_read(&mut data);    
                   frontend_cancellation_token.cancel();
                 },
                 Err(_) => return,
