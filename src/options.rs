@@ -68,7 +68,7 @@ struct IntifaceCLIArguments {
   /// ping timeout maximum for server (in milliseconds)
   #[argh(option)]
   #[argh(default = "0")]
-  pingtime: u64,
+  pingtime: u32,
 
   /// if passed, server will stay running after client disconnection
   #[argh(switch)]
