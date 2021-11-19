@@ -264,7 +264,7 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
       .json()
       .with_max_level(log_level)
       .with_ansi(false)
-      .with_writer(ChannelWriter::new(bp_log_sender))
+      .with_writer(move || ChannelWriter::new(bp_log_sender.clone()))
       .init();
   } else {
     if log_level.is_some() {
