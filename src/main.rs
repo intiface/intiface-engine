@@ -21,7 +21,7 @@ use buttplug::{
   util::logging::ChannelWriter,
 };
 use frontend::FrontendPBufChannel;
-use futures::{FutureExt, Stream, StreamExt, TryFutureExt, pin_mut, select};
+use futures::{FutureExt, Stream, StreamExt, pin_mut, select};
 use log_panics;
 use process_messages::EngineMessage;
 use std::{error::Error, fmt, sync::Arc};
