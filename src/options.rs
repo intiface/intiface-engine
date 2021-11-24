@@ -35,6 +35,10 @@ pub struct IntifaceCLIArguments {
   #[argh(switch)]
   serverversion: bool,
 
+  /// turn on crash reporting to sentry
+  #[argh(switch)]
+  crash_reporting: bool,
+  
   // Options that set up the server networking
   /// if passed, websocket server listens on all interfaces. Otherwise, only
   /// listen on 127.0.0.1.
@@ -118,6 +122,21 @@ pub struct IntifaceCLIArguments {
   /// turn on websocket server device comm manager
   #[argh(switch)]
   with_websocket_server_device: bool,
+
+  #[cfg(debug_assertions)]
+  /// crash the main thread (that holds the runtime)
+  #[argh(switch)]
+  crash_main_thread: bool,
+
+  #[cfg(debug_assertions)]
+  /// crash the task thread (for testing logging/reporting)
+  #[argh(switch)]
+  crash_task_thread: bool,
+}
+
+pub fn should_turn_on_crash_reporting() -> bool {
+  let args: IntifaceCLIArguments = argh::from_env();
+  args.crash_reporting
 }
 
 fn try_add_comm_manager<T>(server: &ButtplugRemoteServer, builder: T)
@@ -171,6 +190,26 @@ pub fn setup_server_device_comm_managers(server: &ButtplugRemoteServer) {
       server,
       WebsocketServerDeviceCommunicationManagerBuilder::default().listen_on_all_interfaces(true),
     );
+  }
+}
+
+#[cfg(debug_assertions)]
+pub fn maybe_crash_main_thread() {
+  let args: IntifaceCLIArguments = argh::from_env();
+  if args.crash_main_thread {
+    panic!("Crashing main thread by request");
+  }
+}
+
+#[cfg(debug_assertions)]
+pub fn maybe_crash_task_thread() {
+  use std::time::Duration;
+  let args: IntifaceCLIArguments = argh::from_env();
+  if args.crash_task_thread {
+    tokio::spawn(async {
+      tokio::time::sleep(Duration::from_millis(100)).await;
+      panic!("Crashing a task thread by request");
+    });
   }
 }
 
