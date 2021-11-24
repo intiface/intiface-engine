@@ -32,7 +32,7 @@ use tokio::{
   sync::mpsc::{channel, Receiver},
 };
 use tokio_util::sync::CancellationToken;
-use tracing_subscriber::filter::EnvFilter;
+use tracing_subscriber::{filter::EnvFilter, layer::SubscriberExt, util::SubscriberInitExt, filter::LevelFilter};
 
 #[derive(Default, Clone)]
 pub struct ConnectorOptions {
@@ -240,29 +240,52 @@ fn setup_logging(frontend_sender: FrontendPBufChannel, token: CancellationToken)
         }
       }
     });
-    tracing_subscriber::fmt()
-      .json()
-      .with_max_level(log_level)
-      .with_ansi(false)
-      .with_writer(move || ChannelWriter::new(bp_log_sender.clone()))
-      .init();
+
+    tracing_subscriber::registry()
+      .with(LevelFilter::from(log_level))
+      .with(tracing_subscriber::fmt::layer()
+        .json()
+        //.with_max_level(log_level)
+        .with_ansi(false)
+        .with_writer(move || ChannelWriter::new(bp_log_sender.clone()))
+      )
+      .with(sentry_tracing::layer())
+      .try_init()
+      .unwrap();
   } else {
-    if log_level.is_some() {
-      tracing_subscriber::fmt()
-        .with_max_level(log_level.unwrap())
-        .init();
-    } else {
-      let filter = EnvFilter::try_from_default_env()
-        .or_else(|_| EnvFilter::try_new("info"))
-        .unwrap();
-      tracing_subscriber::fmt().with_env_filter(filter).init();
-    }
-    println!("Intiface Server, starting up with stdout output.");
+      if log_level.is_some() {
+        tracing_subscriber::registry()
+        .with(tracing_subscriber::fmt::layer())
+        .with(sentry_tracing::layer())
+        .with(LevelFilter::from(log_level))
+        .try_init()
+        .unwrap(); 
+      } else {
+        tracing_subscriber::registry()
+        .with(tracing_subscriber::fmt::layer())
+        .with(sentry_tracing::layer())
+        .with(EnvFilter::try_from_default_env()
+          .or_else(|_| EnvFilter::try_new("info"))
+          .unwrap())
+        .try_init()
+        .unwrap(); 
+      };
+      println!("Intiface Server, starting up with stdout output.");
   }
 }
 
 #[tokio::main]
 async fn main() -> Result<(), IntifaceCLIErrorEnum> {
+  const API_KEY: &str = include_str!(concat!(env!("OUT_DIR"), "/sentry_api_key.txt"));
+  let sentry_guard = if options::should_turn_on_crash_reporting() && !API_KEY.is_empty() {
+    Some(sentry::init((API_KEY, sentry::ClientOptions {
+      release: sentry::release_name!(),
+      ..Default::default()
+    })))
+  } else {
+    None
+  };
+  
   let frontend_cancellation_token = CancellationToken::new();
   let frontend_cancellation_child_token = frontend_cancellation_token.child_token();
   let process_ended_token = CancellationToken::new();
@@ -274,6 +297,12 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
   let frontend_sender = frontend::FrontendPBufChannel::create(frontend_cancellation_token, process_ended_token.child_token());
 
   setup_logging(frontend_sender.clone(), process_ended_token.child_token());
+
+  if sentry_guard.is_some() {
+    info!("Using sentry for crash logging.");
+  } else {
+    info!("Crash logging disabled.");
+  }
 
   // Parse options, get back our connection information and a curried server
   // factory closure.
@@ -324,6 +353,13 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
       ButtplugServerJSONSerializer,
     >::new(transport);
     info!("Starting server");
+    
+    // Let everything spin up, then try crashing.
+    #[cfg(debug_assertions)]
+    options::maybe_crash_main_thread();
+    #[cfg(debug_assertions)]
+    options::maybe_crash_task_thread();
+    
     let mut exit_requested = false;
     select! {
       _ = ctrl_c().fuse() => {
