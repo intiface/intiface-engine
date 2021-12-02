@@ -309,8 +309,9 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
     let server = ButtplugRemoteServer::new(core_server);
     options::setup_server_device_comm_managers(&server);
     info!("Starting new stay open loop");
+    let token = CancellationToken::new();
     loop {
-      let token = CancellationToken::new();
+      let mut exit_requested = false;
       let child_token = token.child_token();
       let event_receiver = server.event_stream();
       let fscc = frontend_sender_clone.clone();
@@ -327,7 +328,6 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
         ButtplugServerJSONSerializer,
       >::new(transport);
       info!("Starting server");
-      let mut exit_requested = false;
       select! {
         _ = ctrl_c().fuse() => {
           info!("Control-c hit, exiting.");
@@ -348,7 +348,6 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
                   .await;
               }
               exit_requested = true;
-              break;
             }
           }
         }

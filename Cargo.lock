@@ -1158,6 +1158,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "matchers"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8263075bb86c5a1b1427b5ae862e8889656f126e9f77c484496e8b47cf5c5558"
+dependencies = [
+ "regex-automata",
+]
+
+[[package]]
 name = "matches"
 version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2309,7 +2318,7 @@ dependencies = [
  "ansi_term 0.11.0",
  "chrono",
  "lazy_static",
- "matchers",
+ "matchers 0.0.1",
  "owning_ref",
  "regex",
  "smallvec 0.6.14",
@@ -2324,11 +2333,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "245da694cc7fc4729f3f418b304cb57789f1bed2a78c575407ab8a23f53cb4d3"
 dependencies = [
  "ansi_term 0.12.1",
+ "lazy_static",
+ "matchers 0.1.0",
+ "regex",
  "serde",
  "serde_json",
  "sharded-slab",
  "smallvec 1.7.0",
  "thread_local",
+ "tracing",
  "tracing-core",
  "tracing-log",
  "tracing-serde",

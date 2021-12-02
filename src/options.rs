@@ -2,9 +2,6 @@ use super::{ConnectorOptions, IntifaceCLIErrorEnum, IntifaceError};
 
 use super::frontend::{self, FrontendPBufChannel};
 use argh::FromArgs;
-use buttplug::device::configuration_manager::{
-  DeviceConfigurationManager,
-};
 #[cfg(target_os = "windows")]
 use buttplug::server::comm_managers::xinput::XInputDeviceCommunicationManagerBuilder;
 use buttplug::{
