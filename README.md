@@ -2,7 +2,6 @@
 
 [![Patreon donate button](https://img.shields.io/badge/patreon-donate-yellow.svg)](https://www.patreon.com/qdot)
 [![Github donate button](https://img.shields.io/badge/github-donate-ff69b4.svg)](https://www.github.com/sponsors/qdot)
-[![Discourse Forum](https://img.shields.io/badge/discourse-forum-blue.svg)](https://metafetish.club)
 [![Discord](https://img.shields.io/discord/353303527587708932.svg?logo=discord)](https://discord.buttplug.io)
 [![Twitter](https://img.shields.io/twitter/follow/buttplugio.svg?style=social&logo=twitter)](https://twitter.com/buttplugio)
 
@@ -33,10 +32,7 @@ Command line options are as follows:
 | `serverversion` | Print version and exit (kept for legacy reasons) |
 | `generatecert` | Generate self signed SSL cert (PEM format) and exit |
 | `wsallinterfaces` | Websocket servers will listen on all interfaces (versus only on localhost, which is default) |
-| `wsinsecureport [port]` | Network port for connecting via insecure (ws://) protocols |
-| `wssecureport [port]` | Network port for connecting via secure (wss://) protocols |
-| `wscertfile [file]` | Path to certificate for secure connection |
-| `wsprivfile [file]` | Path to private key for secure connection |
+| `wsinsecureport [port]` | Network port for connecting via non-ssl (ws://) protocols |
 | `ipcpipe [name]` | Name for IPC pipe (not yet implemented) |
 | `frontendpipe` | Relay output via protobuf to stdout (only used by Intiface Desktop GUI) |
 | `servername` | Identifying name server should emit when asked for info |

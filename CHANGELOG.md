@@ -1,8 +1,18 @@
+# v41 (2021/12/02)
+
+## Features
+
+- Update to Buttplug v5.1
+  - Bluetooth library updates
+  - Satisfyer/ManNuo/other device support (see Buttplug README)
+  - Lots of other fixes
+- Update to vergen v5, tracing-subscriber v0.3
+
 # v40 (2021/09/14)
 
 ## Features
 
-- Update to Buttplug 5.0.1
+- Update to Buttplug v5.0.1
   - Better MacOS bluetooth support
   - Better Linux bluetooth support
   - Tons of device additions (see Buttplug README)
