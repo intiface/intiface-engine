@@ -4,14 +4,23 @@ use super::frontend::{self, FrontendPBufChannel};
 use argh::FromArgs;
 #[cfg(target_os = "windows")]
 use buttplug::server::comm_managers::xinput::XInputDeviceCommunicationManagerBuilder;
-use buttplug::{
-  server::{ButtplugRemoteServer, comm_managers::{DeviceCommunicationManagerBuilder, btleplug::BtlePlugCommunicationManagerBuilder, lovense_dongle::{
-        LovenseHIDDongleCommunicationManagerBuilder, LovenseSerialDongleCommunicationManagerBuilder,
-      }, lovense_connect_service::LovenseConnectServiceCommunicationManagerBuilder, serialport::SerialPortCommunicationManagerBuilder, websocket_server::websocket_server_comm_manager::WebsocketServerDeviceCommunicationManagerBuilder}}};
+use buttplug::server::{
+  comm_managers::{
+    btleplug::BtlePlugCommunicationManagerBuilder,
+    lovense_connect_service::LovenseConnectServiceCommunicationManagerBuilder,
+    lovense_dongle::{
+      LovenseHIDDongleCommunicationManagerBuilder, LovenseSerialDongleCommunicationManagerBuilder,
+    },
+    serialport::SerialPortCommunicationManagerBuilder,
+    websocket_server::websocket_server_comm_manager::WebsocketServerDeviceCommunicationManagerBuilder,
+    DeviceCommunicationManagerBuilder,
+  },
+  ButtplugRemoteServer,
+};
 
 use std::fs;
-use tracing::Level;
 use tokio_util::sync::CancellationToken;
+use tracing::Level;
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
@@ -111,13 +120,12 @@ struct IntifaceCLIArguments {
 
   /// turn on websocket server device comm manager
   #[argh(switch)]
-  with_websocket_server_device: bool
+  with_websocket_server_device: bool,
 }
-
 
 fn try_add_comm_manager<T>(server: &ButtplugRemoteServer, builder: T)
 where
-  T: DeviceCommunicationManagerBuilder
+  T: DeviceCommunicationManagerBuilder,
 {
   if let Err(e) = server.device_manager().add_comm_manager(builder) {
     info!("Can't add Comm Manager: {:?}", e);
@@ -132,11 +140,17 @@ pub fn setup_server_device_comm_managers(server: &ButtplugRemoteServer) {
   }
   if !args.without_lovense_dongle_hid {
     info!("Including Lovense HID Dongle Support");
-    try_add_comm_manager(server, LovenseHIDDongleCommunicationManagerBuilder::default());
+    try_add_comm_manager(
+      server,
+      LovenseHIDDongleCommunicationManagerBuilder::default(),
+    );
   }
   if !args.without_lovense_dongle_serial {
     info!("Including Lovense Serial Dongle Support");
-    try_add_comm_manager(server, LovenseSerialDongleCommunicationManagerBuilder::default());
+    try_add_comm_manager(
+      server,
+      LovenseSerialDongleCommunicationManagerBuilder::default(),
+    );
   }
   if !args.without_serial {
     info!("Including Serial Port Support");
@@ -149,11 +163,17 @@ pub fn setup_server_device_comm_managers(server: &ButtplugRemoteServer) {
   }
   if args.with_lovense_connect {
     info!("Including Lovense Connect App Support");
-    try_add_comm_manager(server, LovenseConnectServiceCommunicationManagerBuilder::default());
+    try_add_comm_manager(
+      server,
+      LovenseConnectServiceCommunicationManagerBuilder::default(),
+    );
   }
   if args.with_websocket_server_device {
     info!("Including Websocket Server Device Support");
-    try_add_comm_manager(server, WebsocketServerDeviceCommunicationManagerBuilder::default().listen_on_all_interfaces(true));
+    try_add_comm_manager(
+      server,
+      WebsocketServerDeviceCommunicationManagerBuilder::default().listen_on_all_interfaces(true),
+    );
   }
 }
 
@@ -249,8 +269,10 @@ pub fn parse_options() -> Result<Option<ConnectorOptions>, IntifaceCLIErrorEnum>
       deviceconfig
     );
     match fs::read_to_string(deviceconfig) {
-      Ok(cfg) => connector_info.server_builder.device_configuration_json(Some(cfg)),
-      Err(err) => panic!("Error opening external device configuration: {:?}", err)
+      Ok(cfg) => connector_info
+        .server_builder
+        .device_configuration_json(Some(cfg)),
+      Err(err) => panic!("Error opening external device configuration: {:?}", err),
     };
   }
 
@@ -260,8 +282,10 @@ pub fn parse_options() -> Result<Option<ConnectorOptions>, IntifaceCLIErrorEnum>
       userdeviceconfig
     );
     match fs::read_to_string(userdeviceconfig) {
-      Ok(cfg) => connector_info.server_builder.user_device_configuration_json(Some(cfg)),
-      Err(err) => panic!("Error opening user device configuration: {:?}", err)
+      Ok(cfg) => connector_info
+        .server_builder
+        .user_device_configuration_json(Some(cfg)),
+      Err(err) => panic!("Error opening user device configuration: {:?}", err),
     };
   }
 

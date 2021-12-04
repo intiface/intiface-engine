@@ -1,4 +1,4 @@
-use vergen::{Config, vergen, ShaKind};
+use vergen::{vergen, Config, ShaKind};
 
 fn main() {
   prost_build::compile_protos(&["src/IntifaceGui.proto"], &["src/"]).unwrap();

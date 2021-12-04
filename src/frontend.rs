@@ -1,9 +1,14 @@
-use tokio::{self, sync::mpsc::{channel, Sender}, io::{stdin, stdout}, io::{AsyncReadExt, AsyncWriteExt}};
+use futures::{select, FutureExt};
 use intiface_gui::{
-  server_process_message::{Msg, self},
+  server_process_message::{self, Msg},
   ServerProcessMessage,
 };
-use futures::{select, FutureExt};
+use tokio::{
+  self,
+  io::{stdin, stdout},
+  io::{AsyncReadExt, AsyncWriteExt},
+  sync::mpsc::{channel, Sender},
+};
 use tokio_util::sync::CancellationToken;
 
 use prost::Message;
@@ -18,9 +23,7 @@ pub struct FrontendPBufChannel {
 }
 
 impl FrontendPBufChannel {
-  pub fn new(
-    sender: Sender<ServerProcessMessage>,
-  ) -> Self {
+  pub fn new(sender: Sender<ServerProcessMessage>) -> Self {
     Self { sender }
   }
 

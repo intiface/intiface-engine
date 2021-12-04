@@ -29,10 +29,10 @@ use log_panics;
 use std::{error::Error, fmt, time::Duration};
 use tokio::{
   self,
+  net::TcpListener,
   signal::ctrl_c,
   sync::mpsc::{channel, Receiver},
   time::sleep,
-  net::TcpListener
 };
 use tokio_util::sync::CancellationToken;
 use tracing_subscriber::filter::EnvFilter;
@@ -130,7 +130,7 @@ fn setup_frontend_filter_channel<T>(
 async fn server_event_receiver(
   receiver: impl Stream<Item = ButtplugRemoteServerEvent>,
   frontend_sender: Option<FrontendPBufChannel>,
-  connection_cancellation_token: CancellationToken
+  connection_cancellation_token: CancellationToken,
 ) {
   pin_mut!(receiver);
   loop {
@@ -197,7 +197,12 @@ async fn server_event_receiver(
   }
 }
 
-async fn reject_all_incoming(frontend_sender: Option<FrontendPBufChannel>, address: &str, port: u16, token: CancellationToken) {
+async fn reject_all_incoming(
+  frontend_sender: Option<FrontendPBufChannel>,
+  address: &str,
+  port: u16,
+  token: CancellationToken,
+) {
   info!("Rejecting all incoming clients while connected");
   let addr = format!("{}:{}", address, port);
   let try_socket = TcpListener::bind(&addr).await;
@@ -300,7 +305,9 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
         error!("Error starting server: {:?}", e);
         if let Some(sender) = &frontend_sender_clone {
           sender
-            .send(Msg::ProcessError(ProcessError { message: format!("Process Error: {:?}", e).to_owned() }))
+            .send(Msg::ProcessError(ProcessError {
+              message: format!("Process Error: {:?}", e).to_owned(),
+            }))
             .await;
         }
         return Err(IntifaceCLIErrorEnum::ButtplugError(e));
@@ -380,7 +387,9 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
         error!("Error starting server: {:?}", e);
         if let Some(sender) = &frontend_sender_clone {
           sender
-            .send(Msg::ProcessError(ProcessError { message: format!("Process Error: {:?}", e).to_owned() }))
+            .send(Msg::ProcessError(ProcessError {
+              message: format!("Process Error: {:?}", e).to_owned(),
+            }))
             .await;
         }
         return Err(IntifaceCLIErrorEnum::ButtplugError(e));
@@ -396,9 +405,9 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
     });
     options::setup_server_device_comm_managers(&server);
     let transport = ButtplugWebsocketServerTransportBuilder::default()
-    .port(connector_opts.ws_insecure_port.unwrap())
-    .listen_on_all_interfaces(connector_opts.ws_listen_on_all_interfaces)
-    .finish();
+      .port(connector_opts.ws_insecure_port.unwrap())
+      .listen_on_all_interfaces(connector_opts.ws_listen_on_all_interfaces)
+      .finish();
     let connector = ButtplugRemoteServerConnector::<
       ButtplugWebsocketServerTransport,
       ButtplugServerJSONSerializer,
