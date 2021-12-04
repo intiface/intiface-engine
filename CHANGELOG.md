@@ -1,3 +1,13 @@
+# v43 (2021/12/04)
+
+## Bugfixes
+
+- Update to Buttplug v5.1.2
+  - Fix race condition with bluetooth advertisements causing multiple simultaneous connects to
+    devices
+- Update to vergen 5.2.0
+  - Last version was yanked
+
 # v42 (2021/12/03)
 
 ## Bugfixes
