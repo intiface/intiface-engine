@@ -1,3 +1,11 @@
+# v42 (2021/12/03)
+
+## Bugfixes
+
+- Update to Buttplug v5.1.1
+  - Fix issues with devices w/ advertised services being ignored
+  - Fix issues with lovense dongle on linux
+
 # v41 (2021/12/02)
 
 ## Features
