@@ -128,6 +128,7 @@ pub struct IntifaceCLIArguments {
   #[argh(switch)]
   crash_main_thread: bool,
 
+  #[allow(dead_code)]
   #[cfg(debug_assertions)]
   /// crash the task thread (for testing logging/reporting)
   #[argh(switch)]
@@ -201,6 +202,7 @@ pub fn maybe_crash_main_thread() {
   }
 }
 
+#[allow(dead_code)]
 #[cfg(debug_assertions)]
 pub fn maybe_crash_task_thread() {
   use std::time::Duration;

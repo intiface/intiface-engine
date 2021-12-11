@@ -10,14 +10,15 @@ mod process_messages;
 
 use buttplug::{
   connector::{
-    ButtplugRemoteServerConnector, ButtplugWebsocketServerTransport,
-    ButtplugWebsocketServerTransportBuilder,
+    ButtplugRemoteServerConnector,
+    ButtplugWebsocketServerTransportBuilder, 
+    ButtplugPipeClientTransportBuilder,
   },
   core::{
     errors::ButtplugError,
     messages::{serializer::ButtplugServerJSONSerializer, ButtplugServerMessage},
   },
-  server::{remote_server::ButtplugRemoteServerEvent, ButtplugRemoteServer, ButtplugServerBuilder},
+  server::{remote_server::{ButtplugRemoteServerEvent, ButtplugServerConnectorError}, ButtplugRemoteServer, ButtplugServerBuilder},
   util::logging::ChannelWriter,
 };
 use frontend::FrontendPBufChannel;
@@ -59,7 +60,7 @@ impl IntifaceError {
 
 impl fmt::Display for IntifaceError {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "self.reason")
+    write!(f, "{}", self.reason)
   }
 }
 
@@ -340,21 +341,25 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
       server_event_receiver(server_clone, event_receiver, fscc, session_connection_child_token).await;
     });
     info!("Creating new stay open connector");
-    let transport = ButtplugWebsocketServerTransportBuilder::default()
-      .port(connector_opts.ws_insecure_port.unwrap())
-      .listen_on_all_interfaces(connector_opts.ws_listen_on_all_interfaces)
-      .finish();
-    let connector = ButtplugRemoteServerConnector::<
-      ButtplugWebsocketServerTransport,
-      ButtplugServerJSONSerializer,
-    >::new(transport);
+
+    async fn run_server(server: Arc<ButtplugRemoteServer>, connector_opts: &ConnectorOptions) -> Result<(), ButtplugServerConnectorError> {
+      if let Some(port) = connector_opts.ws_insecure_port {
+        server.start(ButtplugRemoteServerConnector::<_, ButtplugServerJSONSerializer>::new(ButtplugWebsocketServerTransportBuilder::default()
+          .port(port)
+          .listen_on_all_interfaces(connector_opts.ws_listen_on_all_interfaces)
+          .finish())).await
+      } else if let Some(pipe_name) = &connector_opts.ipc_pipe_name {
+        server.start(ButtplugRemoteServerConnector::<_, ButtplugServerJSONSerializer>::new(ButtplugPipeClientTransportBuilder::new(&pipe_name)
+          .finish())).await
+      } else {
+        panic!("Neither websocket port nor ipc pipe name are set, cannot create transport.");
+      }
+    }
     info!("Starting server");
     
     // Let everything spin up, then try crashing.
     #[cfg(debug_assertions)]
     options::maybe_crash_main_thread();
-    #[cfg(debug_assertions)]
-    options::maybe_crash_task_thread();
     
     let mut exit_requested = false;
     select! {
@@ -366,7 +371,7 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
         info!("Owner requested process exit, exiting.");
         exit_requested = true;
       }
-      result = server.start(connector).fuse() => {
+      result = run_server(server.clone(), &connector_opts).fuse() => {
         match result {
           Ok(_) => info!("Connection dropped, restarting stay open loop."),
           Err(e) => {
