@@ -23,7 +23,6 @@ use buttplug::{
 };
 use frontend::FrontendPBufChannel;
 use futures::{FutureExt, Stream, StreamExt, pin_mut, select};
-use log_panics;
 use process_messages::EngineMessage;
 use std::{error::Error, fmt, sync::Arc};
 use tokio::{
@@ -103,20 +102,12 @@ fn setup_frontend_filter_channel<T>(
   let (sender_filtered, recv_filtered) = channel(256);
 
   tokio::spawn(async move {
-    loop {
-      match receiver.recv().await {
-        Some(msg) => {
-          match msg {
-            ButtplugServerMessage::ServerInfo(_) => {
-              let msg = EngineMessage::ClientConnected("Unknown Name".to_string());
-              frontend_channel.send(msg).await;
-            }
-            _ => {}
-          }
-          sender_filtered.send(msg).await.unwrap();
-        }
-        None => break,
+    while let Some(msg) = receiver.recv().await {
+      if let ButtplugServerMessage::ServerInfo(_) = msg {
+        let msg = EngineMessage::ClientConnected("Unknown Name".to_string());
+        frontend_channel.send(msg).await;
       }
+      sender_filtered.send(msg).await.unwrap();
     }
   });
 
@@ -155,7 +146,7 @@ async fn server_event_receiver(
               let info = server.device_manager().device_info(device_id).unwrap();
               info!("Device Address: {:?}", info.address);
               frontend_sender
-                .send(EngineMessage::DeviceConnected { name: device_name, index: device_id, address: info.address, display_name: info.display_name.unwrap_or("".to_string()) })
+                .send(EngineMessage::DeviceConnected { name: device_name, index: device_id, address: info.address, display_name: info.display_name.unwrap_or_default() })
                 .await;
             }
             ButtplugRemoteServerEvent::DeviceRemoved(device_id) => {
@@ -220,7 +211,7 @@ fn setup_logging(frontend_sender: FrontendPBufChannel, token: CancellationToken)
     // Add panic hook for emitting backtraces through the logging system.
     log_panics::init();
     let (bp_log_sender, mut receiver) = channel::<Vec<u8>>(256);
-    let log_sender = frontend_sender.clone();
+    let log_sender = frontend_sender;
     tokio::spawn(async move {
       log_sender.send(EngineMessage::EngineStarted).await;
       loop {
@@ -349,7 +340,7 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
           .listen_on_all_interfaces(connector_opts.ws_listen_on_all_interfaces)
           .finish())).await
       } else if let Some(pipe_name) = &connector_opts.ipc_pipe_name {
-        server.start(ButtplugRemoteServerConnector::<_, ButtplugServerJSONSerializer>::new(ButtplugPipeClientTransportBuilder::new(&pipe_name)
+        server.start(ButtplugRemoteServerConnector::<_, ButtplugServerJSONSerializer>::new(ButtplugPipeClientTransportBuilder::new(pipe_name)
           .finish())).await
       } else {
         panic!("Neither websocket port nor ipc pipe name are set, cannot create transport.");

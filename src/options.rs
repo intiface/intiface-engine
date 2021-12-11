@@ -19,7 +19,7 @@ use buttplug::server::{
 use std::fs;
 use tracing::Level;
 
-const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// command line interface for intiface/buttplug.
 ///
