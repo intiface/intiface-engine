@@ -26,7 +26,7 @@ impl FrontendPBufChannel {
           .unwrap();
 
         #[cfg(not(target_os="windows"))]
-        unimplemented!("Implement domain sockets!");
+        let mut client = UnixStream::connect(address).await.unwrap();
 
         loop {
           select! {
