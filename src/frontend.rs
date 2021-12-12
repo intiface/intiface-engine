@@ -2,6 +2,9 @@ use super::{process_messages::EngineMessage, options::frontend_pipe};
 use futures::{select, FutureExt};
 #[cfg(target_os = "windows")]
 use tokio::net::windows::named_pipe;
+#[cfg(not(target_os = "windows"))]
+use tokio::net::UnixStream;
+
 use tokio::{
   self,
   io::AsyncWriteExt,
@@ -26,7 +29,7 @@ impl FrontendPBufChannel {
           .unwrap();
 
         #[cfg(not(target_os="windows"))]
-        let mut client = UnixStream::connect(address).await.unwrap();
+        let mut client = UnixStream::connect(pipe_name).await.unwrap();
 
         loop {
           select! {
