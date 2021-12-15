@@ -155,11 +155,8 @@ async fn server_event_receiver(
             }
             ButtplugRemoteServerEvent::Disconnected => {
               info!("Client disconnected.");
-              if let Some(frontend_sender) = &frontend_sender {
-                frontend_sender
-                  .send(Msg::ClientDisconnected(ClientDisconnected {}))
-                  .await;
-              }
+              // If we disconnect, go ahead and break out of our loop.
+              break;
             }
             ButtplugRemoteServerEvent::DeviceAdded(device_id, device_name) => {
               info!("Device Added: {} - {}", device_id, device_name);
@@ -181,10 +178,14 @@ async fn server_event_receiver(
               }
             }
           },
-          None => break,
+          None => {
+            warn!("Lost connection with main thread, breaking.");
+            break;
+          },
         }
       },
       _ = connection_cancellation_token.cancelled().fuse() => {
+        info!("Connection cancellation token activated, breaking");
         break;
       }
     }
@@ -316,14 +317,16 @@ async fn main() -> Result<(), IntifaceCLIErrorEnum> {
     let server = ButtplugRemoteServer::new(core_server);
     options::setup_server_device_comm_managers(&server);
     info!("Starting new stay open loop");
-    let token = CancellationToken::new();
     loop {
+      let token = CancellationToken::new();
       let mut exit_requested = false;
       let child_token = token.child_token();
       let event_receiver = server.event_stream();
       let fscc = frontend_sender_clone.clone();
       tokio::spawn(async move {
+        info!("Spawning server event receiver");
         server_event_receiver(event_receiver, fscc, child_token).await;
+        info!("Shutting down server event receiver");
       });
       info!("Creating new stay open connector");
       let transport = ButtplugWebsocketServerTransportBuilder::default()
