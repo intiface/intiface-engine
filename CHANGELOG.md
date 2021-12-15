@@ -1,3 +1,12 @@
+# v44 (2021/12/14)
+
+## Bugfixes
+
+- Update to Buttplug v5.1.4
+  - Shouldn't change anything in here, all the fixes were FFI related, but eh.
+- Try to get crash logs into frontend log output for easier debugging
+- #14: Fix issue with intiface-cli not sending events to desktop after first disconnection
+
 # v43 (2021/12/04)
 
 ## Bugfixes
