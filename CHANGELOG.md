@@ -1,3 +1,11 @@
+# v45 (2021/12/19)
+
+## Bugfixes
+
+- Update to Buttplug v5.1.5
+  - Fix issues with Satisfyer name detection and disconnection
+  - Fix issues with device scanning always saying it's instantly finished 
+
 # v44 (2021/12/14)
 
 ## Bugfixes

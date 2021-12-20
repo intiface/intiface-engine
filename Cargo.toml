@@ -1,6 +1,6 @@
 [package]
 name = "intiface-cli"
-version = "44.0.0"
+version = "45.0.0"
 authors = ["Nonpolynomial Labs, LLC <kyle@nonpolynomial.com>"]
 description = "Command Line Interface frontend for the Buttplug sex toy control library"
 license = "BSD-3-Clause"
@@ -13,16 +13,16 @@ exclude = [".vscode/**"]
 
 [dependencies]
 # buttplug = { path = "../buttplug-rs/buttplug" }
-buttplug = "5.1.4"
+buttplug = "5.1.5"
 argh = "0.1.7"
 log = "0.4.14"
-futures = "0.3.17"
+futures = "0.3.19"
 prost = "0.9.0"
 async-channel = "1.6.1"
 tracing-fmt = "0.1.1"
 tracing-subscriber = { version = "0.3.3", features = ["env-filter"] }
 tracing = "0.1.29"
-tokio = { version = "1.14.0", features = ["sync", "rt-multi-thread", "macros", "io-std", "fs", "signal", "io-util"] }
+tokio = { version = "1.15.0", features = ["sync", "rt-multi-thread", "macros", "io-std", "fs", "signal", "io-util"] }
 log-panics = { version = "2.0.0", features = ["with-backtrace"] }
 backtrace = "0.3.63"
 ctrlc = "3.2.1"
