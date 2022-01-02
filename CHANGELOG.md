@@ -1,3 +1,12 @@
+# v46 (2022/01/01)
+
+## Bugfixes
+
+- Update to Buttplug v5.1.6
+  - Fix issues with serial ports blocking, lovense connect data types, log message levels, etc...
+  - See Buttplug v5.1.6 changelog for more info.
+    (https://github.com/buttplugio/buttplug/blob/master/buttplug/CHANGELOG.md)
+
 # v45 (2021/12/19)
 
 ## Bugfixes
