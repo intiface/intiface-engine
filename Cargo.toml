@@ -12,21 +12,21 @@ edition = "2021"
 exclude = [".vscode/**"]
 
 [dependencies]
-# buttplug = { path = "../buttplug-rs/buttplug" }
-buttplug = "5.1.4"
+buttplug = { path = "../buttplug-rs/buttplug" }
+# buttplug = "5.1.5"
 argh = "0.1.7"
 log = "0.4.14"
-futures = "0.3.18"
+futures = "0.3.19"
 tracing-fmt = "0.1.1"
-tracing-subscriber = { version = "0.3.3", features = ["env-filter", "json"] }
+tracing-subscriber = { version = "0.3.4", features = ["env-filter", "json"] }
 tracing = "0.1.29"
-tokio = { version = "1.14.0", features = ["sync", "rt-multi-thread", "macros", "io-std", "fs", "signal", "io-util"] }
+tokio = { version = "1.15.0", features = ["sync", "rt-multi-thread", "macros", "io-std", "fs", "signal", "io-util"] }
 log-panics = { version = "2.0.0", features = ["with-backtrace"] }
 backtrace = "0.3.63"
 ctrlc = "3.2.1"
 tokio-util = "0.6.9"
-serde = "1.0.131"
-serde_json = "1.0.72"
+serde = "1.0.132"
+serde_json = "1.0.73"
 sentry = "0.23.0"
 sentry-tracing = "0.23.0"
 
@@ -36,7 +36,7 @@ winapi = "0.3.9"
 
 [build-dependencies]
 vergen = "6.0.0"
-anyhow = "1.0.51"
+anyhow = "1.0.52"
 
 [patch.crates-io]
 
