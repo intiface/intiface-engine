@@ -264,6 +264,13 @@ fn setup_logging(frontend_sender: FrontendPBufChannel, token: CancellationToken)
 
 #[tokio::main]
 async fn main() -> Result<(), IntifaceCLIErrorEnum> {
+
+  let args: options::IntifaceCLIArguments = argh::from_env();
+  if args.serverversion {
+    println!("{}", env!("VERGEN_GIT_SEMVER"));
+    return Ok(());
+  }
+
   const API_KEY: &str = include_str!(concat!(env!("OUT_DIR"), "/sentry_api_key.txt"));
   let sentry_guard = if options::should_turn_on_crash_reporting() && !API_KEY.is_empty() {
     Some(sentry::init((API_KEY, sentry::ClientOptions {
