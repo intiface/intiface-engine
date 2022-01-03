@@ -33,7 +33,7 @@ pub struct IntifaceCLIArguments {
 
   /// print version and exit.
   #[argh(switch)]
-  serverversion: bool,
+  pub serverversion: bool,
 
   /// turn on crash reporting to sentry
   #[argh(switch)]
@@ -227,12 +227,8 @@ pub fn frontend_pipe() -> Option<String> {
 
 pub fn parse_options() -> Result<Option<ConnectorOptions>, IntifaceCLIErrorEnum> {
   let args: IntifaceCLIArguments = argh::from_env();
-
-  // Options that will do a thing then exit:
-  //
-  // - serverversion
-  // - generatecert
-  if args.serverversion || args.version {
+  
+  if args.version {
     debug!("Server version command sent, printing and exiting.");
     println!(
       "Intiface CLI (Rust Edition) Version {}, Commit {}, Built {}",
