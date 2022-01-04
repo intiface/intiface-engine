@@ -42,12 +42,12 @@ jobs:
       with:
         command: fmt
         args: --all -- --check
-    - name: Build Debug
-      run: cargo build
-    - name: Run tests
-      run: cargo test
-    - name: Run doc gen
-      run: cargo doc --no-deps
+#    - name: Build Debug
+#      run: cargo build
+#    - name: Run tests
+#      run: cargo test
+#    - name: Run doc gen
+#      run: cargo doc --no-deps
     - name: Build Release
       run: cargo build --release
     - name: Copy executable (Linux, MacOS)
