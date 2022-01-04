@@ -1,3 +1,9 @@
+# v47 (2021/01/04)
+
+## Bugfixes
+
+- No changes to build, re-release to fix issue with a wrong tag getting pushed.
+
 # v46 (2022/01/01)
 
 ## Bugfixes
