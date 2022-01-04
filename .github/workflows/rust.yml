@@ -53,27 +53,17 @@ jobs:
     - name: Copy executable (Linux, MacOS)
       if: startsWith(matrix.os, 'ubuntu') || startsWith(matrix.os, 'macos')
       run: |
-        mkdir ci-output-debug
-        cp target/debug/intiface-cli ci-output-debug/IntifaceCLI
         mkdir ci-output-release
         cp target/release/intiface-cli ci-output-release/IntifaceCLI
     - name: Copy Info.plist (MacOS)
       if: startsWith(matrix.os, 'macos')
       run: |
-        cp src/Info.plist ci-output-debug/Info.plist
         cp src/Info.plist ci-output-release/Info.plist
     - name: Copy executable (Windows)
       if: startsWith(matrix.os, 'windows')
       run: |
-        mkdir ci-output-debug
-        copy target\debug\intiface-cli.exe ci-output-debug\IntifaceCLI.exe
         mkdir ci-output-release
         copy target\release\intiface-cli.exe ci-output-release\IntifaceCLI.exe
-    - name: Upload artifacts (debug)
-      uses: actions/upload-artifact@v1
-      with:
-        name: intiface-cli-rs-${{ runner.os }}-debug
-        path: ci-output-debug
     - name: Upload artifacts (release)
       uses: actions/upload-artifact@v1
       with:
@@ -86,18 +76,6 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
     - uses: actions/checkout@v2
-    - name: Download Artifact (Linux)
-      uses: actions/download-artifact@v1
-      with:
-        name: intiface-cli-rs-Linux-debug
-    - name: Download Artifact (Windows)
-      uses: actions/download-artifact@v1
-      with:
-        name: intiface-cli-rs-Windows-debug
-    - name: Download Artifact (MacOS)
-      uses: actions/download-artifact@v1
-      with:
-        name: intiface-cli-rs-macOS-debug
     - name: Download Artifact (Linux)
       uses: actions/download-artifact@v1
       with:
@@ -114,9 +92,6 @@ jobs:
       # This follows the naming convention from C# and JS. Use -j to junk the
       # directory structure.
       run: |
-        zip -j intiface-cli-rs-linux-x64-Debug.zip intiface-cli-rs-Linux-debug/IntifaceCLI README.md CHANGELOG.md
-        zip -j intiface-cli-rs-win-x64-Debug.zip intiface-cli-rs-Windows-debug/IntifaceCLI.exe README.md CHANGELOG.md
-        zip -j intiface-cli-rs-macos-x64-Debug.zip intiface-cli-rs-macOS-debug/IntifaceCLI README.md CHANGELOG.md Info.plist
         zip -j intiface-cli-rs-linux-x64-Release.zip intiface-cli-rs-Linux-release/IntifaceCLI README.md CHANGELOG.md
         zip -j intiface-cli-rs-win-x64-Release.zip intiface-cli-rs-Windows-release/IntifaceCLI.exe README.md CHANGELOG.md
         zip -j intiface-cli-rs-macos-x64-Release.zip intiface-cli-rs-macOS-release/IntifaceCLI README.md CHANGELOG.md Info.plist
@@ -125,9 +100,6 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/')
       with:
         files: |
-          intiface-cli-rs-linux-x64-Debug.zip
-          intiface-cli-rs-win-x64-Debug.zip
-          intiface-cli-rs-macos-x64-Debug.zip
           intiface-cli-rs-linux-x64-Release.zip
           intiface-cli-rs-win-x64-Release.zip
           intiface-cli-rs-macos-x64-Release.zip
