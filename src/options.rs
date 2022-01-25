@@ -121,7 +121,11 @@ pub struct IntifaceCLIArguments {
 
   /// turn on websocket server device comm manager
   #[argh(switch)]
-  with_websocket_server_device: bool,
+  with_device_websocket_server: bool,
+
+  /// port for device websocket server comm manager (defaults to 54817)
+  #[argh(option)]
+  device_websocket_server_port: Option<u16>,
 
   #[cfg(debug_assertions)]
   /// crash the main thread (that holds the runtime)
@@ -185,11 +189,15 @@ pub fn setup_server_device_comm_managers(server: &ButtplugRemoteServer) {
       LovenseConnectServiceCommunicationManagerBuilder::default(),
     );
   }
-  if args.with_websocket_server_device {
+  if args.with_device_websocket_server {
     info!("Including Websocket Server Device Support");
+    let mut builder = WebsocketServerDeviceCommunicationManagerBuilder::default().listen_on_all_interfaces(true);
+    if let Some(port) = args.device_websocket_server_port {
+      builder = builder.server_port(port);
+    }
     try_add_comm_manager(
       server,
-      WebsocketServerDeviceCommunicationManagerBuilder::default().listen_on_all_interfaces(true),
+      builder
     );
   }
 }
