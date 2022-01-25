@@ -1,3 +1,10 @@
+# v48 (2021/01/24)
+
+## Features
+
+- Update to Buttplug v5.1.7
+  - Lovense Calor support, Folove support, more WeVibe/Satisfyer support
+
 # v47 (2021/01/04)
 
 ## Bugfixes
