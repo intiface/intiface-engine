@@ -997,7 +997,7 @@ dependencies = [
 
 [[package]]
 name = "intiface-cli"
-version = "100.0.0"
+version = "101.0.0"
 dependencies = [
  "anyhow",
  "argh",

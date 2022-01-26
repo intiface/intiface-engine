@@ -1,3 +1,16 @@
+# v101 (egui Beta 2) (2021/01/25)
+
+- Add websocket device server port selection
+
+# v100 (egui Beta 1) (2021/01/04)
+
+## Features
+
+- Use JSON over named pipes instead of protobufs over stdio
+- Add sentry crash logging
+- Server version now uses a shorter tag
+- Update to Rust 2021
+
 # v48 (2021/01/24)
 
 ## Features
