@@ -1,3 +1,16 @@
+# v101 (egui Beta 2) (2021/01/25)
+
+- Add websocket device server port selection
+
+# v100 (egui Beta 1) (2021/01/04)
+
+## Features
+
+- Use JSON over named pipes instead of protobufs over stdio
+- Add sentry crash logging
+- Server version now uses a shorter tag
+- Update to Rust 2021
+
 # v50 (2022/04/26)
 
 ## Features
@@ -15,7 +28,7 @@
   - Added Lelo F1s v2 support, more support for Mannuo/Magic Motion/OhMiBod devices
   - May fix issues with windows bluetooth on older Win 10 versions
 
-# v48 (2022/01/24)
+# v48 (2021/01/24)
 
 ## Features
 
