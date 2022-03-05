@@ -1,6 +1,6 @@
 [package]
 name = "intiface-cli"
-version = "48.0.0"
+version = "49.0.0"
 authors = ["Nonpolynomial Labs, LLC <kyle@nonpolynomial.com>"]
 description = "Command Line Interface frontend for the Buttplug sex toy control library"
 license = "BSD-3-Clause"
@@ -13,20 +13,20 @@ exclude = [".vscode/**"]
 
 [dependencies]
 # buttplug = { path = "../buttplug-rs/buttplug" }
-buttplug = "5.1.7"
+buttplug = "5.1.8"
 argh = "0.1.7"
 log = "0.4.14"
-futures = "0.3.19"
+futures = "0.3.21"
 prost = "0.9.0"
 async-channel = "1.6.1"
 tracing-fmt = "0.1.1"
-tracing-subscriber = { version = "0.3.6", features = ["env-filter"] }
-tracing = "0.1.29"
-tokio = { version = "1.15.0", features = ["sync", "rt-multi-thread", "macros", "io-std", "fs", "signal", "io-util"] }
+tracing-subscriber = { version = "0.3.9", features = ["env-filter"] }
+tracing = "0.1.31"
+tokio = { version = "1.17.0", features = ["sync", "rt-multi-thread", "macros", "io-std", "fs", "signal", "io-util"] }
 log-panics = { version = "2.0.0", features = ["with-backtrace"] }
-backtrace = "0.3.63"
+backtrace = "0.3.64"
 ctrlc = "3.2.1"
-tokio-util = "0.6.9"
+tokio-util = "0.7.0"
 
 [target.'cfg(windows)'.dependencies]
 kernel32-sys = "0.2.2"
@@ -34,4 +34,4 @@ winapi = "0.3.9"
 
 [build-dependencies]
 prost-build = "0.9.0"
-vergen = "6.0.1"
+vergen = "6.0.2"

@@ -1,3 +1,11 @@
+# v49 (2021/03/05)
+
+## Features
+
+- Update to Buttplug v5.1.8
+  - Added Lelo F1s v2 support, more support for Mannuo/Magic Motion/OhMiBod devices
+  - May fix issues with windows bluetooth on older Win 10 versions
+
 # v48 (2021/01/24)
 
 ## Features
