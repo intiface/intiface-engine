@@ -1,6 +1,6 @@
 [package]
 name = "intiface-cli"
-version = "49.0.0"
+version = "50.0.0"
 authors = ["Nonpolynomial Labs, LLC <kyle@nonpolynomial.com>"]
 description = "Command Line Interface frontend for the Buttplug sex toy control library"
 license = "BSD-3-Clause"

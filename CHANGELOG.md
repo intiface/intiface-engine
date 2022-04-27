@@ -1,4 +1,13 @@
-# v49 (2021/03/05)
+# v50 (2022/04/26)
+
+## Features
+
+- Update to Buttplug v5.1.9
+  - Add Magic Motion Crystal support
+  - Fix issues with Satisfyer Plugalicious 2 connections
+  - Fix issues with Satisfyer device identification
+
+# v49 (2022/03/05)
 
 ## Features
 
@@ -6,14 +15,14 @@
   - Added Lelo F1s v2 support, more support for Mannuo/Magic Motion/OhMiBod devices
   - May fix issues with windows bluetooth on older Win 10 versions
 
-# v48 (2021/01/24)
+# v48 (2022/01/24)
 
 ## Features
 
 - Update to Buttplug v5.1.7
   - Lovense Calor support, Folove support, more WeVibe/Satisfyer support
 
-# v47 (2021/01/04)
+# v47 (2022/01/04)
 
 ## Bugfixes
 
