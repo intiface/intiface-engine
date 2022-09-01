@@ -29,6 +29,8 @@ serde = "1.0.139"
 serde_json = "1.0.82"
 sentry = "0.27.0"
 sentry-tracing = "0.27.0"
+async-tungstenite = "0.17.2"
+thiserror = "1.0.31"
 
 [target.'cfg(windows)'.dependencies]
 winapi = "0.3.9"

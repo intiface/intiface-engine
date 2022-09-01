@@ -1,17 +1,19 @@
 use serde::{Serialize, Deserialize};
 
+// Everything in this struct is an object, even if it has null contents. This is to make other
+// languages happy when trying to recompose JSON into objects.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum EngineMessage {
-  MessageVersion(u32),
-  EngineLog(String),
-  EngineStarted,
-  EngineError(String),
-  EngineStopped,
-  ClientConnected(String),
-  ClientDisconnected,
-  DeviceConnected { name: String, index: u32, address: String, display_name: String },
-  DeviceDisconnected(u32),
-  ClientRejected(String)
+  MessageVersion{version: u32},
+  EngineLog{message: String},
+  EngineStarted{},
+  EngineError{error: String},
+  EngineStopped{},
+  ClientConnected{client_name: String},
+  ClientDisconnected{},
+  DeviceConnected { name: String, index: u32, address: String, display_name: Option<String> },
+  DeviceDisconnected{index: u32},
+  ClientRejected{reason: String}
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
