@@ -1,6 +1,6 @@
 [package]
 name = "intiface-cli"
-version = "101.0.0"
+version = "102.0.0"
 authors = ["Nonpolynomial Labs, LLC <kyle@nonpolynomial.com>"]
 description = "Command Line Interface frontend for the Buttplug sex toy control library"
 license = "BSD-3-Clause"
@@ -13,7 +13,7 @@ exclude = [".vscode/**"]
 
 [dependencies]
 # buttplug = { path = "../buttplug-rs/buttplug" }
-buttplug = "5.1.10"
+buttplug = "6.0.0"
 argh = "0.1.8"
 log = "0.4.17"
 futures = "0.3.21"
