@@ -1,9 +1,9 @@
 use super::{ConnectorOptions, IntifaceCLIErrorEnum, IntifaceError};
 use argh::FromArgs;
 #[cfg(target_os = "windows")]
-use buttplug::server::comm_managers::xinput::XInputDeviceCommunicationManagerBuilder;
+use buttplug::server::device::hardware::communication::xinput::XInputDeviceCommunicationManagerBuilder;
 use buttplug::server::{
-  comm_managers::{
+  device::hardware::communication::{
     btleplug::BtlePlugCommunicationManagerBuilder,
     lovense_connect_service::LovenseConnectServiceCommunicationManagerBuilder,
     lovense_dongle::{
@@ -11,9 +11,8 @@ use buttplug::server::{
     },
     serialport::SerialPortCommunicationManagerBuilder,
     websocket_server::websocket_server_comm_manager::WebsocketServerDeviceCommunicationManagerBuilder,
-    DeviceCommunicationManagerBuilder,
   },
-  ButtplugRemoteServer,
+  ButtplugServerBuilder,
 };
 
 use std::fs;
@@ -144,50 +143,33 @@ pub fn should_turn_on_crash_reporting() -> bool {
   args.crash_reporting
 }
 
-fn try_add_comm_manager<T>(server: &ButtplugRemoteServer, builder: T)
-where
-  T: DeviceCommunicationManagerBuilder,
-{
-  if let Err(e) = server.device_manager().add_comm_manager(builder) {
-    info!("Can't add Comm Manager: {:?}", e);
-  }
-}
 
-pub fn setup_server_device_comm_managers(server: &ButtplugRemoteServer) {
+pub fn setup_server_device_comm_managers(server_builder: &mut ButtplugServerBuilder) {
   let args: IntifaceCLIArguments = argh::from_env();
   if !args.without_bluetooth_le {
     info!("Including Bluetooth LE (btleplug) Device Comm Manager Support");
-    try_add_comm_manager(server, BtlePlugCommunicationManagerBuilder::default());
+    server_builder.comm_manager(BtlePlugCommunicationManagerBuilder::default());
   }
   if !args.without_lovense_dongle_hid {
     info!("Including Lovense HID Dongle Support");
-    try_add_comm_manager(
-      server,
-      LovenseHIDDongleCommunicationManagerBuilder::default(),
-    );
+    server_builder.comm_manager(LovenseHIDDongleCommunicationManagerBuilder::default());
   }
   if !args.without_lovense_dongle_serial {
     info!("Including Lovense Serial Dongle Support");
-    try_add_comm_manager(
-      server,
-      LovenseSerialDongleCommunicationManagerBuilder::default(),
-    );
+    server_builder.comm_manager(LovenseSerialDongleCommunicationManagerBuilder::default());
   }
   if !args.without_serial {
     info!("Including Serial Port Support");
-    try_add_comm_manager(server, SerialPortCommunicationManagerBuilder::default());
+    server_builder.comm_manager(SerialPortCommunicationManagerBuilder::default());
   }
   #[cfg(target_os = "windows")]
   if !args.without_xinput {
     info!("Including XInput Gamepad Support");
-    try_add_comm_manager(server, XInputDeviceCommunicationManagerBuilder::default());
+    server_builder.comm_manager(XInputDeviceCommunicationManagerBuilder::default());
   }
   if args.with_lovense_connect {
     info!("Including Lovense Connect App Support");
-    try_add_comm_manager(
-      server,
-      LovenseConnectServiceCommunicationManagerBuilder::default(),
-    );
+    server_builder.comm_manager(LovenseConnectServiceCommunicationManagerBuilder::default());
   }
   if args.with_device_websocket_server {
     info!("Including Websocket Server Device Support");
@@ -195,10 +177,7 @@ pub fn setup_server_device_comm_managers(server: &ButtplugRemoteServer) {
     if let Some(port) = args.device_websocket_server_port {
       builder = builder.server_port(port);
     }
-    try_add_comm_manager(
-      server,
-      builder
-    );
+    server_builder.comm_manager(builder);
   }
 }
 
@@ -286,9 +265,11 @@ pub fn parse_options() -> Result<Option<ConnectorOptions>, IntifaceCLIErrorEnum>
   connector_info
     .server_builder
     .name(&args.servername)
-    .max_ping_time(args.pingtime)
-    .allow_raw_messages(args.allowraw);
+    .max_ping_time(args.pingtime);
 
+  if args.allowraw {
+    connector_info.server_builder.allow_raw_messages();
+  }
   if args.frontendpipe.is_some() {
     info!("Intiface CLI Options: Using frontend pipe");
     connector_info.use_frontend_pipe = true;
