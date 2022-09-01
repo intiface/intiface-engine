@@ -16,28 +16,28 @@ exclude = [".vscode/**"]
 buttplug = "6.0.0"
 argh = "0.1.8"
 log = "0.4.17"
-futures = "0.3.21"
+futures = "0.3.24"
 tracing-fmt = "0.1.1"
-tracing-subscriber = { version = "0.3.14", features = ["env-filter", "json"] }
-tracing = "0.1.35"
-tokio = { version = "1.20.0", features = ["sync", "rt-multi-thread", "macros", "io-std", "fs", "signal", "io-util"] }
+tracing-subscriber = { version = "0.3.15", features = ["env-filter", "json"] }
+tracing = "0.1.36"
+tokio = { version = "1.20.1", features = ["sync", "rt-multi-thread", "macros", "io-std", "fs", "signal", "io-util"] }
 log-panics = { version = "2.1.0", features = ["with-backtrace"] }
 backtrace = "0.3.66"
-ctrlc = "3.2.2"
+ctrlc = "3.2.3"
 tokio-util = "0.7.3"
-serde = "1.0.139"
-serde_json = "1.0.82"
+serde = "1.0.144"
+serde_json = "1.0.85"
 sentry = "0.27.0"
 sentry-tracing = "0.27.0"
 async-tungstenite = "0.17.2"
-thiserror = "1.0.31"
+thiserror = "1.0.33"
 
 [target.'cfg(windows)'.dependencies]
 winapi = "0.3.9"
 
 [build-dependencies]
-vergen = "7.2.1"
-anyhow = "1.0.58"
+vergen = "7.4.2"
+anyhow = "1.0.63"
 
 [patch.crates-io]
 
