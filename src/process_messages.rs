@@ -11,7 +11,13 @@ pub enum EngineMessage {
   EngineStopped{},
   ClientConnected{client_name: String},
   ClientDisconnected{},
-  DeviceConnected { name: String, index: u32, address: String, display_name: Option<String> },
+  DeviceConnected { 
+    name: String, 
+    index: u32, 
+    address: String, 
+    #[serde(skip_serializing_if = "Option::is_none")]
+    display_name: Option<String> 
+  },
   DeviceDisconnected{index: u32},
   ClientRejected{reason: String}
 }
