@@ -161,6 +161,10 @@ impl IntifaceEngine {
 
       let mut exit_requested = false;
       select! {
+        _ = self.stop_token.cancelled() => {
+          info!("Owner requested process exit, exiting.");
+          exit_requested = true;
+        }
         _ = frontend_cancellation_child_token.cancelled() => {
           info!("Owner requested process exit, exiting.");
           exit_requested = true;
