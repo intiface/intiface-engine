@@ -1,312 +1,195 @@
-use super::{ConnectorOptions, IntifaceCLIErrorEnum, IntifaceError};
-use argh::FromArgs;
-#[cfg(target_os = "windows")]
-use buttplug::server::device::hardware::communication::xinput::XInputDeviceCommunicationManagerBuilder;
 use buttplug::server::{
-  device::hardware::communication::{
-    btleplug::BtlePlugCommunicationManagerBuilder,
-    lovense_connect_service::LovenseConnectServiceCommunicationManagerBuilder,
-    lovense_dongle::{
-      LovenseHIDDongleCommunicationManagerBuilder, LovenseSerialDongleCommunicationManagerBuilder,
-    },
-    serialport::SerialPortCommunicationManagerBuilder,
-    websocket_server::websocket_server_comm_manager::WebsocketServerDeviceCommunicationManagerBuilder,
-  },
   ButtplugServerBuilder,
 };
 
-use std::fs;
+use getset::{CopyGetters, Getters};
 use tracing::Level;
 
-const VERSION: &str = env!("CARGO_PKG_VERSION");
-
-/// command line interface for intiface/buttplug.
-///
-/// Note: Commands are one word to keep compat with C#/JS executables currently.
-#[derive(FromArgs)]
-pub struct IntifaceCLIArguments {
-  // Options that do something then exit
-  /// print version and exit.
-  #[argh(switch)]
-  version: bool,
-
-  /// print version and exit.
-  #[argh(switch)]
-  pub serverversion: bool,
-
-  /// turn on crash reporting to sentry
-  #[argh(switch)]
+#[derive(CopyGetters, Getters, Default, Debug, Clone)]
+pub struct EngineOptions {
+  #[getset(get="pub")]
+  sentry_api_key: Option<String>,
+  #[getset(get="pub")]
+  ipc_pipe_name: Option<String>,
+  #[getset(get="pub")]
+  device_config_json: Option<String>,
+  #[getset(get="pub")]
+  user_device_config_json: Option<String>,
+  #[getset(get="pub")]
+  server_name: String,
+  #[getset(get_copy="pub")]
   crash_reporting: bool,
-  
-  // Options that set up the server networking
-  /// if passed, websocket server listens on all interfaces. Otherwise, only
-  /// listen on 127.0.0.1.
-  #[argh(switch)]
-  wsallinterfaces: bool,
-
-  /// insecure port for websocket servers.
-  #[argh(option)]
-  wsinsecureport: Option<u16>,
-
-  /// pipe name for ipc server
-  #[argh(option)]
-  ipcpipe: Option<String>,
-
-  // Options that set up communications with intiface GUI
-  /// if passed, output protobufs for parent process via stdio, instead of strings.
-  #[argh(option)]
-  frontendpipe: Option<String>,
-
-  // Options that set up Buttplug server parameters
-  /// name of server to pass to connecting clients.
-  #[argh(option)]
-  #[argh(default = "\"Buttplug Server\".to_owned()")]
-  servername: String,
-
-  /// path to the device configuration file
-  #[argh(option)]
-  deviceconfig: Option<String>,
-
-  /// path to user device configuration file
-  #[argh(option)]
-  userdeviceconfig: Option<String>,
-
-  /// ping timeout maximum for server (in milliseconds)
-  #[argh(option)]
-  #[argh(default = "0")]
-  pingtime: u32,
-
-  /// if passed, server will stay running after client disconnection
-  #[argh(switch)]
-  stayopen: bool,
-
-  /// set log level for output
-  #[allow(dead_code)]
-  #[argh(option)]
-  log: Option<Level>,
-
-  /// allow raw messages (dangerous, only use for development)
-  #[argh(switch)]
-  allowraw: bool,
-
-  /// turn off bluetooth le device support
-  #[argh(switch)]
-  without_bluetooth_le: bool,
-
-  /// turn off serial device support
-  #[argh(switch)]
-  without_serial: bool,
-
-  /// turn off hid device support
-  #[allow(dead_code)]
-  #[argh(switch)]
-  without_hid: bool,
-
-  /// turn off lovense dongle serial device support
-  #[argh(switch)]
-  without_lovense_dongle_serial: bool,
-
-  /// turn off lovense dongle hid device support
-  #[argh(switch)]
-  without_lovense_dongle_hid: bool,
-
-  /// turn off xinput gamepad device support (windows only)
-  #[argh(switch)]
-  without_xinput: bool,
-
-  /// turn on lovense connect app device support (off by default)
-  #[argh(switch)]
-  with_lovense_connect: bool,
-
-  /// turn on websocket server device comm manager
-  #[argh(switch)]
-  with_device_websocket_server: bool,
-
-  /// port for device websocket server comm manager (defaults to 54817)
-  #[argh(option)]
+  #[getset(get_copy="pub")]
+  websocket_use_all_interfaces: bool,
+  #[getset(get_copy="pub")]
+  websocket_port: Option<u16>,
+  #[getset(get_copy="pub")]
+  frontend_websocket_port: Option<u16>,
+  #[getset(get_copy="pub")]
+  frontend_in_process_channel: bool,
+  #[getset(get_copy="pub")]
+  max_ping_time: u32,
+  #[getset(get_copy="pub")]
+  log_level: Option<Level>,
+  #[getset(get_copy="pub")]
+  allow_raw_messages: bool,
+  #[getset(get_copy="pub")]
+  use_bluetooth_le: bool,
+  #[getset(get_copy="pub")]
+  use_serial_port: bool,
+  #[getset(get_copy="pub")]
+  use_hid: bool,
+  #[getset(get_copy="pub")]
+  use_lovense_dongle_serial: bool,
+  #[getset(get_copy="pub")]
+  use_lovense_dongle_hid: bool,
+  #[getset(get_copy="pub")]
+  use_xinput: bool,
+  #[getset(get_copy="pub")]
+  use_lovense_connect: bool,
+  #[getset(get_copy="pub")]
+  use_device_websocket_server: bool,
+  #[getset(get_copy="pub")]
   device_websocket_server_port: Option<u16>,
-
-  #[cfg(debug_assertions)]
-  /// crash the main thread (that holds the runtime)
-  #[argh(switch)]
+  #[getset(get_copy="pub")]
   crash_main_thread: bool,
-
-  #[allow(dead_code)]
-  #[cfg(debug_assertions)]
-  /// crash the task thread (for testing logging/reporting)
-  #[argh(switch)]
+  #[getset(get_copy="pub")]
   crash_task_thread: bool,
 }
 
-pub fn should_turn_on_crash_reporting() -> bool {
-  let args: IntifaceCLIArguments = argh::from_env();
-  args.crash_reporting
+#[derive(Default)]
+pub struct EngineOptionsBuilder {
+  options: EngineOptions
 }
 
+impl EngineOptionsBuilder {
+  pub fn sentry_api_key(&mut self, value: &str) -> &mut Self {
+    self.options.sentry_api_key = Some(value.to_owned());
+    self
+  }
 
-pub fn setup_server_device_comm_managers(server_builder: &mut ButtplugServerBuilder) {
-  let args: IntifaceCLIArguments = argh::from_env();
-  if !args.without_bluetooth_le {
-    info!("Including Bluetooth LE (btleplug) Device Comm Manager Support");
-    server_builder.comm_manager(BtlePlugCommunicationManagerBuilder::default());
+  pub fn ipc_pipe_name(&mut self, value: &str) -> &mut Self {
+    self.options.sentry_api_key = Some(value.to_owned());
+    self
   }
-  if !args.without_lovense_dongle_hid {
-    info!("Including Lovense HID Dongle Support");
-    server_builder.comm_manager(LovenseHIDDongleCommunicationManagerBuilder::default());
+
+  pub fn device_config_json(&mut self, value: &str) -> &mut Self {
+    self.options.device_config_json = Some(value.to_owned());
+    self
   }
-  if !args.without_lovense_dongle_serial {
-    info!("Including Lovense Serial Dongle Support");
-    server_builder.comm_manager(LovenseSerialDongleCommunicationManagerBuilder::default());
+
+  pub fn user_device_config_json(&mut self, value: &str) -> &mut Self {
+    self.options.user_device_config_json = Some(value.to_owned());
+    self
   }
-  if !args.without_serial {
-    info!("Including Serial Port Support");
-    server_builder.comm_manager(SerialPortCommunicationManagerBuilder::default());
+
+  pub fn server_name(&mut self, value: &str) -> &mut Self {
+    self.options.server_name = value.to_owned();
+    self
   }
-  #[cfg(target_os = "windows")]
-  if !args.without_xinput {
-    info!("Including XInput Gamepad Support");
-    server_builder.comm_manager(XInputDeviceCommunicationManagerBuilder::default());
-  }
-  if args.with_lovense_connect {
-    info!("Including Lovense Connect App Support");
-    server_builder.comm_manager(LovenseConnectServiceCommunicationManagerBuilder::default());
-  }
-  if args.with_device_websocket_server {
-    info!("Including Websocket Server Device Support");
-    let mut builder = WebsocketServerDeviceCommunicationManagerBuilder::default().listen_on_all_interfaces(true);
-    if let Some(port) = args.device_websocket_server_port {
-      builder = builder.server_port(port);
+
+  pub fn crash_main_thread(&mut self, value: bool) -> &mut Self {
+    #[cfg(debug_assertions)]
+    {
+      self.options.crash_main_thread = value;
     }
-    server_builder.comm_manager(builder);
-  }
-}
-
-#[cfg(debug_assertions)]
-pub fn maybe_crash_main_thread() {
-  let args: IntifaceCLIArguments = argh::from_env();
-  if args.crash_main_thread {
-    panic!("Crashing main thread by request");
-  }
-}
-
-#[allow(dead_code)]
-#[cfg(debug_assertions)]
-pub fn maybe_crash_task_thread() {
-  use std::time::Duration;
-  let args: IntifaceCLIArguments = argh::from_env();
-  if args.crash_task_thread {
-    tokio::spawn(async {
-      tokio::time::sleep(Duration::from_millis(100)).await;
-      panic!("Crashing a task thread by request");
-    });
-  }
-}
-
-pub fn check_log_level() -> Option<Level> {
-  let args: IntifaceCLIArguments = argh::from_env();
-  args.log
-}
-
-pub fn frontend_pipe() -> Option<String> {
-  let args: IntifaceCLIArguments = argh::from_env();
-  args.frontendpipe
-}
-
-pub fn parse_options() -> Result<Option<ConnectorOptions>, IntifaceCLIErrorEnum> {
-  let args: IntifaceCLIArguments = argh::from_env();
-  
-  if args.version {
-    debug!("Server version command sent, printing and exiting.");
-    println!(
-      "Intiface CLI (Rust Edition) Version {}, Commit {}, Built {}",
-      VERSION,
-      env!("VERGEN_GIT_SHA_SHORT"),
-      env!("VERGEN_BUILD_TIMESTAMP")
-    );
-    return Ok(None);
+    self
   }
 
-  // Options that set up the server networking
-
-  let mut connector_info = ConnectorOptions::default();
-  let mut connector_info_set = false;
-
-  if args.wsallinterfaces {
-    info!("Intiface CLI Options: Websocket Use All Interfaces option passed.");
-    connector_info.ws_listen_on_all_interfaces = true;
-    connector_info_set = true;
+  pub fn crash_task_thread(&mut self, value: bool) -> &mut Self {
+    #[cfg(debug_assertions)]
+    {
+      self.options.crash_main_thread = value;
+    }
+    self
   }
 
-  if let Some(wsinsecureport) = &args.wsinsecureport {
-    info!(
-      "Intiface CLI Options: Websocket Insecure Port {}",
-      wsinsecureport
-    );
-    connector_info.ws_insecure_port = Some(*wsinsecureport);
-    connector_info_set = true;
+  pub fn crash_reporting(&mut self, value: bool) -> &mut Self {
+    self.options.crash_reporting = value;
+    self
   }
 
-  if let Some(ipcpipe) = &args.ipcpipe {
-    // TODO We should actually implement pipes :(
-    info!("Intiface CLI Options: IPC Pipe Name {}", ipcpipe);
+  pub fn websocket_use_all_interfaces(&mut self, value: bool) -> &mut Self {
+    self.options.websocket_use_all_interfaces = value;
+    self
   }
 
-  // If we don't have a device configuration by this point, panic.
-
-  if !connector_info_set {
-    return Err(
-      IntifaceError::new(
-        "Must have a connection argument (wsinsecureport, wssecureport, ipcport) to run!",
-      )
-      .into(),
-    );
+  pub fn allow_raw_messages(&mut self, value: bool) -> &mut Self {
+    self.options.allow_raw_messages = value;
+    self
   }
 
-  connector_info
-    .server_builder
-    .name(&args.servername)
-    .max_ping_time(args.pingtime);
-
-  if args.allowraw {
-    connector_info.server_builder.allow_raw_messages();
-  }
-  if args.frontendpipe.is_some() {
-    info!("Intiface CLI Options: Using frontend pipe");
-    connector_info.use_frontend_pipe = true;
+  pub fn use_bluetooth_le(&mut self, value: bool) -> &mut Self {
+    self.options.use_bluetooth_le = value;
+    self
   }
 
-  if args.stayopen {
-    info!("Intiface CLI Options: Leave server open after disconnect.");
-    connector_info.stay_open = true;
+  pub fn use_serial_port(&mut self, value: bool) -> &mut Self {
+    self.options.use_serial_port = value;
+    self
   }
 
-  // Options that set up Buttplug server parameters
-
-  if let Some(deviceconfig) = &args.deviceconfig {
-    info!(
-      "Intiface CLI Options: External Device Config {}",
-      deviceconfig
-    );
-    match fs::read_to_string(deviceconfig) {
-      Ok(cfg) => connector_info
-        .server_builder
-        .device_configuration_json(Some(cfg)),
-      Err(err) => panic!("Error opening external device configuration: {:?}", err),
-    };
+  pub fn use_hid(&mut self, value: bool) -> &mut Self {
+    self.options.use_hid = value;
+    self
   }
 
-  if let Some(userdeviceconfig) = &args.userdeviceconfig {
-    info!(
-      "Intiface CLI Options: User Device Config {}",
-      userdeviceconfig
-    );
-    match fs::read_to_string(userdeviceconfig) {
-      Ok(cfg) => connector_info
-        .server_builder
-        .user_device_configuration_json(Some(cfg)),
-      Err(err) => panic!("Error opening user device configuration: {:?}", err),
-    };
+  pub fn use_lovense_dongle_serial(&mut self, value: bool) -> &mut Self {
+    self.options.use_lovense_dongle_serial = value;
+    self
   }
 
-  Ok(Some(connector_info))
+  pub fn use_lovense_dongle_hid(&mut self, value: bool) -> &mut Self {
+    self.options.use_lovense_dongle_hid = value;
+    self
+  }
+
+  pub fn use_xinput(&mut self, value: bool) -> &mut Self {
+    self.options.use_xinput = value;
+    self
+  }
+
+  pub fn use_lovense_connect(&mut self, value: bool) -> &mut Self {
+    self.options.use_lovense_connect = value;
+    self
+  }
+
+  pub fn use_device_websocket_server(&mut self, value: bool) -> &mut Self {
+    self.options.use_device_websocket_server = value;
+    self
+  }
+
+  pub fn websocket_port(&mut self, port: u16) -> &mut Self {
+    self.options.websocket_port = Some(port);
+    self
+  }
+
+  pub fn frontend_websocket_port(&mut self, port: u16) -> &mut Self {
+    self.options.frontend_websocket_port = Some(port);
+    self
+  }
+
+  pub fn frontend_in_process_channel(&mut self, value: bool) -> &mut Self {
+    self.options.frontend_in_process_channel = value;
+    self
+  }
+
+  pub fn device_websocket_server_port(&mut self, port: u16) -> &mut Self {
+    self.options.device_websocket_server_port = Some(port);
+    self
+  }
+
+  pub fn max_ping_time(&mut self, value: u32) -> &mut Self {
+    self.options.max_ping_time = value;
+    self
+  }
+
+  pub fn log_level(&mut self, level: Level) -> &mut Self {
+    self.options.log_level = Some(level);
+    self
+  }
+
+  pub fn finish(&mut self) -> EngineOptions {
+    self.options.clone()
+  }
 }

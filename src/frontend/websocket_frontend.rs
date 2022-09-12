@@ -1,36 +1,30 @@
-use crate::process_messages::IntifaceMessage;
+use super::{
+  process_messages::{EngineMessage, IntifaceMessage},
+  Frontend,
+};
+use crate::error::IntifaceError;
 
-use super::{process_messages::EngineMessage};
-
+use async_trait::async_trait;
+use futures::FutureExt;
 use futures::{AsyncRead, AsyncWrite, SinkExt, StreamExt};
 use std::{sync::Arc, time::Duration};
 use tokio::{
   self,
+  net::TcpListener,
   select,
   sync::{
-    OnceCell,
     mpsc::{channel, Receiver, Sender},
-    Notify,
+    Notify, OnceCell,
   },
-  net::TcpListener
 };
 use tokio_util::sync::CancellationToken;
-use thiserror::Error;
-use futures::FutureExt;
-
-#[derive(Error, Debug)]
-#[error("Intiface Error")]
-pub enum IntifaceError {
-  // Error creating websocket frontend.
-  WebsocketFrontendError
-}
 
 async fn run_connection_loop<S>(
   ws_stream: async_tungstenite::WebSocketStream<S>,
   mut request_receiver: Receiver<EngineMessage>,
   response_sender: Sender<IntifaceMessage>,
   disconnect_notifier: Arc<Notify>,
-  cancellation_token: CancellationToken
+  cancellation_token: CancellationToken,
 ) where
   S: AsyncRead + AsyncWrite + Unpin,
 {
@@ -98,6 +92,10 @@ async fn run_connection_loop<S>(
                 }
                 async_tungstenite::tungstenite::Message::Close(_) => {
                   cancellation_token.cancel();
+                  if websocket_server_sender.close().await.is_err() {
+                    warn!("Cannot close, assuming connection already closed");
+                    return;
+                  }
                   //let _ = response_sender.send(ButtplugTransportIncomingMessage::Close("Websocket server closed".to_owned())).await;
                   break;
                 }
@@ -137,34 +135,33 @@ async fn run_connection_loop<S>(
 }
 
 #[derive(Clone, Debug)]
-pub struct FrontendChannel {
+pub struct WebsocketFrontend {
   sender: OnceCell<Sender<EngineMessage>>,
   port: u16,
   disconnect_notifier: Arc<Notify>,
   cancellation_token: CancellationToken,
 }
 
-impl FrontendChannel {
-  pub fn new(
-    port: u16,
-    cancellation_token: CancellationToken
-  ) -> Self {
-    Self { sender: OnceCell::new(), disconnect_notifier: Arc::new(Notify::new()), port, cancellation_token }
+impl WebsocketFrontend {
+  pub fn new(port: u16, cancellation_token: CancellationToken) -> Self {
+    Self {
+      sender: OnceCell::new(),
+      disconnect_notifier: Arc::new(Notify::new()),
+      port,
+      cancellation_token,
+    }
   }
+}
 
-  pub fn has_frontend(&self) -> bool {
-    self.sender.initialized()
-  }
-
-  pub async fn send(&self, msg: EngineMessage) {
+#[async_trait]
+impl Frontend for WebsocketFrontend {
+  async fn send(&self, msg: EngineMessage) {
     if let Some(sender) = self.sender.get() {
       sender.send(msg).await.unwrap();
     }
   }
 
-  pub async fn connect(
-    &self,
-  ) -> Result<(), IntifaceError> {
+  async fn connect(&self) -> Result<(), IntifaceError> {
     let disconnect_notifier = self.disconnect_notifier.clone();
 
     let (incoming_sender, incoming_receiver) = channel::<IntifaceMessage>(256);
@@ -178,38 +175,36 @@ impl FrontendChannel {
     let response_sender_clone = incoming_sender;
     let disconnect_notifier_clone = disconnect_notifier;
 
-      // Create the event loop and TCP listener we'll accept connections on.
-      let try_socket = TcpListener::bind(&addr).await;
-      debug!("Websocket: Socket bound.");
-      let listener = try_socket.map_err(|e| {
-        IntifaceError::WebsocketFrontendError
+    // Create the event loop and TCP listener we'll accept connections on.
+    let try_socket = TcpListener::bind(&addr).await;
+    debug!("Websocket: Socket bound.");
+    let listener = try_socket.map_err(|e| IntifaceError::new(&format!("Websocket bind error: {:?}", e)))?;
+    debug!("Websocket: Listening on: {}", addr);
+    if let Ok((stream, _)) = listener.accept().await {
+      info!("Websocket: Got connection");
+      let ws_fut = async_tungstenite::tokio::accept_async(stream);
+      let ws_stream = ws_fut.await.map_err(|err| {
+        error!("Websocket server accept error: {:?}", err);
+        IntifaceError::new(&format!("Websocket server accept error: {:?}", err))
       })?;
-      debug!("Websocket: Listening on: {}", addr);
-      if let Ok((stream, _)) = listener.accept().await {
-        info!("Websocket: Got connection");
-        let ws_fut = async_tungstenite::tokio::accept_async(stream);
-        let ws_stream = ws_fut.await.map_err(|err| {
-          error!("Websocket server accept error: {:?}", err);
-          IntifaceError::WebsocketFrontendError
-        })?;
-        let cancellation_token = self.cancellation_token.clone();
-        tokio::spawn(async move {
-          run_connection_loop(
-            ws_stream,
-            outgoing_receiver,
-            response_sender_clone,
-            disconnect_notifier_clone,
-            cancellation_token
-          )
-          .await;
-        });
-        Ok(())
-      } else {
-        Err(IntifaceError::WebsocketFrontendError)
-      }
+      let cancellation_token = self.cancellation_token.clone();
+      tokio::spawn(async move {
+        run_connection_loop(
+          ws_stream,
+          outgoing_receiver,
+          response_sender_clone,
+          disconnect_notifier_clone,
+          cancellation_token,
+        )
+        .await;
+      });
+      Ok(())
+    } else {
+      Err(IntifaceError::new("Cannot run accept on websocket frontend port."))
+    }
   }
 
-  pub fn disconnect(self) {
+  fn disconnect(self) {
     self.disconnect_notifier.notify_waiters();
   }
 }

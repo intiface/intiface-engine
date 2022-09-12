@@ -1,5 +1,5 @@
 [package]
-name = "intiface-cli"
+name = "intiface-engine"
 version = "102.0.0"
 authors = ["Nonpolynomial Labs, LLC <kyle@nonpolynomial.com>"]
 description = "Command Line Interface frontend for the Buttplug sex toy control library"
@@ -11,9 +11,17 @@ keywords = ["usb", "serial", "hardware", "bluetooth", "teledildonics"]
 edition = "2021"
 exclude = [".vscode/**"]
 
+[lib]
+name = "intiface_engine"
+path = "src/lib.rs"
+
+[[bin]]
+name = "intiface_engine"
+path = "src/bin/main.rs"
+
 [dependencies]
-# buttplug = { path = "../buttplug-rs/buttplug" }
-buttplug = "6.0.0"
+buttplug = { path = "../buttplug-rs/buttplug" }
+# buttplug = "6.0.0"
 argh = "0.1.8"
 log = "0.4.17"
 futures = "0.3.24"
@@ -31,6 +39,8 @@ sentry = "0.27.0"
 sentry-tracing = "0.27.0"
 async-tungstenite = "0.17.2"
 thiserror = "1.0.33"
+getset = "0.1.2"
+async-trait = "0.1.57"
 
 [target.'cfg(windows)'.dependencies]
 winapi = "0.3.9"
