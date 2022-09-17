@@ -45,7 +45,7 @@ tracing_subscriber::registry()
     .with_ansi(false)
     .with_writer(move || ChannelWriter::new(bp_log_sender.clone()))
   )
-  .with(sentry_tracing::layer())
+  //.with(sentry_tracing::layer())
   .try_init()
   .unwrap();
 }
@@ -54,14 +54,14 @@ pub fn setup_console_logging(log_level: Option<Level>) {
   if log_level.is_some() {
     tracing_subscriber::registry()
     .with(tracing_subscriber::fmt::layer())
-    .with(sentry_tracing::layer())
+    //.with(sentry_tracing::layer())
     .with(LevelFilter::from(log_level))
     .try_init()
     .unwrap(); 
   } else {
     tracing_subscriber::registry()
     .with(tracing_subscriber::fmt::layer())
-    .with(sentry_tracing::layer())
+    //.with(sentry_tracing::layer())
     .with(EnvFilter::try_from_default_env()
       .or_else(|_| EnvFilter::try_new("info"))
       .unwrap())

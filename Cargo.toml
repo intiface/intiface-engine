@@ -19,9 +19,14 @@ path = "src/lib.rs"
 name = "intiface_engine"
 path = "src/bin/main.rs"
 
+[features]
+default=[]
+crash_reporting=["sentry", "sentry-tracing"]
+desktop=["buttplug/xinput-manager", "buttplug/serial-manager", "buttplug/lovense-dongle-manager", "buttplug/lovense-connect-service-manager",]
+
 [dependencies]
-buttplug = { path = "../buttplug-rs/buttplug" }
-# buttplug = "6.0.0"
+buttplug = { path = "../buttplug-rs/buttplug", default_features = false, features = ["tokio-runtime", "client", "server", "serialize-json", "websockets", "btleplug-manager", "websocket-server-manager"] }
+# buttplug = { version = "6.0.0", default_features = false, features = ["tokio-runtime", "client", "server", "serialize-json", "websockets", "btleplug-manager", "websocket-server-manager"] }
 argh = "0.1.8"
 log = "0.4.17"
 futures = "0.3.24"
@@ -35,8 +40,8 @@ ctrlc = "3.2.3"
 tokio-util = "0.7.3"
 serde = "1.0.144"
 serde_json = "1.0.85"
-sentry = "0.27.0"
-sentry-tracing = "0.27.0"
+sentry = { version = "0.27.0", optional = true }
+sentry-tracing = { version = "0.27.0", optional = true }
 async-tungstenite = "0.17.2"
 thiserror = "1.0.33"
 getset = "0.1.2"

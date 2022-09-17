@@ -34,10 +34,8 @@ async fn run_connection_loop<S>(
 
   // Start pong count at 1, so we'll clear it after sending our first ping.
   let mut pong_count = 1u32;
-  let mut sleep = tokio::time::sleep(Duration::from_secs(1));
 
   loop {
-    sleep = tokio::time::sleep(Duration::from_secs(1));
     select! {
       _ = disconnect_notifier.notified() => {
         info!("Websocket server connector requested disconnect.");
@@ -46,7 +44,7 @@ async fn run_connection_loop<S>(
           return;
         }
       },
-      _ = sleep => {
+      _ = tokio::time::sleep(Duration::from_secs(1)) => {
         if pong_count == 0 {
           warn!("No pongs received, considering connection closed.");
           return;

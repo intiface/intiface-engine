@@ -1,4 +1,3 @@
-mod in_process_frontend;
 mod websocket_frontend;
 pub mod process_messages;
 use async_trait::async_trait;
@@ -7,7 +6,6 @@ use crate::{
   options::EngineOptions
 };
 use websocket_frontend::WebsocketFrontend;
-use in_process_frontend::InProcessFrontend;
 pub use process_messages::{EngineMessage, IntifaceMessage};
 use std::{
   sync::Arc,
@@ -124,7 +122,7 @@ struct NullFrontend {}
 
 #[async_trait]
 impl Frontend for NullFrontend {
-  async fn send(&self, msg: EngineMessage) {}
+  async fn send(&self, _: EngineMessage) {}
   async fn connect(&self) -> Result<(), IntifaceError> { Ok(()) }
   fn disconnect(self) {}
 }
@@ -132,8 +130,6 @@ impl Frontend for NullFrontend {
 pub async fn setup_frontend(options: &EngineOptions, cancellation_token: &CancellationToken) -> Arc<dyn Frontend> {
   if let Some(frontend_websocket_port) = options.frontend_websocket_port() {
     Arc::new(WebsocketFrontend::new(frontend_websocket_port, cancellation_token.child_token()))
-  } else if options.frontend_in_process_channel() {
-    Arc::new(InProcessFrontend::new(cancellation_token.child_token()))
   } else {
     Arc::new(NullFrontend::default())
   }

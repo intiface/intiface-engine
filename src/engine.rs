@@ -1,7 +1,8 @@
 use crate::{
+  device_communication_managers::setup_server_device_comm_managers,
   error::IntifaceEngineError,
-  frontend::{setup_frontend, process_messages::EngineMessage, frontend_server_event_loop},
-  options::EngineOptions, device_communication_managers::setup_server_device_comm_managers,
+  frontend::{Frontend, frontend_server_event_loop, process_messages::EngineMessage, setup_frontend},
+  options::EngineOptions, logging::setup_frontend_logging,
 };
 use buttplug::{
   core::{
@@ -11,7 +12,11 @@ use buttplug::{
     },
     message::serializer::ButtplugServerJSONSerializer,
   },
-  server::{ButtplugRemoteServer, ButtplugServerConnectorError, ButtplugServerBuilder},
+  server::{ButtplugRemoteServer, ButtplugServerBuilder, ButtplugServerConnectorError},
+};
+use std::{
+  sync::Arc,
+  str::FromStr
 };
 use tokio::select;
 use tokio_util::sync::CancellationToken;
@@ -50,13 +55,11 @@ async fn setup_buttplug_server(
   }
 
   if let Some(device_config_json) = options.device_config_json() {
-    server_builder
-      .device_configuration_json(Some(device_config_json.clone()));
+    server_builder.device_configuration_json(Some(device_config_json.clone()));
   }
 
   if let Some(user_device_config_json) = &options.user_device_config_json() {
-    server_builder
-      .user_device_configuration_json(Some(user_device_config_json.clone()));
+    server_builder.user_device_configuration_json(Some(user_device_config_json.clone()));
   }
 
   setup_server_device_comm_managers(options, &mut server_builder);
@@ -107,22 +110,25 @@ pub struct IntifaceEngine {
 }
 
 impl IntifaceEngine {
-  pub async fn run(&self, options: &EngineOptions) -> Result<(), IntifaceEngineError> {
+  pub async fn run(&self, options: &EngineOptions, external_frontend: Option<Arc<dyn Frontend>>) -> Result<(), IntifaceEngineError> {
     // At this point we will have received and validated options.
 
     // Set up crash logging for the duration of the server session.
-    const API_KEY: &str = include_str!(concat!(env!("OUT_DIR"), "/sentry_api_key.txt"));
-    let sentry_guard = if options.crash_reporting() && !API_KEY.is_empty() {
-      Some(sentry::init((
-        API_KEY,
-        sentry::ClientOptions {
-          release: sentry::release_name!(),
-          ..Default::default()
-        },
-      )))
-    } else {
-      None
-    };
+    #[cfg(feature = "sentry")]
+    {
+      const API_KEY: &str = include_str!(concat!(env!("OUT_DIR"), "/sentry_api_key.txt"));
+      let sentry_guard = if options.crash_reporting() && !API_KEY.is_empty() {
+        Some(sentry::init((
+          API_KEY,
+          sentry::ClientOptions {
+            release: sentry::release_name!(),
+            ..Default::default()
+          },
+        )))
+      } else {
+        None
+      };
+    }
 
     // Create the cancellation tokens for
     let frontend_cancellation_token = CancellationToken::new();
@@ -132,12 +138,25 @@ impl IntifaceEngine {
     // Checking for this is the first thing we should do, as any output after this either needs to be
     // printed strings or json messages.
 
-    let frontend = setup_frontend(options, &self.stop_token).await;
-
-    if sentry_guard.is_some() {
-      info!("Using sentry for crash logging.");
+    let frontend = if let Some(frontend) = external_frontend {
+      frontend
     } else {
-      info!("Crash logging disabled.");
+      setup_frontend(options, &self.stop_token).await
+    };
+
+    if let Some(level) = options.log_level() {
+      
+      setup_frontend_logging(tracing::Level::from_str(level).unwrap(), frontend.clone(), self.stop_token.child_token());
+    }
+
+    // Set up crash logging for the duration of the server session.
+    #[cfg(feature = "sentry")]
+    {
+      if sentry_guard.is_some() {
+        info!("Using sentry for crash logging.");
+      } else {
+        info!("Crash logging disabled.");
+      }
     }
 
     // Hang out until those listeners get sick of listening.

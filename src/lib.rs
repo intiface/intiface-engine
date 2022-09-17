@@ -8,5 +8,6 @@ mod frontend;
 mod logging;
 pub use engine::IntifaceEngine;
 pub use error::*;
-pub use options::{EngineOptions, EngineOptionsBuilder};
+pub use frontend::{EngineMessage, Frontend};
+pub use options::{EngineOptions, EngineOptionsBuilder, EngineOptionsExternal};
 pub use logging::setup_console_logging;
