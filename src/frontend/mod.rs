@@ -61,7 +61,7 @@ pub async fn frontend_server_event_loop(
             }
           },
           None => {
-            warn!("Lost connection with main thread, breaking.");
+            info!("Lost connection with main thread, breaking.");
             break;
           },
         }
@@ -73,9 +73,6 @@ pub async fn frontend_server_event_loop(
     }
   }
   info!("Exiting server event receiver loop");
-  frontend_sender
-    .send(EngineMessage::ClientDisconnected{})
-    .await;
 }
 
 #[derive(Default)]

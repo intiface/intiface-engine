@@ -16,7 +16,8 @@ use buttplug::{
 };
 use std::{
   sync::Arc,
-  str::FromStr
+  str::FromStr,
+  time::Duration
 };
 use tokio::select;
 use tokio_util::sync::CancellationToken;
@@ -202,19 +203,22 @@ impl IntifaceEngine {
         }
       };
       match server.disconnect().await {
-        Ok(_) => info!("Client forcefully disconnected from server."),
+        Ok(_) => {
+          info!("Client forcefully disconnected from server.");
+          frontend.send(EngineMessage::ClientDisconnected {}).await;
+        }
         Err(_) => info!("Client already disconnected from server."),
       };
       session_connection_token.cancel();
-      frontend.send(EngineMessage::ClientDisconnected {}).await;
       if exit_requested {
         info!("Breaking out of event loop in order to exit");
-        frontend.send(EngineMessage::EngineStopped {}).await;
         break;
       }
       info!("Server connection dropped, restarting");
     }
     info!("Exiting");
+    tokio::time::sleep(Duration::from_millis(100)).await;
+    frontend.send(EngineMessage::EngineStopped {}).await;
     Ok(())
   }
 
