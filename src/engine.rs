@@ -115,21 +115,18 @@ impl IntifaceEngine {
     // At this point we will have received and validated options.
 
     // Set up crash logging for the duration of the server session.
-    #[cfg(feature = "sentry")]
-    {
-      const API_KEY: &str = include_str!(concat!(env!("OUT_DIR"), "/sentry_api_key.txt"));
-      let sentry_guard = if options.crash_reporting() && !API_KEY.is_empty() {
-        Some(sentry::init((
-          API_KEY,
-          sentry::ClientOptions {
-            release: sentry::release_name!(),
-            ..Default::default()
-          },
-        )))
-      } else {
-        None
-      };
-    }
+    const API_KEY: &str = include_str!(concat!(env!("OUT_DIR"), "/sentry_api_key.txt"));
+    let sentry_guard = if options.crash_reporting() && !API_KEY.is_empty() {
+      Some(sentry::init((
+        API_KEY,
+        sentry::ClientOptions {
+          release: sentry::release_name!(),
+          ..Default::default()
+        },
+      )))
+    } else {
+      None
+    };
 
     // Create the cancellation tokens for
     let frontend_cancellation_token = CancellationToken::new();
@@ -146,8 +143,7 @@ impl IntifaceEngine {
     };
 
     if let Some(level) = options.log_level() {
-      
-      setup_frontend_logging(tracing::Level::from_str(level).unwrap(), frontend.clone(), self.stop_token.child_token());
+      setup_frontend_logging(tracing::Level::from_str(level).unwrap(), frontend.clone());
     }
 
     // Set up crash logging for the duration of the server session.
