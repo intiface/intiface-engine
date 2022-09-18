@@ -15,7 +15,7 @@ use futures::{
   StreamExt,
   pin_mut
 };
-use tokio::{select, net::TcpListener};
+use tokio::select;
 use buttplug::server::ButtplugRemoteServerEvent;
 use tokio_util::sync::CancellationToken;
 
@@ -24,40 +24,6 @@ pub trait Frontend: Sync + Send {
   async fn send(&self, msg: EngineMessage);
   async fn connect(&self) -> Result<(), IntifaceError>;
   fn disconnect(self);
-}
-
-async fn reject_all_incoming(
-  frontend_sender: Arc<dyn Frontend>,
-  address: &str,
-  port: u16,
-  token: CancellationToken,
-) {
-  info!("Rejecting all incoming clients while connected");
-  let addr = format!("{}:{}", address, port);
-  let try_socket = TcpListener::bind(&addr).await;
-  let listener = try_socket.expect("Cannot hold port while connected?!");
-
-  loop {
-    select! {
-      _ = token.cancelled() => {
-        break;
-      }
-      ret = listener.accept() =>  {
-        match ret {
-          Ok(_) => {
-            error!("Someone tried to connect while we're already connected!!!!");
-            frontend_sender
-              .send(EngineMessage::ClientRejected{reason: "Unknown".to_owned()})
-              .await;
-          }
-          Err(_) => {
-            break;
-          }
-        }
-      }
-    }
-  }
-  info!("Leaving client rejection loop.");
 }
 
 pub async fn frontend_server_event_loop(
@@ -73,11 +39,6 @@ pub async fn frontend_server_event_loop(
           Some(event) => match event {
             ButtplugRemoteServerEvent::Connected(client_name) => {
               info!("Client connected: {}", client_name);
-              let sender = frontend_sender.clone();
-              let token = connection_cancellation_token.child_token();
-              tokio::spawn(async move {
-                reject_all_incoming(sender, "localhost", 12345, token).await;
-              });
               frontend_sender.send(EngineMessage::ClientConnected{client_name}).await;
             }
             ButtplugRemoteServerEvent::Disconnected => {
