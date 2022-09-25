@@ -20,13 +20,13 @@ name = "intiface_engine"
 path = "src/bin/main.rs"
 
 [features]
-default=["crash_reporting"]
+default=["crash_reporting", "desktop"]
 crash_reporting=["sentry", "sentry-tracing"]
 desktop=["buttplug/xinput-manager", "buttplug/serial-manager", "buttplug/lovense-dongle-manager", "buttplug/lovense-connect-service-manager",]
 
 [dependencies]
-buttplug = { path = "../buttplug-rs/buttplug", default_features = false, features = ["tokio-runtime", "client", "server", "serialize-json", "websockets", "btleplug-manager", "websocket-server-manager"] }
-# buttplug = { version = "6.0.0", default_features = false, features = ["tokio-runtime", "client", "server", "serialize-json", "websockets", "btleplug-manager", "websocket-server-manager"] }
+# buttplug = { path = "../buttplug-rs/buttplug", default_features = false, features = ["tokio-runtime", "client", "server", "serialize-json", "websockets", "btleplug-manager", "websocket-server-manager"] }
+buttplug = { version = "6.0.1", default_features = false, features = ["tokio-runtime", "client", "server", "serialize-json", "websockets", "btleplug-manager", "websocket-server-manager"] }
 argh = "0.1.8"
 log = "0.4.17"
 futures = "0.3.24"
@@ -60,6 +60,3 @@ anyhow = "1.0.63"
 # If you want to use the bleeding edge version of `egui`:
 sentry = { git = "https://github.com/getsentry/sentry-rust", branch = "master" }
 sentry-tracing = { git = "https://github.com/getsentry/sentry-rust", branch = "master" }
-
-# If you fork https://github.com/emilk/egui you can test with:
-# eframe = { path = "../egui/eframe" }
