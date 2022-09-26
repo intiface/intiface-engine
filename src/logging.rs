@@ -2,8 +2,7 @@ use crate::frontend::{EngineMessage, Frontend};
 use buttplug::util::logging::ChannelWriter;
 use once_cell::sync::OnceCell;
 use std::sync::Arc;
-use tokio::{select, sync::mpsc::channel};
-use tokio_util::sync::CancellationToken;
+use tokio::sync::mpsc::channel;
 use tracing::Level;
 use tracing_subscriber::{
   filter::{EnvFilter, LevelFilter},
@@ -19,7 +18,6 @@ pub fn setup_frontend_logging(log_level: Level, frontend: Arc<dyn Frontend>) {
   let (bp_log_sender, mut receiver) = channel::<Vec<u8>>(256);
   let log_sender = frontend.clone();
   tokio::spawn(async move {
-    log_sender.send(EngineMessage::EngineStarted {}).await;
     // We can log until our receiver disappears at this point.
     while let Some(log) = receiver.recv().await {
       log_sender
@@ -31,7 +29,7 @@ pub fn setup_frontend_logging(log_level: Level, frontend: Arc<dyn Frontend>) {
   });
 
   if FRONTEND_LOGGING_SET.get().is_none() {
-    FRONTEND_LOGGING_SET.set(true);
+    FRONTEND_LOGGING_SET.set(true).unwrap();
     tracing_subscriber::registry()
       .with(LevelFilter::from(log_level))
       .with(

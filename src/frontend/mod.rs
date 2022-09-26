@@ -15,20 +15,60 @@ use futures::{
   StreamExt,
   pin_mut
 };
-use tokio::select;
+use tokio::{select, sync::broadcast};
 use buttplug::server::ButtplugRemoteServerEvent;
 use tokio_util::sync::CancellationToken;
+
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[async_trait]
 pub trait Frontend: Sync + Send {
   async fn send(&self, msg: EngineMessage);
   async fn connect(&self) -> Result<(), IntifaceError>;
   fn disconnect(self);
+  fn event_stream(&self) -> broadcast::Receiver<IntifaceMessage>;
+}
+
+pub async fn frontend_external_event_loop(
+  frontend: Arc<dyn Frontend>,
+  connection_cancellation_token: Arc<CancellationToken>,
+) {
+  let mut external_receiver = frontend.event_stream();
+  loop {
+    select!{
+      external_message = external_receiver.recv() => {
+        match external_message {
+          Ok(message) => match message {
+            IntifaceMessage::RequestEngineVersion{expected_version:_} => {
+              // TODO We should check the version here and shut down on mismatch.
+              info!("Engine version request received from frontend.");
+              frontend
+                .send(EngineMessage::EngineVersion{ version: VERSION.to_owned() })
+                .await;
+            },
+            IntifaceMessage::Stop{} => {
+              connection_cancellation_token.cancel();
+              info!("Got external stop request");
+              break;
+            }
+          },
+          Err(_) => {
+            info!("Frontend sender dropped, assuming connection lost, breaking.");
+            break;
+          }
+        }
+      },
+      _ = connection_cancellation_token.cancelled() => {
+        info!("Connection cancellation token activated, breaking");
+        break;
+      }
+    }
+  }
 }
 
 pub async fn frontend_server_event_loop(
   receiver: impl Stream<Item = ButtplugRemoteServerEvent>,
-  frontend_sender: Arc<dyn Frontend>,
+  frontend: Arc<dyn Frontend>,
   connection_cancellation_token: CancellationToken,
 ) {
   pin_mut!(receiver);
@@ -39,23 +79,23 @@ pub async fn frontend_server_event_loop(
           Some(event) => match event {
             ButtplugRemoteServerEvent::Connected(client_name) => {
               info!("Client connected: {}", client_name);
-              frontend_sender.send(EngineMessage::ClientConnected{client_name}).await;
+              frontend.send(EngineMessage::ClientConnected{client_name}).await;
             }
             ButtplugRemoteServerEvent::Disconnected => {
               info!("Client disconnected.");
-              frontend_sender
+              frontend
                 .send(EngineMessage::ClientDisconnected{})
                 .await;
             }
             ButtplugRemoteServerEvent::DeviceAdded(device_id, device_name, device_address, device_display_name) => {
               info!("Device Added: {} - {} - {}", device_id, device_name, device_address);
-              frontend_sender
+              frontend
                 .send(EngineMessage::DeviceConnected { name: device_name, index: device_id, address: device_address, display_name: device_display_name })
                 .await;
             }
             ButtplugRemoteServerEvent::DeviceRemoved(device_id) => {
               info!("Device Removed: {}", device_id);
-              frontend_sender
+              frontend
                 .send(EngineMessage::DeviceDisconnected{index: device_id})
                 .await;
             }
@@ -83,11 +123,15 @@ impl Frontend for NullFrontend {
   async fn send(&self, _: EngineMessage) {}
   async fn connect(&self) -> Result<(), IntifaceError> { Ok(()) }
   fn disconnect(self) {}
+  fn event_stream(&self) -> broadcast::Receiver<IntifaceMessage> {
+    let (_, receiver) = broadcast::channel(255);
+    receiver
+  }
 }
 
-pub async fn setup_frontend(options: &EngineOptions, cancellation_token: &CancellationToken) -> Arc<dyn Frontend> {
+pub async fn setup_frontend(options: &EngineOptions, cancellation_token: &Arc<CancellationToken>) -> Arc<dyn Frontend> {
   if let Some(frontend_websocket_port) = options.frontend_websocket_port() {
-    Arc::new(WebsocketFrontend::new(frontend_websocket_port, cancellation_token.child_token()))
+    Arc::new(WebsocketFrontend::new(frontend_websocket_port, cancellation_token.clone()))
   } else {
     Arc::new(NullFrontend::default())
   }

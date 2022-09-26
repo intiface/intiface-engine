@@ -1,7 +1,7 @@
 use crate::{
   device_communication_managers::setup_server_device_comm_managers,
   error::IntifaceEngineError,
-  frontend::{Frontend, frontend_server_event_loop, process_messages::EngineMessage, setup_frontend},
+  frontend::{Frontend, frontend_server_event_loop, frontend_external_event_loop, process_messages::EngineMessage, setup_frontend},
   options::EngineOptions, logging::setup_frontend_logging,
 };
 use buttplug::{
@@ -32,7 +32,6 @@ pub fn maybe_crash_main_thread(options: &EngineOptions) {
 #[allow(dead_code)]
 #[cfg(debug_assertions)]
 pub fn maybe_crash_task_thread(options: &EngineOptions) {
-  use std::time::Duration;
   if options.crash_task_thread() {
     tokio::spawn(async {
       tokio::time::sleep(Duration::from_millis(100)).await;
@@ -107,7 +106,7 @@ async fn run_server(
 
 #[derive(Default)]
 pub struct IntifaceEngine {
-  stop_token: CancellationToken,
+  stop_token: Arc<CancellationToken>,
 }
 
 impl IntifaceEngine {
@@ -142,6 +141,13 @@ impl IntifaceEngine {
       setup_frontend(options, &self.stop_token).await
     };
 
+    let frontend_clone = frontend.clone();
+    let stop_token_clone = self.stop_token.clone();
+    tokio::spawn(async move {
+      frontend_external_event_loop(frontend_clone, stop_token_clone).await;
+    });
+    frontend.connect().await.unwrap();
+    frontend.send(EngineMessage::EngineStarted {}).await;
     if let Some(level) = options.log_level() {
       setup_frontend_logging(tracing::Level::from_str(level).unwrap(), frontend.clone());
     }
@@ -166,6 +172,7 @@ impl IntifaceEngine {
     tokio::spawn(async move {
       frontend_server_event_loop(event_receiver, frontend_clone, stop_child_token).await;
     });
+
     loop {
       let session_connection_token = CancellationToken::new();
       info!("Starting server");

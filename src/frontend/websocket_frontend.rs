@@ -7,13 +7,18 @@ use crate::error::IntifaceError;
 use async_trait::async_trait;
 use futures::FutureExt;
 use futures::{AsyncRead, AsyncWrite, SinkExt, StreamExt};
-use std::{sync::Arc, time::Duration};
+use std::{sync::{
+  Arc,
+  atomic::{AtomicBool, Ordering}
+}
+  , time::Duration};
 use tokio::{
   self,
   net::TcpListener,
   select,
   sync::{
-    mpsc::{channel, Receiver, Sender},
+    mpsc,
+    broadcast,
     Notify, OnceCell,
   },
 };
@@ -21,10 +26,10 @@ use tokio_util::sync::CancellationToken;
 
 async fn run_connection_loop<S>(
   ws_stream: async_tungstenite::WebSocketStream<S>,
-  mut request_receiver: Receiver<EngineMessage>,
-  response_sender: Sender<IntifaceMessage>,
+  mut request_receiver: mpsc::Receiver<EngineMessage>,
+  response_sender: broadcast::Sender<IntifaceMessage>,
   disconnect_notifier: Arc<Notify>,
-  cancellation_token: CancellationToken,
+  cancellation_token: Arc<CancellationToken>,
 ) where
   S: AsyncRead + AsyncWrite + Unpin,
 {
@@ -83,13 +88,14 @@ async fn run_connection_loop<S>(
               match msg {
                 async_tungstenite::tungstenite::Message::Text(text_msg) => {
                   trace!("Got text: {}", text_msg);
-                  if response_sender.send(serde_json::from_str(&text_msg).unwrap()).await.is_err() {
+                  if response_sender.receiver_count() == 0 || response_sender.send(serde_json::from_str(&text_msg).unwrap()).is_err() {
                     warn!("Connector that owns transport no longer available, exiting.");
                     break;
                   }
                 }
                 async_tungstenite::tungstenite::Message::Close(_) => {
-                  cancellation_token.cancel();
+                  info!("Closing websocket");
+                  cancellation_token.cancel();                  
                   if websocket_server_sender.close().await.is_err() {
                     warn!("Cannot close, assuming connection already closed");
                     return;
@@ -132,21 +138,26 @@ async fn run_connection_loop<S>(
   }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct WebsocketFrontend {
-  sender: OnceCell<Sender<EngineMessage>>,
+  sender: OnceCell<mpsc::Sender<EngineMessage>>,
   port: u16,
   disconnect_notifier: Arc<Notify>,
-  cancellation_token: CancellationToken,
+  cancellation_token: Arc<CancellationToken>,
+  event_sender: broadcast::Sender<IntifaceMessage>,
+  connected: Arc<AtomicBool>
 }
 
 impl WebsocketFrontend {
-  pub fn new(port: u16, cancellation_token: CancellationToken) -> Self {
+  pub fn new(port: u16, cancellation_token: Arc<CancellationToken>) -> Self {
+    let (event_sender, _) = broadcast::channel(255);
     Self {
       sender: OnceCell::new(),
       disconnect_notifier: Arc::new(Notify::new()),
       port,
       cancellation_token,
+      event_sender,
+      connected: Arc::new(AtomicBool::new(false))
     }
   }
 }
@@ -154,23 +165,32 @@ impl WebsocketFrontend {
 #[async_trait]
 impl Frontend for WebsocketFrontend {
   async fn send(&self, msg: EngineMessage) {
-    if let Some(sender) = self.sender.get() {
-      sender.send(msg).await.unwrap();
+    if !self.connected.load(Ordering::SeqCst) {
+      error!("Websocket frontend lost connection, ignoring.");
+      return;
     }
+    if let Some(sender) = self.sender.get() {
+      if let Err(e) = sender.send(msg).await {
+        error!("Websocket cannot send event: {}", e);
+      }
+    }
+  }
+
+  fn event_stream(&self) -> broadcast::Receiver<IntifaceMessage> {
+    self.event_sender.subscribe()
   }
 
   async fn connect(&self) -> Result<(), IntifaceError> {
     let disconnect_notifier = self.disconnect_notifier.clone();
 
-    let (incoming_sender, incoming_receiver) = channel::<IntifaceMessage>(256);
-    let (outgoing_sender, outgoing_receiver) = channel::<EngineMessage>(256);
+    let incoming_sender = self.event_sender.clone();
+    let (outgoing_sender, outgoing_receiver) = mpsc::channel::<EngineMessage>(256);
 
     self.sender.set(outgoing_sender).unwrap();
     let base_addr = "127.0.0.1";
 
     let addr = format!("{}:{}", base_addr, self.port);
     debug!("Websocket: Trying to listen on {}", addr);
-    let response_sender_clone = incoming_sender;
     let disconnect_notifier_clone = disconnect_notifier;
 
     // Create the event loop and TCP listener we'll accept connections on.
@@ -185,16 +205,19 @@ impl Frontend for WebsocketFrontend {
         error!("Websocket server accept error: {:?}", err);
         IntifaceError::new(&format!("Websocket server accept error: {:?}", err))
       })?;
+      self.connected.store(true, Ordering::SeqCst);
+      let connected = self.connected.clone();
       let cancellation_token = self.cancellation_token.clone();
       tokio::spawn(async move {
         run_connection_loop(
           ws_stream,
           outgoing_receiver,
-          response_sender_clone,
+          incoming_sender,
           disconnect_notifier_clone,
           cancellation_token,
         )
         .await;
+        connected.store(false, Ordering::SeqCst)
       });
       Ok(())
     } else {

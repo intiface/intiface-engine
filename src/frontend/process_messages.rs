@@ -4,7 +4,7 @@ use serde::{Serialize, Deserialize};
 // languages happy when trying to recompose JSON into objects.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum EngineMessage {
-  MessageVersion{version: u32},
+  EngineVersion{version: String},
   EngineLog{message: String},
   EngineStarted{},
   EngineError{error: String},
@@ -24,7 +24,8 @@ pub enum EngineMessage {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum IntifaceMessage {
-  Stop
+  RequestEngineVersion{expected_version: u32},
+  Stop{}
 }
 
 /*

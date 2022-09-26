@@ -225,7 +225,7 @@ impl TryFrom<IntifaceCLIArguments> for EngineOptions {
 async fn main() -> Result<(), IntifaceEngineError> {
   let args: IntifaceCLIArguments = argh::from_env();
   if args.server_version() {
-    println!("{}", env!("VERGEN_GIT_SEMVER"));
+    println!("{}", VERSION);
     return Ok(());
   }
 
