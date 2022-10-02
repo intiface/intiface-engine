@@ -1,3 +1,20 @@
+# Intiface Engine v1.0.0 (2022/10/01)
+
+## Breaking Changes
+
+- Rebuilt command line arguments
+  - Now in kebab case format
+  - ALL DCMs require --use statements, there are no default DCMs anymore
+- Incorporates changes made during the egui betas.
+- The `--stay_open` argument is now assumed. The server will run until either Ctrl-C is pressed or
+  an IPC stop message is received.
+
+## Features
+
+- Intiface Engine is now compiled as both a CLI (for desktop) and a Library (for mobile).
+- Updated to Buttplug v6
+- Moved to semantic versioning, major version denotes CLI argument or breaking IPC protocol change.
+
 # v101 (egui Beta 2) (2021/01/25)
 
 - Add websocket device server port selection
@@ -11,7 +28,7 @@
 - Server version now uses a shorter tag
 - Update to Rust 2021
 
-# v50 (2022/04/26)
+# v50 (2022/04/26) - Last version of Intiface CLI
 
 ## Features
 
