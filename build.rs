@@ -1,8 +1,11 @@
 use anyhow::Result;
 use std::{
-  env, fs::File, io::{BufWriter, Write}, path::Path,
+  env,
+  fs::File,
+  io::{BufWriter, Write},
+  path::Path,
 };
-use vergen::{Config, vergen, ShaKind};
+use vergen::{vergen, Config, ShaKind};
 
 fn main() -> Result<()> {
   let out_dir = env::var("OUT_DIR")?;

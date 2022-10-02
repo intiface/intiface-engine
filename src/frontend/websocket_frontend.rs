@@ -7,20 +7,18 @@ use crate::error::IntifaceError;
 use async_trait::async_trait;
 use futures::FutureExt;
 use futures::{AsyncRead, AsyncWrite, SinkExt, StreamExt};
-use std::{sync::{
-  Arc,
-  atomic::{AtomicBool, Ordering}
-}
-  , time::Duration};
+use std::{
+  sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc,
+  },
+  time::Duration,
+};
 use tokio::{
   self,
   net::TcpListener,
   select,
-  sync::{
-    mpsc,
-    broadcast,
-    Notify, OnceCell,
-  },
+  sync::{broadcast, mpsc, Notify, OnceCell},
 };
 use tokio_util::sync::CancellationToken;
 
@@ -95,7 +93,7 @@ async fn run_connection_loop<S>(
                 }
                 async_tungstenite::tungstenite::Message::Close(_) => {
                   info!("Closing websocket");
-                  cancellation_token.cancel();                  
+                  cancellation_token.cancel();
                   if websocket_server_sender.close().await.is_err() {
                     warn!("Cannot close, assuming connection already closed");
                     return;
@@ -145,7 +143,7 @@ pub struct WebsocketFrontend {
   disconnect_notifier: Arc<Notify>,
   cancellation_token: Arc<CancellationToken>,
   event_sender: broadcast::Sender<IntifaceMessage>,
-  connected: Arc<AtomicBool>
+  connected: Arc<AtomicBool>,
 }
 
 impl WebsocketFrontend {
@@ -157,7 +155,7 @@ impl WebsocketFrontend {
       port,
       cancellation_token,
       event_sender,
-      connected: Arc::new(AtomicBool::new(false))
+      connected: Arc::new(AtomicBool::new(false)),
     }
   }
 }
@@ -196,7 +194,8 @@ impl Frontend for WebsocketFrontend {
     // Create the event loop and TCP listener we'll accept connections on.
     let try_socket = TcpListener::bind(&addr).await;
     debug!("Websocket: Socket bound.");
-    let listener = try_socket.map_err(|e| IntifaceError::new(&format!("Websocket bind error: {:?}", e)))?;
+    let listener =
+      try_socket.map_err(|e| IntifaceError::new(&format!("Websocket bind error: {:?}", e)))?;
     debug!("Websocket: Listening on: {}", addr);
     if let Ok((stream, _)) = listener.accept().await {
       info!("Websocket: Got connection");
@@ -221,7 +220,9 @@ impl Frontend for WebsocketFrontend {
       });
       Ok(())
     } else {
-      Err(IntifaceError::new("Cannot run accept on websocket frontend port."))
+      Err(IntifaceError::new(
+        "Cannot run accept on websocket frontend port.",
+      ))
     }
   }
 

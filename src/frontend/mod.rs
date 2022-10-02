@@ -1,23 +1,14 @@
-mod websocket_frontend;
 pub mod process_messages;
+mod websocket_frontend;
+use crate::{error::IntifaceError, options::EngineOptions};
 use async_trait::async_trait;
-use crate::{
-  error::IntifaceError,
-  options::EngineOptions
-};
-use websocket_frontend::WebsocketFrontend;
-pub use process_messages::{EngineMessage, IntifaceMessage};
-use std::{
-  sync::Arc,
-};
-use futures::{
-  Stream,
-  StreamExt,
-  pin_mut
-};
-use tokio::{select, sync::broadcast};
 use buttplug::server::ButtplugRemoteServerEvent;
+use futures::{pin_mut, Stream, StreamExt};
+pub use process_messages::{EngineMessage, IntifaceMessage};
+use std::sync::Arc;
+use tokio::{select, sync::broadcast};
 use tokio_util::sync::CancellationToken;
+use websocket_frontend::WebsocketFrontend;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -35,7 +26,7 @@ pub async fn frontend_external_event_loop(
 ) {
   let mut external_receiver = frontend.event_stream();
   loop {
-    select!{
+    select! {
       external_message = external_receiver.recv() => {
         match external_message {
           Ok(message) => match message {
@@ -121,7 +112,9 @@ struct NullFrontend {}
 #[async_trait]
 impl Frontend for NullFrontend {
   async fn send(&self, _: EngineMessage) {}
-  async fn connect(&self) -> Result<(), IntifaceError> { Ok(()) }
+  async fn connect(&self) -> Result<(), IntifaceError> {
+    Ok(())
+  }
   fn disconnect(self) {}
   fn event_stream(&self) -> broadcast::Receiver<IntifaceMessage> {
     let (_, receiver) = broadcast::channel(255);
@@ -129,9 +122,15 @@ impl Frontend for NullFrontend {
   }
 }
 
-pub async fn setup_frontend(options: &EngineOptions, cancellation_token: &Arc<CancellationToken>) -> Arc<dyn Frontend> {
+pub async fn setup_frontend(
+  options: &EngineOptions,
+  cancellation_token: &Arc<CancellationToken>,
+) -> Arc<dyn Frontend> {
   if let Some(frontend_websocket_port) = options.frontend_websocket_port() {
-    Arc::new(WebsocketFrontend::new(frontend_websocket_port, cancellation_token.clone()))
+    Arc::new(WebsocketFrontend::new(
+      frontend_websocket_port,
+      cancellation_token.clone(),
+    ))
   } else {
     Arc::new(NullFrontend::default())
   }

@@ -3,53 +3,53 @@ use tracing::Level;
 
 #[derive(CopyGetters, Getters, Default, Debug, Clone)]
 pub struct EngineOptions {
-  #[getset(get="pub")]
+  #[getset(get = "pub")]
   sentry_api_key: Option<String>,
-  #[getset(get="pub")]
+  #[getset(get = "pub")]
   ipc_pipe_name: Option<String>,
-  #[getset(get="pub")]
+  #[getset(get = "pub")]
   device_config_json: Option<String>,
-  #[getset(get="pub")]
+  #[getset(get = "pub")]
   user_device_config_json: Option<String>,
-  #[getset(get="pub")]
+  #[getset(get = "pub")]
   server_name: String,
-  #[getset(get_copy="pub")]
+  #[getset(get_copy = "pub")]
   crash_reporting: bool,
-  #[getset(get_copy="pub")]
+  #[getset(get_copy = "pub")]
   websocket_use_all_interfaces: bool,
-  #[getset(get_copy="pub")]
+  #[getset(get_copy = "pub")]
   websocket_port: Option<u16>,
-  #[getset(get_copy="pub")]
+  #[getset(get_copy = "pub")]
   frontend_websocket_port: Option<u16>,
-  #[getset(get_copy="pub")]
+  #[getset(get_copy = "pub")]
   frontend_in_process_channel: bool,
-  #[getset(get_copy="pub")]
+  #[getset(get_copy = "pub")]
   max_ping_time: u32,
-  #[getset(get="pub")]
+  #[getset(get = "pub")]
   log_level: Option<String>,
-  #[getset(get_copy="pub")]
+  #[getset(get_copy = "pub")]
   allow_raw_messages: bool,
-  #[getset(get_copy="pub")]
+  #[getset(get_copy = "pub")]
   use_bluetooth_le: bool,
-  #[getset(get_copy="pub")]
+  #[getset(get_copy = "pub")]
   use_serial_port: bool,
-  #[getset(get_copy="pub")]
+  #[getset(get_copy = "pub")]
   use_hid: bool,
-  #[getset(get_copy="pub")]
+  #[getset(get_copy = "pub")]
   use_lovense_dongle_serial: bool,
-  #[getset(get_copy="pub")]
+  #[getset(get_copy = "pub")]
   use_lovense_dongle_hid: bool,
-  #[getset(get_copy="pub")]
+  #[getset(get_copy = "pub")]
   use_xinput: bool,
-  #[getset(get_copy="pub")]
+  #[getset(get_copy = "pub")]
   use_lovense_connect: bool,
-  #[getset(get_copy="pub")]
+  #[getset(get_copy = "pub")]
   use_device_websocket_server: bool,
-  #[getset(get_copy="pub")]
+  #[getset(get_copy = "pub")]
   device_websocket_server_port: Option<u16>,
-  #[getset(get_copy="pub")]
+  #[getset(get_copy = "pub")]
   crash_main_thread: bool,
-  #[getset(get_copy="pub")]
+  #[getset(get_copy = "pub")]
   crash_task_thread: bool,
 }
 
@@ -107,14 +107,14 @@ impl From<EngineOptionsExternal> for EngineOptions {
       use_device_websocket_server: other.use_device_websocket_server,
       device_websocket_server_port: other.device_websocket_server_port,
       crash_main_thread: other.crash_main_thread,
-      crash_task_thread: other.crash_task_thread
+      crash_task_thread: other.crash_task_thread,
     }
   }
 }
 
 #[derive(Default)]
 pub struct EngineOptionsBuilder {
-  options: EngineOptions
+  options: EngineOptions,
 }
 
 impl EngineOptionsBuilder {
@@ -250,4 +250,3 @@ impl EngineOptionsBuilder {
     self.options.clone()
   }
 }
-

@@ -1,11 +1,5 @@
-use std::{
-  error::Error,
-  fmt,
-};
-use buttplug::{
-  core::errors::ButtplugError,
-  server::ButtplugServerError
-};
+use buttplug::{core::errors::ButtplugError, server::ButtplugServerError};
+use std::{error::Error, fmt};
 
 #[derive(Debug)]
 pub struct IntifaceError {

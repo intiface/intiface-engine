@@ -1,8 +1,12 @@
 use crate::{
   device_communication_managers::setup_server_device_comm_managers,
   error::IntifaceEngineError,
-  frontend::{Frontend, frontend_server_event_loop, frontend_external_event_loop, process_messages::EngineMessage, setup_frontend},
-  options::EngineOptions, logging::setup_frontend_logging,
+  frontend::{
+    frontend_external_event_loop, frontend_server_event_loop, process_messages::EngineMessage,
+    setup_frontend, Frontend,
+  },
+  logging::setup_frontend_logging,
+  options::EngineOptions,
 };
 use buttplug::{
   core::{
@@ -14,11 +18,7 @@ use buttplug::{
   },
   server::{ButtplugRemoteServer, ButtplugServerBuilder, ButtplugServerConnectorError},
 };
-use std::{
-  sync::Arc,
-  str::FromStr,
-  time::Duration
-};
+use std::{str::FromStr, sync::Arc, time::Duration};
 use tokio::select;
 use tokio_util::sync::CancellationToken;
 
@@ -110,7 +110,11 @@ pub struct IntifaceEngine {
 }
 
 impl IntifaceEngine {
-  pub async fn run(&self, options: &EngineOptions, external_frontend: Option<Arc<dyn Frontend>>) -> Result<(), IntifaceEngineError> {
+  pub async fn run(
+    &self,
+    options: &EngineOptions,
+    external_frontend: Option<Arc<dyn Frontend>>,
+  ) -> Result<(), IntifaceEngineError> {
     // At this point we will have received and validated options.
 
     // Set up crash logging for the duration of the server session.
@@ -219,7 +223,7 @@ impl IntifaceEngine {
       }
       info!("Server connection dropped, restarting");
     }
-    if let Err(e) =  server.shutdown().await {
+    if let Err(e) = server.shutdown().await {
       error!("Shutdown failed: {:?}", e);
     }
     info!("Exiting");

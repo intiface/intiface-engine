@@ -1,23 +1,16 @@
-use tracing::info;
-use intiface_engine::{
-  IntifaceEngine,
-  EngineOptions,
-  IntifaceError,
-  EngineOptionsBuilder,
-  IntifaceEngineError, setup_console_logging
-};
-use tracing::debug;
-use tokio::{
-  select,
-  signal::ctrl_c
-};
 use argh::FromArgs;
 use getset::{CopyGetters, Getters};
+use intiface_engine::{
+  setup_console_logging, EngineOptions, EngineOptionsBuilder, IntifaceEngine, IntifaceEngineError,
+  IntifaceError,
+};
 use std::fs;
+use tokio::{select, signal::ctrl_c};
+use tracing::debug;
+use tracing::info;
 use tracing::Level;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
-
 
 /// command line interface for intiface/buttplug.
 ///
@@ -169,7 +162,12 @@ impl TryFrom<IntifaceCLIArguments> for EngineOptions {
       );
       match fs::read_to_string(deviceconfig) {
         Ok(cfg) => builder.device_config_json(&cfg),
-        Err(err) => return Err(IntifaceError::new(&format!("Error opening external device configuration: {:?}", err))),
+        Err(err) => {
+          return Err(IntifaceError::new(&format!(
+            "Error opening external device configuration: {:?}",
+            err
+          )))
+        }
       };
     }
 
@@ -180,7 +178,12 @@ impl TryFrom<IntifaceCLIArguments> for EngineOptions {
       );
       match fs::read_to_string(userdeviceconfig) {
         Ok(cfg) => builder.user_device_config_json(&cfg),
-        Err(err) => return Err(IntifaceError::new(&format!("Error opening user device configuration: {:?}", err))),
+        Err(err) => {
+          return Err(IntifaceError::new(&format!(
+            "Error opening user device configuration: {:?}",
+            err
+          )))
+        }
       };
     }
 
@@ -225,7 +228,6 @@ impl TryFrom<IntifaceCLIArguments> for EngineOptions {
   }
 }
 
-
 #[tokio::main]
 async fn main() -> Result<(), IntifaceEngineError> {
   let args: IntifaceCLIArguments = argh::from_env();
@@ -260,6 +262,6 @@ async fn main() -> Result<(), IntifaceEngineError> {
       engine.stop();
     }
   }
-  
+
   Ok(())
 }
