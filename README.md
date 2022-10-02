@@ -14,9 +14,8 @@
 
 CLI and Library frontend for Buttplug
 
-Intiface Engine is just a front-end for [buttplug-rs](https://github.com/buttplugio/buttplug-rs),
-but since we're trying to not make people install a program named "Buttplug" on their computers,
-here we are.
+Intiface Engine is just a front-end for [Buttplug](https://github.com/buttplugio/buttplug),
+but since we're trying to not make people install a program named "Buttplug", here we are.
 
 While this program can be used standalone, it will mostly be featured as a backend/engine for
 Intiface Central.
