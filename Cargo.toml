@@ -16,7 +16,7 @@ name = "intiface_engine"
 path = "src/lib.rs"
 
 [[bin]]
-name = "intiface_engine"
+name = "intiface-engine"
 path = "src/bin/main.rs"
 
 [features]
