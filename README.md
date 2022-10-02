@@ -1,26 +1,25 @@
-# Buttplug Rust Intiface CLI Utility
+# Intiface Engine
 
 [![Patreon donate button](https://img.shields.io/badge/patreon-donate-yellow.svg)](https://www.patreon.com/qdot)
 [![Github donate button](https://img.shields.io/badge/github-donate-ff69b4.svg)](https://www.github.com/sponsors/qdot)
 [![Discord](https://img.shields.io/discord/353303527587708932.svg?logo=discord)](https://discord.buttplug.io)
 [![Twitter](https://img.shields.io/twitter/follow/buttplugio.svg?style=social&logo=twitter)](https://twitter.com/buttplugio)
 
-![Intiface CLI Build](https://github.com/intiface/intiface-cli-rs/workflows/Intiface%20CLI%20Build/badge.svg)  ![crates.io](https://img.shields.io/crates/v/intiface-cli.svg)
+![Intiface Engine Build](https://github.com/intiface/intiface-engine/workflows/Intiface%20Engine%20Build/badge.svg)  ![crates.io](https://img.shields.io/crates/v/intiface-engine.svg)
 
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/buttplugio/buttplug-rs/dev/buttplug/docs/buttplug_rust_docs.png">
 </p>
 
-CLI for Intiface/Buttplug
+CLI and Library frontend for Buttplug
 
-Basically just a front-end for
-[buttplug-rs](https://github.com/buttplugio/buttplug-rs), but since we're trying
-to not make people install a program named "Buttplug" on their computers, here
-we are.
+Intiface Engine is just a front-end for [buttplug-rs](https://github.com/buttplugio/buttplug-rs),
+but since we're trying to not make people install a program named "Buttplug" on their computers,
+here we are.
 
-While this program can be used standalone, it will mostly be featured
-as a backend/engine for Intiface Desktop.
+While this program can be used standalone, it will mostly be featured as a backend/engine for
+Intiface Central.
 
 ## Running
 
@@ -29,29 +28,32 @@ Command line options are as follows:
 | Option | Description |
 | --------- | --------- |
 | `version` | Print version and exit |
-| `serverversion` | Print version and exit (kept for legacy reasons) |
-| `generatecert` | Generate self signed SSL cert (PEM format) and exit |
-| `wsallinterfaces` | Websocket servers will listen on all interfaces (versus only on localhost, which is default) |
-| `wsinsecureport [port]` | Network port for connecting via non-ssl (ws://) protocols |
-| `ipcpipe [name]` | Name for IPC pipe (not yet implemented) |
-| `frontendpipe` | Relay output via protobuf to stdout (only used by Intiface Desktop GUI) |
-| `servername` | Identifying name server should emit when asked for info |
-| `deviceconfig [file]` | Device configuration file to load (if omitted, uses internal) |
-| `userdeviceconfig [file]` | User device configuration file to load (if omitted, none used) |
-| `pingtime [number]` | Milliseconds for ping time limit of server (if omitted, set to 0) |
-| `stayopen` | Stay open between connections (needed for Windows due to device disconnect issues) |
+| `server_version` | Print version and exit (kept for legacy reasons) |
+| `crash_reporting` | Turn on sentry crash reporting |
+| `websocket_use_all_interfaces` | Websocket servers will listen on all interfaces (versus only on localhost, which is default) |
+| `websocket_peport [port]` | Network port for connecting via non-ssl (ws://) protocols |
+| `ipc_pipe [name]` | Name for IPC pipe (not yet implemented) |
+| `frontend_websocket_port` | IPC JSON port for Intiface Central |
+| `server_name` | Identifying name server should emit when asked for info |
+| `device_config_file [file]` | Device configuration file to load (if omitted, uses internal) |
+| `user_device_config_file [file]` | User device configuration file to load (if omitted, none used) |
+| `max_ping_time [number]` | Milliseconds for ping time limit of server (if omitted, set to 0) |
 | `log` | Level of logs to output by default (if omitted, set to None) |
+| `allow_raw` | Allow clients to communicate using raw messages (DANGEROUS, CAN BRICK SOME DEVICES) |
+| `use_bluetooth_le` | Use the Bluetooth LE Buttplug Device Communication Manager |
+| `use_serial` | Use the Serial Port Buttplug Device Communication Manager |
+| `use_hid` | Use the HID Buttplug Device Communication Manager |
+| `use_lovense_dongle` | Use the HID Lovense Dongle Buttplug Device Communication Manager |
+| `use_xinput` | Use the XInput Buttplug Device Communication Manager |
+| `use_lovense_connect` | Use the Lovense Connect Buttplug Device Communication Manager |
+| `use_device_websocket_server` | Use the Device Websocket Server Buttplug Device Communication Manager |
+| `device_websocket_server_port` | Port for the device websocket server |
 
-For example, to run the server on an insecure websocket at port 12345:
+For example, to run the server on websockets at port 12345 with bluetooth device support:
 
-`intiface-cli --wsinsecureport 12345`
+`intiface-engine --wsinsecureport 12345 --use_bluetooth_le`
 
 ## Compiling
-
-For compiling on all platforms the protobuf compiler (protoc) is required. On
-Windows and macOS, this can either be retreived via Chocolatey or Homebrew,
-respectively. On Debian linux, the `protobuf-compiler` package can be used.
-Other linux distros most likely have a similar package.
 
 Linux will have extra compilation dependency requirements via
 [buttplug-rs](https://github.com/buttplugio/buttplug-rs). For pacakges required,
@@ -59,24 +61,24 @@ please check there.
 
 ## Contributing
 
-Right now, we mostly need code/API style reviews and feedback. We
-don't really have any good bite-sized chunks to mentor the
-implementation yet, but one we do, those will be marked "Help Wanted"
-in our [github
-issues](https://github.com/buttplugio/buttplug-rs/issues).
+Right now, we mostly need code/API style reviews and feedback. We don't really have any good
+bite-sized chunks to mentor the implementation yet, but one we do, those will be marked "Help
+Wanted" in our [github issues](https://github.com/buttplugio/buttplug-rs/issues).
 
-As we need money to keep up with supporting the latest and greatest hardware, we
-also have multiple ways to donate!
+As we need money to keep up with supporting the latest and greatest hardware, we also have multiple
+ways to donate!
 
 - [Patreon](https://patreon.com/qdot)
 - [Github Sponsors](https://github.com/sponsors/qdot)
 - [Ko-Fi](https://ko-fi.com/qdot76367)
 
-## License
+## License and Trademarks
 
-Buttplug is BSD licensed.
+Intiface is a Registered Trademark of Nonpolynomial Labs, LLC
 
-    Copyright (c) 2016-2021, Nonpolynomial Labs, LLC
+Buttplug and Intiface are BSD licensed.
+
+    Copyright (c) 2016-2022, Nonpolynomial Labs, LLC
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
