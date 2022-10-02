@@ -197,9 +197,14 @@ impl TryFrom<IntifaceCLIArguments> for EngineOptions {
       .use_lovense_connect(args.use_lovense_connect())
       .use_device_websocket_server(args.use_device_websocket_server())
       .max_ping_time(args.max_ping_time())
-      .crash_main_thread(args.crash_main_thread())
-      .crash_task_thread(args.crash_task_thread())
       .server_name(&args.server_name());
+
+    #[cfg(debug_assertions)]
+    {
+      builder
+        .crash_main_thread(args.crash_main_thread())
+        .crash_task_thread(args.crash_task_thread());
+    }
 
     if let Some(value) = args.log() {
       builder.log_level(value);

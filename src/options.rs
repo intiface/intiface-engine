@@ -143,6 +143,7 @@ impl EngineOptionsBuilder {
     self
   }
 
+  #[cfg(debug_assertions)]
   pub fn crash_main_thread(&mut self, value: bool) -> &mut Self {
     #[cfg(debug_assertions)]
     {
@@ -151,6 +152,7 @@ impl EngineOptionsBuilder {
     self
   }
 
+  #[cfg(debug_assertions)]
   pub fn crash_task_thread(&mut self, value: bool) -> &mut Self {
     #[cfg(debug_assertions)]
     {
