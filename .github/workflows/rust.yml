@@ -1,4 +1,4 @@
-name: Intiface CLI Build
+name: Intiface Engine Build
 
 on: push
 
@@ -54,7 +54,7 @@ jobs:
       if: startsWith(matrix.os, 'ubuntu') || startsWith(matrix.os, 'macos')
       run: |
         mkdir ci-output-release
-        cp target/release/intiface-cli ci-output-release/IntifaceCLI
+        cp target/release/intiface-engine ci-output-release/intiface-engine
     - name: Copy Info.plist (MacOS)
       if: startsWith(matrix.os, 'macos')
       run: |
@@ -63,11 +63,11 @@ jobs:
       if: startsWith(matrix.os, 'windows')
       run: |
         mkdir ci-output-release
-        copy target\release\intiface-cli.exe ci-output-release\IntifaceCLI.exe
+        copy target\release\intiface-engine.exe ci-output-release\intiface-engine.exe
     - name: Upload artifacts (release)
       uses: actions/upload-artifact@v1
       with:
-        name: intiface-cli-rs-${{ runner.os }}-release
+        name: intiface-engine-${{ runner.os }}-release
         path: ci-output-release
   release:
     name: Release artifacts
@@ -79,30 +79,30 @@ jobs:
     - name: Download Artifact (Linux)
       uses: actions/download-artifact@v1
       with:
-        name: intiface-cli-rs-Linux-release
+        name: intiface-engine-Linux-release
     - name: Download Artifact (Windows)
       uses: actions/download-artifact@v1
       with:
-        name: intiface-cli-rs-Windows-release
+        name: intiface-engine-Windows-release
     - name: Download Artifact (MacOS)
       uses: actions/download-artifact@v1
       with:
-        name: intiface-cli-rs-macOS-release
+        name: intiface-engine-macOS-release
     - name: Zip executables
       # This follows the naming convention from C# and JS. Use -j to junk the
       # directory structure.
       run: |
-        zip -j intiface-cli-rs-linux-x64-Release.zip intiface-cli-rs-Linux-release/IntifaceCLI README.md CHANGELOG.md
-        zip -j intiface-cli-rs-win-x64-Release.zip intiface-cli-rs-Windows-release/IntifaceCLI.exe README.md CHANGELOG.md
-        zip -j intiface-cli-rs-macos-x64-Release.zip intiface-cli-rs-macOS-release/IntifaceCLI README.md CHANGELOG.md Info.plist
+        zip -j intiface-engine-linux-x64-Release.zip intiface-engine-Linux-release/intiface-engine README.md CHANGELOG.md
+        zip -j intiface-engine-win-x64-Release.zip intiface-engine-Windows-release/intiface-engine.exe README.md CHANGELOG.md
+        zip -j intiface-engine-macos-x64-Release.zip intiface-engine-macOS-release/intiface-engine README.md CHANGELOG.md Info.plist
     - name: Release
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
       with:
         files: |
-          intiface-cli-rs-linux-x64-Release.zip
-          intiface-cli-rs-win-x64-Release.zip
-          intiface-cli-rs-macos-x64-Release.zip
+          intiface-engine-linux-x64-Release.zip
+          intiface-engine-win-x64-Release.zip
+          intiface-engine-macos-x64-Release.zip
           README.md
           CHANGELOG.md
       env:
