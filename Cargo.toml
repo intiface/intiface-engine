@@ -1,6 +1,6 @@
 [package]
 name = "intiface-engine"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Nonpolynomial Labs, LLC <kyle@nonpolynomial.com>"]
 description = "CLI and Library frontend for the Buttplug sex toy control library"
 license = "BSD-3-Clause"
@@ -26,7 +26,7 @@ desktop=["buttplug/xinput-manager", "buttplug/serial-manager", "buttplug/lovense
 
 [dependencies]
 # buttplug = { path = "../buttplug-rs/buttplug", default_features = false, features = ["tokio-runtime", "client", "server", "serialize-json", "websockets", "btleplug-manager", "websocket-server-manager"] }
-buttplug = { version = "6.0.1", default_features = false, features = ["tokio-runtime", "client", "server", "serialize-json", "websockets", "btleplug-manager", "websocket-server-manager"] }
+buttplug = { version = "6.1.0", default_features = false, features = ["tokio-runtime", "client", "server", "serialize-json", "websockets", "btleplug-manager", "websocket-server-manager"] }
 argh = "0.1.8"
 log = "0.4.17"
 futures = "0.3.24"

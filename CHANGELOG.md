@@ -1,3 +1,11 @@
+# Intiface Engine v1.0.1 (2022/10/15)
+
+## Features
+
+- Update to Buttplug v6.1.0
+  - Mostly bugfixes
+  - Now requires v2.x device config files
+
 # Intiface Engine v1.0.0 (2022/10/01)
 
 ## Breaking Changes
