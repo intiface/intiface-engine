@@ -1,3 +1,9 @@
+# Intiface Engine v1.0.2 (2022/10/18)
+
+## Bugfixes
+
+- Vergen should not block building as a library dependency
+
 # Intiface Engine v1.0.1 (2022/10/15)
 
 ## Features
