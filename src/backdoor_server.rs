@@ -40,7 +40,6 @@ impl BackdoorServer {
   // This has to act like both a message parser *and* a connector, as we're wrapping the serializer
   // here. So it will only take strings, and only output strings.
   pub async fn parse_message(&self, msg: &str) -> String {
-    info!("BACKDOOR SERVER GOT NEW MESSAGE");
     let messages = match self
       .serializer
       .deserialize(&ButtplugSerializedMessage::Text(msg.to_owned()))
