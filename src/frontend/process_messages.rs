@@ -14,6 +14,7 @@ pub enum EngineMessage {
   EngineError {
     error: String,
   },
+  EngineServerCreated {},
   EngineStopped {},
   ClientConnected {
     client_name: String,

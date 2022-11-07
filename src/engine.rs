@@ -168,8 +168,9 @@ impl IntifaceEngine {
 
     // Hang out until those listeners get sick of listening.
     info!("Intiface CLI Setup finished, running server tasks until all joined.");
-    let server = setup_buttplug_server(options).await?;
-
+    let server = setup_buttplug_server(options, &self.backdoor_server).await?;
+    frontend.send(EngineMessage::EngineServerCreated {}).await;
+    
     let event_receiver = server.event_stream();
     let frontend_clone = frontend.clone();
     let stop_child_token = self.stop_token.child_token();
