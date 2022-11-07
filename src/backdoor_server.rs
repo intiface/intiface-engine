@@ -1,6 +1,6 @@
 use std::sync::Arc;
 use futures::{Stream, StreamExt};
-use buttplug::{server::{device::ServerDeviceManager}, core::{message::{Error, serializer::{ButtplugServerJSONSerializer, ButtplugMessageSerializer, ButtplugSerializedMessage}, ButtplugMessageSpecVersion, ButtplugServerMessage}, errors::{ButtplugMessageError, ButtplugError}}};
+use buttplug::{server::{device::ServerDeviceManager}, core::{message::{Error, serializer::{ButtplugServerJSONSerializer, ButtplugMessageSerializer, ButtplugSerializedMessage}, ButtplugMessageSpecVersion, ButtplugServerMessage, ButtplugMessage}, errors::{ButtplugMessageError, ButtplugError}}};
 
 // Allows direct access to the Device Manager of a running ButtplugServer. Bypasses requirements for
 // client handshake, ping, etc...
@@ -48,9 +48,17 @@ impl BackdoorServer {
       Err(e) => return self.serialize_msg(&Error::from(ButtplugError::from(ButtplugMessageError::MessageSerializationError(e))).into())
     };
     let device_manager = self.device_manager.clone();
+    // ID setting is normally done by the top level server, so we'll have to manage that ourselves here.
     match device_manager.parse_message(messages[0].clone()).await {
-      Ok(outgoing_msg) => self.serialize_msg(&outgoing_msg),
-      Err(e) => self.serialize_msg(&Error::from(e).into())
+      Ok(mut outgoing_msg) => {
+        outgoing_msg.set_id(messages[0].id());
+        self.serialize_msg(&outgoing_msg)
+      }
+      Err(e) => {
+        let mut error_msg: ButtplugServerMessage = Error::from(e).into();
+        error_msg.set_id(messages[0].id());
+        self.serialize_msg(&error_msg)
+      }
     }
   }
 }
