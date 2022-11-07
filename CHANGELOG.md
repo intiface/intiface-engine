@@ -1,3 +1,15 @@
+# Intiface Engine v1.0.3 (2022/11/05)
+
+## Features
+
+- Implemented BackdoorServer, which allows access to server devices directly, while still allowing a
+  client to access them simultaneously. Can't possibly see how this could go wrong.
+- Added EngineServerCreated Event for IntifaceCentral to know when to bring up the BackdoorServer.
+
+## Bugfixes
+
+- Fixed issue where logging could stay alive through multiple server bringups when run in process.
+
 # Intiface Engine v1.0.2 (2022/10/18)
 
 ## Bugfixes
