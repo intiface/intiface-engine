@@ -6,7 +6,7 @@ use buttplug::server::ButtplugRemoteServerEvent;
 use futures::{pin_mut, Stream, StreamExt};
 pub use process_messages::{EngineMessage, IntifaceMessage};
 use std::sync::Arc;
-use tokio::{select, sync::broadcast};
+use tokio::{select, sync::{broadcast, Notify}};
 use tokio_util::sync::CancellationToken;
 use websocket_frontend::WebsocketFrontend;
 
@@ -16,7 +16,8 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub trait Frontend: Sync + Send {
   async fn send(&self, msg: EngineMessage);
   async fn connect(&self) -> Result<(), IntifaceError>;
-  fn disconnect(self);
+  fn disconnect_notifier(&self) -> Arc<Notify>;
+  fn disconnect(&self);
   fn event_stream(&self) -> broadcast::Receiver<IntifaceMessage>;
 }
 
@@ -107,7 +108,9 @@ pub async fn frontend_server_event_loop(
 }
 
 #[derive(Default)]
-struct NullFrontend {}
+struct NullFrontend {
+  notify: Arc<Notify>
+}
 
 #[async_trait]
 impl Frontend for NullFrontend {
@@ -115,7 +118,12 @@ impl Frontend for NullFrontend {
   async fn connect(&self) -> Result<(), IntifaceError> {
     Ok(())
   }
-  fn disconnect(self) {}
+  fn disconnect(&self) {
+    self.notify.notify_waiters();
+  }
+  fn disconnect_notifier(&self) -> Arc<Notify> {
+    self.notify.clone()
+  }
   fn event_stream(&self) -> broadcast::Receiver<IntifaceMessage> {
     let (_, receiver) = broadcast::channel(255);
     receiver

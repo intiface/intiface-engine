@@ -230,6 +230,7 @@ impl IntifaceEngine {
     info!("Exiting");
     tokio::time::sleep(Duration::from_millis(100)).await;
     frontend.send(EngineMessage::EngineStopped {}).await;
+    frontend.disconnect();
     Ok(())
   }
 

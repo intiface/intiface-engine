@@ -178,6 +178,10 @@ impl Frontend for WebsocketFrontend {
     self.event_sender.subscribe()
   }
 
+  fn disconnect_notifier(&self) -> Arc<Notify> {
+    self.disconnect_notifier.clone()
+  }
+
   async fn connect(&self) -> Result<(), IntifaceError> {
     let disconnect_notifier = self.disconnect_notifier.clone();
 
@@ -226,7 +230,7 @@ impl Frontend for WebsocketFrontend {
     }
   }
 
-  fn disconnect(self) {
+  fn disconnect(&self) {
     self.disconnect_notifier.notify_waiters();
   }
 }
