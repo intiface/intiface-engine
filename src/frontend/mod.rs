@@ -51,7 +51,7 @@ pub async fn frontend_external_event_loop(
         }
       },
       _ = connection_cancellation_token.cancelled() => {
-        info!("Connection cancellation token activated, breaking");
+        info!("Connection cancellation token activated, breaking from frontend external event loop.");
         break;
       }
     }
@@ -69,11 +69,11 @@ pub async fn frontend_server_event_loop(
       maybe_event = receiver.next() => {
         match maybe_event {
           Some(event) => match event {
-            ButtplugRemoteServerEvent::Connected(client_name) => {
+            ButtplugRemoteServerEvent::ClientConnected(client_name) => {
               info!("Client connected: {}", client_name);
               frontend.send(EngineMessage::ClientConnected{client_name}).await;
             }
-            ButtplugRemoteServerEvent::Disconnected => {
+            ButtplugRemoteServerEvent::ClientDisconnected => {
               info!("Client disconnected.");
               frontend
                 .send(EngineMessage::ClientDisconnected{})
@@ -99,7 +99,7 @@ pub async fn frontend_server_event_loop(
         }
       },
       _ = connection_cancellation_token.cancelled() => {
-        info!("Connection cancellation token activated, breaking");
+        info!("Connection cancellation token activated, breaking from frontend server event loop");
         break;
       }
     }
