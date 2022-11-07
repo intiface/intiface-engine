@@ -6,7 +6,7 @@ use crate::{
     setup_frontend, Frontend,
   },
   logging::setup_frontend_logging,
-  options::EngineOptions,
+  options::EngineOptions, backdoor_server::BackdoorServer, IntifaceError,
 };
 use buttplug::{
   core::{
@@ -18,7 +18,8 @@ use buttplug::{
   },
   server::{ButtplugRemoteServer, ButtplugServerBuilder, ButtplugServerConnectorError},
 };
-use std::{str::FromStr, sync::Arc, time::Duration};
+use once_cell::sync::OnceCell;
+use std::{str::FromStr, sync::{Arc, Once}, time::Duration};
 use tokio::select;
 use tokio_util::sync::CancellationToken;
 
@@ -42,6 +43,7 @@ pub fn maybe_crash_task_thread(options: &EngineOptions) {
 
 async fn setup_buttplug_server(
   options: &EngineOptions,
+  backdoor_server: &OnceCell<Arc<BackdoorServer>>
 ) -> Result<ButtplugRemoteServer, IntifaceEngineError> {
   //options::setup_server_device_comm_managers(&mut connector_opts.server_builder);
 
@@ -71,7 +73,11 @@ async fn setup_buttplug_server(
       return Err(IntifaceEngineError::ButtplugServerError(e));
     }
   };
-  Ok(ButtplugRemoteServer::new(core_server))
+  if backdoor_server.set(Arc::new(BackdoorServer::new(core_server.device_manager()))).is_err() {
+    Err(IntifaceError::new("BackdoorServer already initialized somehow! This should never happen!").into())
+  } else {
+    Ok(ButtplugRemoteServer::new(core_server))
+  }
 }
 
 async fn run_server(
@@ -107,9 +113,14 @@ async fn run_server(
 #[derive(Default)]
 pub struct IntifaceEngine {
   stop_token: Arc<CancellationToken>,
+  backdoor_server: OnceCell<Arc<BackdoorServer>>,
 }
 
 impl IntifaceEngine {
+  pub fn backdoor_server(&self) -> Option<Arc<BackdoorServer>> {
+    Some(self.backdoor_server.get()?.clone())
+  }
+
   pub async fn run(
     &self,
     options: &EngineOptions,
