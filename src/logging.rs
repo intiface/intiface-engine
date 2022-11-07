@@ -1,4 +1,4 @@
-use crate::frontend::{EngineMessage, IntifaceMessage, Frontend};
+use crate::frontend::{EngineMessage, Frontend};
 use once_cell::sync::OnceCell;
 use std::sync::Arc;
 use tokio::{select, sync::{broadcast}};

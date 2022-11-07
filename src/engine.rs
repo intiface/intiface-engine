@@ -19,7 +19,7 @@ use buttplug::{
   server::{ButtplugRemoteServer, ButtplugServerBuilder, ButtplugServerConnectorError},
 };
 use once_cell::sync::OnceCell;
-use std::{str::FromStr, sync::{Arc, Once}, time::Duration};
+use std::{str::FromStr, sync::Arc, time::Duration};
 use tokio::select;
 use tokio_util::sync::CancellationToken;
 
