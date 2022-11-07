@@ -1,6 +1,17 @@
-use std::sync::Arc;
+use buttplug::{
+  core::{
+    errors::{ButtplugError, ButtplugMessageError},
+    message::{
+      serializer::{
+        ButtplugMessageSerializer, ButtplugSerializedMessage, ButtplugServerJSONSerializer,
+      },
+      ButtplugMessage, ButtplugMessageSpecVersion, ButtplugServerMessage, Error,
+    },
+  },
+  server::device::ServerDeviceManager,
+};
 use futures::{Stream, StreamExt};
-use buttplug::{server::{device::ServerDeviceManager}, core::{message::{Error, serializer::{ButtplugServerJSONSerializer, ButtplugMessageSerializer, ButtplugSerializedMessage}, ButtplugMessageSpecVersion, ButtplugServerMessage, ButtplugMessage}, errors::{ButtplugMessageError, ButtplugError}}};
+use std::sync::Arc;
 
 // Allows direct access to the Device Manager of a running ButtplugServer. Bypasses requirements for
 // client handshake, ping, etc...
@@ -9,7 +20,7 @@ pub struct BackdoorServer {
   device_manager: Arc<ServerDeviceManager>,
   // Unlike clients, which can vary their serializers (but currently don't), we don't expect outside
   // access to a BackdoorServer, so we can hardcode to using JSON.
-  serializer: ButtplugServerJSONSerializer
+  serializer: ButtplugServerJSONSerializer,
 }
 
 impl BackdoorServer {
@@ -18,14 +29,17 @@ impl BackdoorServer {
     serializer.force_message_version(&ButtplugMessageSpecVersion::Version3);
     Self {
       device_manager,
-      serializer
+      serializer,
     }
   }
 
   pub fn event_stream(&self) -> impl Stream<Item = String> + '_ {
     // Unlike the client API, we can expect anyone using the server to pin this
     // themselves.
-    self.device_manager.event_stream().map(|x| self.serialize_msg(&x))
+    self
+      .device_manager
+      .event_stream()
+      .map(|x| self.serialize_msg(&x))
   }
 
   fn serialize_msg(&self, msg: &ButtplugServerMessage) -> String {
@@ -45,7 +59,14 @@ impl BackdoorServer {
       .deserialize(&ButtplugSerializedMessage::Text(msg.to_owned()))
     {
       Ok(msg) => msg,
-      Err(e) => return self.serialize_msg(&Error::from(ButtplugError::from(ButtplugMessageError::MessageSerializationError(e))).into())
+      Err(e) => {
+        return self.serialize_msg(
+          &Error::from(ButtplugError::from(
+            ButtplugMessageError::MessageSerializationError(e),
+          ))
+          .into(),
+        )
+      }
     };
     let device_manager = self.device_manager.clone();
     // ID setting is normally done by the top level server, so we'll have to manage that ourselves here.

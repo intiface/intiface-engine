@@ -1,9 +1,9 @@
 use crate::frontend::{EngineMessage, Frontend};
+use lazy_static::lazy_static;
 use once_cell::sync::OnceCell;
 use std::sync::Arc;
-use tokio::{select, sync::{broadcast}};
+use tokio::{select, sync::broadcast};
 use tracing::Level;
-use lazy_static::lazy_static;
 use tracing_subscriber::{
   filter::{EnvFilter, LevelFilter},
   layer::SubscriberExt,
@@ -52,7 +52,7 @@ pub fn setup_frontend_logging(log_level: Level, frontend: Arc<dyn Frontend>) {
   // Add panic hook for emitting backtraces through the logging system.
   log_panics::init();
   let mut receiver = LOG_BROADCASTER.subscribe();
-  let log_sender = frontend.clone();  
+  let log_sender = frontend.clone();
   let notifier = log_sender.disconnect_notifier();
   tokio::spawn(async move {
     // We can log until our receiver disappears at this point.

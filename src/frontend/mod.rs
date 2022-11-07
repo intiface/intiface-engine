@@ -6,7 +6,10 @@ use buttplug::server::ButtplugRemoteServerEvent;
 use futures::{pin_mut, Stream, StreamExt};
 pub use process_messages::{EngineMessage, IntifaceMessage};
 use std::sync::Arc;
-use tokio::{select, sync::{broadcast, Notify}};
+use tokio::{
+  select,
+  sync::{broadcast, Notify},
+};
 use tokio_util::sync::CancellationToken;
 use websocket_frontend::WebsocketFrontend;
 
@@ -109,7 +112,7 @@ pub async fn frontend_server_event_loop(
 
 #[derive(Default)]
 struct NullFrontend {
-  notify: Arc<Notify>
+  notify: Arc<Notify>,
 }
 
 #[async_trait]

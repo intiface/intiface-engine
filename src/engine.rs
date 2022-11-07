@@ -1,4 +1,5 @@
 use crate::{
+  backdoor_server::BackdoorServer,
   device_communication_managers::setup_server_device_comm_managers,
   error::IntifaceEngineError,
   frontend::{
@@ -6,7 +7,8 @@ use crate::{
     setup_frontend, Frontend,
   },
   logging::setup_frontend_logging,
-  options::EngineOptions, backdoor_server::BackdoorServer, IntifaceError,
+  options::EngineOptions,
+  IntifaceError,
 };
 use buttplug::{
   core::{
@@ -43,7 +45,7 @@ pub fn maybe_crash_task_thread(options: &EngineOptions) {
 
 async fn setup_buttplug_server(
   options: &EngineOptions,
-  backdoor_server: &OnceCell<Arc<BackdoorServer>>
+  backdoor_server: &OnceCell<Arc<BackdoorServer>>,
 ) -> Result<ButtplugRemoteServer, IntifaceEngineError> {
   //options::setup_server_device_comm_managers(&mut connector_opts.server_builder);
 
@@ -73,8 +75,14 @@ async fn setup_buttplug_server(
       return Err(IntifaceEngineError::ButtplugServerError(e));
     }
   };
-  if backdoor_server.set(Arc::new(BackdoorServer::new(core_server.device_manager()))).is_err() {
-    Err(IntifaceError::new("BackdoorServer already initialized somehow! This should never happen!").into())
+  if backdoor_server
+    .set(Arc::new(BackdoorServer::new(core_server.device_manager())))
+    .is_err()
+  {
+    Err(
+      IntifaceError::new("BackdoorServer already initialized somehow! This should never happen!")
+        .into(),
+    )
   } else {
     Ok(ButtplugRemoteServer::new(core_server))
   }
@@ -181,7 +189,7 @@ impl IntifaceEngine {
     info!("Intiface CLI Setup finished, running server tasks until all joined.");
     let server = setup_buttplug_server(options, &self.backdoor_server).await?;
     frontend.send(EngineMessage::EngineServerCreated {}).await;
-    
+
     let event_receiver = server.event_stream();
     let frontend_clone = frontend.clone();
     let stop_child_token = self.stop_token.child_token();
