@@ -25,35 +25,36 @@ crash_reporting=["sentry", "sentry-tracing"]
 desktop=["buttplug/xinput-manager", "buttplug/serial-manager", "buttplug/lovense-dongle-manager", "buttplug/lovense-connect-service-manager",]
 
 [dependencies]
-# buttplug = { path = "../buttplug-rs/buttplug", default_features = false, features = ["tokio-runtime", "client", "server", "serialize-json", "websockets", "btleplug-manager", "websocket-server-manager"] }
-buttplug = { version = "6.1.0", default_features = false, features = ["tokio-runtime", "client", "server", "serialize-json", "websockets", "btleplug-manager", "websocket-server-manager"] }
-argh = "0.1.8"
+buttplug = { path = "../buttplug-rs/buttplug", default_features = false, features = ["tokio-runtime", "client", "server", "serialize-json", "websockets", "btleplug-manager", "websocket-server-manager"] }
+# buttplug = { version = "6.1.0", default_features = false, features = ["tokio-runtime", "client", "server", "serialize-json", "websockets", "btleplug-manager", "websocket-server-manager"] }
+argh = "0.1.9"
 log = "0.4.17"
-futures = "0.3.24"
+futures = "0.3.25"
 tracing-fmt = "0.1.1"
-tracing-subscriber = { version = "0.3.15", features = ["env-filter", "json"] }
-tracing = "0.1.36"
-tokio = { version = "1.20.1", features = ["sync", "rt-multi-thread", "macros", "io-std", "fs", "signal", "io-util"] }
+tracing-subscriber = { version = "0.3.16", features = ["env-filter", "json"] }
+tracing = "0.1.37"
+tokio = { version = "1.21.2", features = ["sync", "rt-multi-thread", "macros", "io-std", "fs", "signal", "io-util"] }
 log-panics = { version = "2.1.0", features = ["with-backtrace"] }
 backtrace = "0.3.66"
 ctrlc = "3.2.3"
-tokio-util = "0.7.3"
-serde = "1.0.144"
-serde_json = "1.0.85"
+tokio-util = "0.7.4"
+serde = "1.0.147"
+serde_json = "1.0.87"
 sentry = { version = "0.27.0", optional = true }
 sentry-tracing = { version = "0.27.0", optional = true }
-async-tungstenite = "0.17.2"
-thiserror = "1.0.33"
+async-tungstenite = { version = "0.18.0", features = ["tokio-runtime"] }
+thiserror = "1.0.37"
 getset = "0.1.2"
-async-trait = "0.1.57"
-once_cell = "1.14.0"
+async-trait = "0.1.58"
+once_cell = "1.16.0"
+lazy_static = "1.4.0"
 
 [target.'cfg(windows)'.dependencies]
 winapi = "0.3.9"
 
 [build-dependencies]
 vergen = "7.4.2"
-anyhow = "1.0.63"
+anyhow = "1.0.66"
 
 [patch.crates-io]
 
