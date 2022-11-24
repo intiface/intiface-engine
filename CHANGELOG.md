@@ -1,3 +1,12 @@
+# Intiface Engine v1.0.4 (2022/11/24)
+
+## Features
+
+- Update to Buttplug v6.2.1
+- Add optional tokio_console feature for task debugging
+- Remove crash reporting for now
+  - Needs to be updated, more testing, etc...
+
 # Intiface Engine v1.0.3 (2022/11/05)
 
 ## Features
