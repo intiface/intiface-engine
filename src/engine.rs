@@ -137,6 +137,7 @@ impl IntifaceEngine {
     // At this point we will have received and validated options.
 
     // Set up crash logging for the duration of the server session.
+    /*
     const API_KEY: &str = include_str!(concat!(env!("OUT_DIR"), "/sentry_api_key.txt"));
     let sentry_guard = if options.crash_reporting() && !API_KEY.is_empty() {
       Some(sentry::init((
@@ -149,7 +150,7 @@ impl IntifaceEngine {
     } else {
       None
     };
-
+    */
     // Create the cancellation tokens for
     let frontend_cancellation_token = CancellationToken::new();
     let frontend_cancellation_child_token = frontend_cancellation_token.child_token();
