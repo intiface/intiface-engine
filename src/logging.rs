@@ -9,6 +9,8 @@ use tracing_subscriber::{
   layer::SubscriberExt,
   util::SubscriberInitExt,
 };
+#[cfg(feature="tokio_console")]
+use console_subscriber;
 
 static FRONTEND_LOGGING_SET: OnceCell<bool> = OnceCell::new();
 lazy_static! {
@@ -77,18 +79,45 @@ pub fn setup_frontend_logging(log_level: Level, frontend: Arc<dyn Frontend>) {
 
   if FRONTEND_LOGGING_SET.get().is_none() {
     FRONTEND_LOGGING_SET.set(true).unwrap();
-    tracing_subscriber::registry()
-      .with(LevelFilter::from(log_level))
-      .with(
-        tracing_subscriber::fmt::layer()
-          .json()
-          //.with_max_level(log_level)
-          .with_ansi(false)
-          .with_writer(move || BroadcastWriter::new(LOG_BROADCASTER.clone())),
-      )
-      .with(sentry_tracing::layer())
-      .try_init()
-      .unwrap();
+    #[cfg(feature="tokio_console")]
+    {/*
+      let console = console_subscriber::ConsoleLayer::builder()
+        //.server_addr(([0, 0, 0, 0], 5555))
+        .spawn();
+      tracing_subscriber::registry()
+        .with(LevelFilter::from(log_level))
+        .with(
+          tracing_subscriber::fmt::layer()
+            .json()
+            //.with_max_level(log_level)
+            .with_ansi(false)
+            .with_writer(move || BroadcastWriter::new(LOG_BROADCASTER.clone())),
+        )
+        .with(sentry_tracing::layer())
+        .with(console)
+        .try_init()
+        .unwrap();
+        */
+        //console_subscriber::init();
+        console_subscriber::ConsoleLayer::builder()
+        .server_addr(([0, 0, 0, 0], 5555))
+        .init();
+    }
+    #[cfg(not(feature="tokio_console"))]
+    {
+      tracing_subscriber::registry()
+        .with(LevelFilter::from(log_level))
+        .with(
+          tracing_subscriber::fmt::layer()
+            .json()
+            //.with_max_level(log_level)
+            .with_ansi(false)
+            .with_writer(move || BroadcastWriter::new(LOG_BROADCASTER.clone())),
+        )
+        //.with(sentry_tracing::layer())
+        .try_init()
+        .unwrap();
+    }
   }
 }
 
