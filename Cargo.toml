@@ -26,20 +26,20 @@ desktop=["buttplug/xinput-manager", "buttplug/serial-manager", "buttplug/lovense
 
 [dependencies]
 # buttplug = { path = "../buttplug-rs/buttplug", default_features = false, features = ["tokio-runtime", "client", "server", "serialize-json", "websockets", "btleplug-manager", "websocket-server-manager"] }
-buttplug = { version = "6.2.0", default_features = false, features = ["tokio-runtime", "client", "server", "serialize-json", "websockets", "btleplug-manager", "websocket-server-manager"] }
+buttplug = { version = "6.2.1", default_features = false, features = ["tokio-runtime", "client", "server", "serialize-json", "websockets", "btleplug-manager", "websocket-server-manager"] }
 argh = "0.1.9"
 log = "0.4.17"
 futures = "0.3.25"
 tracing-fmt = "0.1.1"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter", "json"] }
 tracing = "0.1.37"
-tokio = { version = "1.21.2", features = ["sync", "rt-multi-thread", "macros", "io-std", "fs", "signal", "io-util"] }
+tokio = { version = "1.22.0", features = ["sync", "rt-multi-thread", "macros", "io-std", "fs", "signal", "io-util"] }
 log-panics = { version = "2.1.0", features = ["with-backtrace"] }
 backtrace = "0.3.66"
 ctrlc = "3.2.3"
 tokio-util = "0.7.4"
 serde = "1.0.147"
-serde_json = "1.0.87"
+serde_json = "1.0.89"
 sentry = { version = "0.27.0", optional = true }
 sentry-tracing = { version = "0.27.0", optional = true }
 async-tungstenite = { version = "0.18.0", features = ["tokio-runtime"] }
