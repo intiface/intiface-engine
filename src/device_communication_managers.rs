@@ -1,17 +1,8 @@
 use crate::EngineOptions;
-#[cfg(all(target_os = "windows", feature = "desktop"))]
-use buttplug::server::device::hardware::communication::xinput::XInputDeviceCommunicationManagerBuilder;
-#[cfg(feature = "desktop")]
-use buttplug::server::device::hardware::communication::{
-  lovense_connect_service::LovenseConnectServiceCommunicationManagerBuilder,
-  lovense_dongle::{
-    LovenseHIDDongleCommunicationManagerBuilder, LovenseSerialDongleCommunicationManagerBuilder,
-  },
-  serialport::SerialPortCommunicationManagerBuilder,
-};
 use buttplug::server::{
   device::hardware::communication::{
     btleplug::BtlePlugCommunicationManagerBuilder,
+    lovense_connect_service::LovenseConnectServiceCommunicationManagerBuilder,
     websocket_server::websocket_server_comm_manager::WebsocketServerDeviceCommunicationManagerBuilder,
   },
   ButtplugServerBuilder,
@@ -27,8 +18,18 @@ pub fn setup_server_device_comm_managers(
     info!("Including Bluetooth LE (btleplug) Device Comm Manager Support");
     server_builder.comm_manager(BtlePlugCommunicationManagerBuilder::default());
   }
-  #[cfg(feature = "desktop")]
+  if args.use_lovense_connect() {
+    info!("Including Lovense Connect App Support");
+    server_builder.comm_manager(LovenseConnectServiceCommunicationManagerBuilder::default());
+  }
+#[cfg(not(any(target_os="android", target_os="ios")))]
   {
+    use buttplug::server::device::hardware::communication::{
+      lovense_dongle::{
+        LovenseHIDDongleCommunicationManagerBuilder, LovenseSerialDongleCommunicationManagerBuilder,
+      },
+      serialport::SerialPortCommunicationManagerBuilder,
+    };
     if args.use_lovense_dongle_hid() {
       info!("Including Lovense HID Dongle Support");
       server_builder.comm_manager(LovenseHIDDongleCommunicationManagerBuilder::default());
@@ -42,13 +43,12 @@ pub fn setup_server_device_comm_managers(
       server_builder.comm_manager(SerialPortCommunicationManagerBuilder::default());
     }
     #[cfg(target_os = "windows")]
-    if args.use_xinput() {
-      info!("Including XInput Gamepad Support");
-      server_builder.comm_manager(XInputDeviceCommunicationManagerBuilder::default());
-    }
-    if args.use_lovense_connect() {
-      info!("Including Lovense Connect App Support");
-      server_builder.comm_manager(LovenseConnectServiceCommunicationManagerBuilder::default());
+    {
+      use buttplug::server::device::hardware::communication::xinput::XInputDeviceCommunicationManagerBuilder;
+      if args.use_xinput() {
+        info!("Including XInput Gamepad Support");
+        server_builder.comm_manager(XInputDeviceCommunicationManagerBuilder::default());
+      }
     }
   }
   if args.use_device_websocket_server() {
