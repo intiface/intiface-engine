@@ -1,3 +1,12 @@
+# Intiface Engine v1.0.5 (2022/11/27)
+
+## Bugfixes
+
+- Update to Buttplug v6.2.2
+  - Fixes issues with platform dependencies and DCMs
+  - Fixes error message in common path in CoreBluetooth
+  - Stops devices when server disconnects
+
 # Intiface Engine v1.0.4 (2022/11/24)
 
 ## Features
