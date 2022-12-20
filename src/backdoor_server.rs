@@ -45,7 +45,7 @@ impl BackdoorServer {
   fn serialize_msg(&self, msg: &ButtplugServerMessage) -> String {
     let serialized_message = self.serializer.serialize(&[msg.clone()]);
     if let ButtplugSerializedMessage::Text(text_msg) = serialized_message {
-      return text_msg;
+      text_msg
     } else {
       panic!("We've hardcoded to use a JSON serializer so we shouldn't get binary back.");
     }

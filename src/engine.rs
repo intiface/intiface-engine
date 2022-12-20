@@ -205,7 +205,7 @@ impl IntifaceEngine {
       // Let everything spin up, then try crashing.
 
       #[cfg(debug_assertions)]
-      maybe_crash_main_thread(&options);
+      maybe_crash_main_thread(options);
 
       let mut exit_requested = false;
       select! {
@@ -217,7 +217,7 @@ impl IntifaceEngine {
           info!("Owner requested process exit, exiting.");
           exit_requested = true;
         }
-        result = run_server(&server, &options) => {
+        result = run_server(&server, options) => {
           match result {
             Ok(_) => info!("Connection dropped, restarting stay open loop."),
             Err(e) => {

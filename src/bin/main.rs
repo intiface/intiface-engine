@@ -200,7 +200,7 @@ impl TryFrom<IntifaceCLIArguments> for EngineOptions {
       .use_lovense_connect(args.use_lovense_connect())
       .use_device_websocket_server(args.use_device_websocket_server())
       .max_ping_time(args.max_ping_time())
-      .server_name(&args.server_name());
+      .server_name(args.server_name());
 
     #[cfg(debug_assertions)]
     {
@@ -251,7 +251,7 @@ async fn main() -> Result<(), IntifaceEngineError> {
     setup_console_logging(args.log());
   }
 
-  let options = EngineOptions::try_from(args).map_err(|e| IntifaceEngineError::from(e))?;
+  let options = EngineOptions::try_from(args).map_err(IntifaceEngineError::from)?;
   let engine = IntifaceEngine::default();
   select! {
     _ = engine.run(&options, None) => {
