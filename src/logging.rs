@@ -1,4 +1,6 @@
 use crate::frontend::{EngineMessage, Frontend};
+#[cfg(feature = "tokio_console")]
+use console_subscriber;
 use lazy_static::lazy_static;
 use once_cell::sync::OnceCell;
 use std::sync::Arc;
@@ -9,8 +11,6 @@ use tracing_subscriber::{
   layer::SubscriberExt,
   util::SubscriberInitExt,
 };
-#[cfg(feature="tokio_console")]
-use console_subscriber;
 
 static FRONTEND_LOGGING_SET: OnceCell<bool> = OnceCell::new();
 lazy_static! {
@@ -79,8 +79,9 @@ pub fn setup_frontend_logging(log_level: Level, frontend: Arc<dyn Frontend>) {
 
   if FRONTEND_LOGGING_SET.get().is_none() {
     FRONTEND_LOGGING_SET.set(true).unwrap();
-    #[cfg(feature="tokio_console")]
-    {/*
+    #[cfg(feature = "tokio_console")]
+    {
+      /*
       let console = console_subscriber::ConsoleLayer::builder()
         //.server_addr(([0, 0, 0, 0], 5555))
         .spawn();
@@ -98,12 +99,12 @@ pub fn setup_frontend_logging(log_level: Level, frontend: Arc<dyn Frontend>) {
         .try_init()
         .unwrap();
         */
-        //console_subscriber::init();
-        console_subscriber::ConsoleLayer::builder()
+      //console_subscriber::init();
+      console_subscriber::ConsoleLayer::builder()
         .server_addr(([0, 0, 0, 0], 5555))
         .init();
     }
-    #[cfg(not(feature="tokio_console"))]
+    #[cfg(not(feature = "tokio_console"))]
     {
       tracing_subscriber::registry()
         .with(LevelFilter::from(log_level))

@@ -22,7 +22,7 @@ pub fn setup_server_device_comm_managers(
     info!("Including Lovense Connect App Support");
     server_builder.comm_manager(LovenseConnectServiceCommunicationManagerBuilder::default());
   }
-#[cfg(not(any(target_os="android", target_os="ios")))]
+  #[cfg(not(any(target_os = "android", target_os = "ios")))]
   {
     use buttplug::server::device::hardware::communication::{
       lovense_dongle::{
