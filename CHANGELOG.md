@@ -1,3 +1,9 @@
+# Intiface Engine v1.1.0 (2022/12/19)
+
+- Update to Buttplug v6.3.0
+  - Lots of device additions
+  - Major bugfixes for WeVibe/Satisfyer/Magic Motion and Lovense Connect
+
 # Intiface Engine v1.0.5 (2022/11/27)
 
 ## Bugfixes
