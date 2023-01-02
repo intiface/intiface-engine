@@ -31,7 +31,6 @@ Command line options are as follows:
 | `crash_reporting` | Turn on sentry crash reporting |
 | `websocket_use_all_interfaces` | Websocket servers will listen on all interfaces (versus only on localhost, which is default) |
 | `websocket_peport [port]` | Network port for connecting via non-ssl (ws://) protocols |
-| `ipc_pipe [name]` | Name for IPC pipe (not yet implemented) |
 | `frontend_websocket_port` | IPC JSON port for Intiface Central |
 | `server_name` | Identifying name server should emit when asked for info |
 | `device_config_file [file]` | Device configuration file to load (if omitted, uses internal) |

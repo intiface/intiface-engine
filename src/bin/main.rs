@@ -45,11 +45,6 @@ pub struct IntifaceCLIArguments {
   #[getset(get_copy = "pub")]
   websocket_port: Option<u16>,
 
-  /// pipe name for ipc server
-  #[argh(option)]
-  #[getset(get = "pub")]
-  ipc_pipe: Option<String>,
-
   // Options that set up communications with intiface GUI
   /// if passed, output json for parent process via websockets
   #[argh(option)]
@@ -220,9 +215,6 @@ impl TryFrom<IntifaceCLIArguments> for EngineOptions {
     }
     if let Some(value) = args.device_websocket_server_port() {
       builder.device_websocket_server_port(value);
-    }
-    if let Some(value) = args.ipc_pipe() {
-      builder.ipc_pipe_name(value);
     }
     Ok(builder.finish())
   }

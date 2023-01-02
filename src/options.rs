@@ -6,8 +6,6 @@ pub struct EngineOptions {
   #[getset(get = "pub")]
   sentry_api_key: Option<String>,
   #[getset(get = "pub")]
-  ipc_pipe_name: Option<String>,
-  #[getset(get = "pub")]
   device_config_json: Option<String>,
   #[getset(get = "pub")]
   user_device_config_json: Option<String>,
@@ -56,7 +54,6 @@ pub struct EngineOptions {
 #[derive(Default, Debug, Clone)]
 pub struct EngineOptionsExternal {
   pub sentry_api_key: Option<String>,
-  pub ipc_pipe_name: Option<String>,
   pub device_config_json: Option<String>,
   pub user_device_config_json: Option<String>,
   pub server_name: String,
@@ -85,7 +82,6 @@ impl From<EngineOptionsExternal> for EngineOptions {
   fn from(other: EngineOptionsExternal) -> Self {
     Self {
       sentry_api_key: other.sentry_api_key,
-      ipc_pipe_name: other.ipc_pipe_name,
       device_config_json: other.device_config_json,
       user_device_config_json: other.user_device_config_json,
       server_name: other.server_name,
@@ -119,11 +115,6 @@ pub struct EngineOptionsBuilder {
 
 impl EngineOptionsBuilder {
   pub fn sentry_api_key(&mut self, value: &str) -> &mut Self {
-    self.options.sentry_api_key = Some(value.to_owned());
-    self
-  }
-
-  pub fn ipc_pipe_name(&mut self, value: &str) -> &mut Self {
     self.options.sentry_api_key = Some(value.to_owned());
     self
   }

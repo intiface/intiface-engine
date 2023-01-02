@@ -13,7 +13,7 @@ use crate::{
 use buttplug::{
   core::{
     connector::{
-      ButtplugPipeClientTransportBuilder, ButtplugRemoteServerConnector,
+      ButtplugRemoteServerConnector,
       ButtplugWebsocketServerTransportBuilder,
     },
     message::serializer::ButtplugServerJSONSerializer,
@@ -104,17 +104,8 @@ async fn run_server(
           .finish(),
       ))
       .await
-  } else if let Some(pipe_name) = options.ipc_pipe_name() {
-    server
-      .start(ButtplugRemoteServerConnector::<
-        _,
-        ButtplugServerJSONSerializer,
-      >::new(
-        ButtplugPipeClientTransportBuilder::new(pipe_name).finish(),
-      ))
-      .await
   } else {
-    panic!("Neither websocket port nor ipc pipe name are set, cannot create transport.");
+    panic!("Websocket port not set, cannot create transport.");
   }
 }
 

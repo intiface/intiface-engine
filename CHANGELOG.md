@@ -1,4 +1,15 @@
+# Intiface Engine v1.2.0 (2023/01/01)
+
+## Features
+
+- Update to Buttplug v7.0.0
+  - Major version move because of API breakage.
+  - Mostly bugfixes otherwise.
+  - Removes IPC Pipes, so removed them in Intiface Engine too.
+
 # Intiface Engine v1.1.0 (2022/12/19)
+
+## Features
 
 - Update to Buttplug v6.3.0
   - Lots of device additions
