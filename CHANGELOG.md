@@ -1,3 +1,10 @@
+# Intiface Engine v1.2.1 (2023/01/16)
+
+# Features
+
+- Update to Buttplug v7.0.1
+  - Hardware protocol updates/fixed, see Buttplug CHANGELOG for more info.
+
 # Intiface Engine v1.2.0 (2023/01/01)
 
 ## Features
