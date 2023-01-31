@@ -235,6 +235,7 @@ impl IntifaceEngine {
       }
       info!("Server connection dropped, restarting");
     }
+    info!("Shutting down server...");
     if let Err(e) = server.shutdown().await {
       error!("Shutdown failed: {:?}", e);
     }
