@@ -1,6 +1,12 @@
+# Intiface Engine v1.2.2 (2023/01/30)
+
+## Bugfixes
+
+- Fix timing issue on sending EngineStopped message on exit
+
 # Intiface Engine v1.2.1 (2023/01/16)
 
-# Features
+## Features
 
 - Update to Buttplug v7.0.1
   - Hardware protocol updates/fixed, see Buttplug CHANGELOG for more info.
