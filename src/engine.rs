@@ -14,6 +14,7 @@ use buttplug::{
   core::{
     connector::{
       ButtplugRemoteServerConnector,
+      ButtplugWebsocketClientTransport,
       ButtplugWebsocketServerTransportBuilder,
     },
     message::serializer::ButtplugServerJSONSerializer,
@@ -102,6 +103,15 @@ async fn run_server(
           .port(port)
           .listen_on_all_interfaces(options.websocket_use_all_interfaces())
           .finish(),
+      ))
+      .await
+  } else if let Some(addr) = options.websocket_client_address() {
+    server
+      .start(ButtplugRemoteServerConnector::<
+        _,
+        ButtplugServerJSONSerializer,
+      >::new(
+        ButtplugWebsocketClientTransport::new_insecure_connector(&addr)
       ))
       .await
   } else {

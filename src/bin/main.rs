@@ -45,6 +45,11 @@ pub struct IntifaceCLIArguments {
   #[getset(get_copy = "pub")]
   websocket_port: Option<u16>,
 
+  /// insecure address for connecting to websocket servers.
+  #[argh(option)]
+  #[getset(get = "pub")]
+  websocket_client_address: Option<String>,
+  
   // Options that set up communications with intiface GUI
   /// if passed, output json for parent process via websockets
   #[argh(option)]
@@ -209,6 +214,9 @@ impl TryFrom<IntifaceCLIArguments> for EngineOptions {
     }
     if let Some(value) = args.websocket_port() {
       builder.websocket_port(value);
+    }
+    if let Some(value) = args.websocket_client_address() {
+      builder.websocket_client_address(value);
     }
     if let Some(value) = args.frontend_websocket_port() {
       builder.frontend_websocket_port(value);

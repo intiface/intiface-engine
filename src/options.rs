@@ -17,6 +17,8 @@ pub struct EngineOptions {
   websocket_use_all_interfaces: bool,
   #[getset(get_copy = "pub")]
   websocket_port: Option<u16>,
+  #[getset(get = "pub")]
+  websocket_client_address: Option<String>,
   #[getset(get_copy = "pub")]
   frontend_websocket_port: Option<u16>,
   #[getset(get_copy = "pub")]
@@ -60,6 +62,7 @@ pub struct EngineOptionsExternal {
   pub crash_reporting: bool,
   pub websocket_use_all_interfaces: bool,
   pub websocket_port: Option<u16>,
+  pub websocket_client_address: Option<String>,
   pub frontend_websocket_port: Option<u16>,
   pub frontend_in_process_channel: bool,
   pub max_ping_time: u32,
@@ -88,6 +91,7 @@ impl From<EngineOptionsExternal> for EngineOptions {
       crash_reporting: other.crash_reporting,
       websocket_use_all_interfaces: other.websocket_use_all_interfaces,
       websocket_port: other.websocket_port,
+      websocket_client_address: other.websocket_client_address,
       frontend_websocket_port: other.frontend_websocket_port,
       frontend_in_process_channel: other.frontend_in_process_channel,
       max_ping_time: other.max_ping_time,
@@ -209,6 +213,11 @@ impl EngineOptionsBuilder {
 
   pub fn websocket_port(&mut self, port: u16) -> &mut Self {
     self.options.websocket_port = Some(port);
+    self
+  }
+
+  pub fn websocket_client_address(&mut self, address: &str) -> &mut Self {
+    self.options.websocket_client_address = Some(address.to_owned());
     self
   }
 
