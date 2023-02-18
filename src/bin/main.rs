@@ -257,8 +257,8 @@ async fn main() -> Result<(), IntifaceEngineError> {
     println!(
       "Intiface CLI (Rust Edition) Version {}, Commit {}, Built {}",
       VERSION,
-      env!("VERGEN_GIT_SHA_SHORT"),
-      env!("VERGEN_BUILD_TIMESTAMP")
+      option_env!("VERGEN_GIT_SHA_SHORT").unwrap_or("unknown"),
+      option_env!("VERGEN_BUILD_TIMESTAMP").unwrap_or("unknown")
     );
     return Ok(());
   }
