@@ -12,10 +12,7 @@ use crate::{
 };
 use buttplug::{
   core::{
-    connector::{
-      ButtplugRemoteServerConnector,
-      ButtplugWebsocketServerTransportBuilder,
-    },
+    connector::{ButtplugRemoteServerConnector, ButtplugWebsocketServerTransportBuilder},
     message::serializer::ButtplugServerJSONSerializer,
   },
   server::{ButtplugRemoteServer, ButtplugServerBuilder, ButtplugServerConnectorError},
