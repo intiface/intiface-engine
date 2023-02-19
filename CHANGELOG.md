@@ -1,3 +1,11 @@
+# Intiface Engine v1.3.0 (2023/02/19)
+
+## Features
+
+- Added Websocket Client argument for running the engine as a websocket client instead of a server
+- Update to Buttplug v7.0.2
+  - Hardware protocols updates for Kizuna/Svakom/Sakuraneko
+
 # Intiface Engine v1.2.2 (2023/01/30)
 
 ## Bugfixes
