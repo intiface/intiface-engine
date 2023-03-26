@@ -82,13 +82,13 @@ pub async fn frontend_server_event_loop(
                 .send(EngineMessage::ClientDisconnected{})
                 .await;
             }
-            ButtplugRemoteServerEvent::DeviceAdded(device_id, device_name, device_address, device_display_name) => {
-              info!("Device Added: {} - {} - {}", device_id, device_name, device_address);
+            ButtplugRemoteServerEvent::DeviceAdded { index: device_id, name: device_name, identifier: device_address, display_name: device_display_name } => {
+              info!("Device Added: {} - {} - {:?}", device_id, device_name, device_address);
               frontend
-                .send(EngineMessage::DeviceConnected { name: device_name, index: device_id, address: device_address, display_name: device_display_name })
+                .send(EngineMessage::DeviceConnected { name: device_name, index: device_id, identifier: device_address, display_name: device_display_name })
                 .await;
             }
-            ButtplugRemoteServerEvent::DeviceRemoved(device_id) => {
+            ButtplugRemoteServerEvent::DeviceRemoved { index: device_id } => {
               info!("Device Removed: {}", device_id);
               frontend
                 .send(EngineMessage::DeviceDisconnected{index: device_id})
