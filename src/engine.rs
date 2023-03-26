@@ -166,11 +166,13 @@ impl IntifaceEngine {
       setup_frontend(options, &self.stop_token).await
     };
 
-    let frontend_clone = frontend.clone();
-    let stop_token_clone = self.stop_token.clone();
-    tokio::spawn(async move {
-      frontend_external_event_loop(frontend_clone, stop_token_clone).await;
-    });
+    {
+      let frontend = frontend.clone();
+      let stop_token = self.stop_token.clone();
+      tokio::spawn(async move {
+        frontend_external_event_loop(frontend, stop_token).await;
+      });
+    }
     frontend.connect().await.unwrap();
     frontend.send(EngineMessage::EngineStarted {}).await;
     if let Some(level) = options.log_level() {
