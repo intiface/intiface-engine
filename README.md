@@ -28,29 +28,29 @@ Command line options are as follows:
 | Option | Description |
 | --------- | --------- |
 | `version` | Print version and exit |
-| `server_version` | Print version and exit (kept for legacy reasons) |
-| `crash_reporting` | Turn on sentry crash reporting |
-| `websocket_use_all_interfaces` | Websocket servers will listen on all interfaces (versus only on localhost, which is default) |
-| `websocket_peport [port]` | Network port for connecting via non-ssl (ws://) protocols |
-| `frontend_websocket_port` | IPC JSON port for Intiface Central |
-| `server_name` | Identifying name server should emit when asked for info |
-| `device_config_file [file]` | Device configuration file to load (if omitted, uses internal) |
-| `user_device_config_file [file]` | User device configuration file to load (if omitted, none used) |
-| `max_ping_time [number]` | Milliseconds for ping time limit of server (if omitted, set to 0) |
+| `server-version` | Print version and exit (kept for legacy reasons) |
+| `crash-reporting` | Turn on sentry crash reporting |
+| `websocket-use-all-interfaces` | Websocket servers will listen on all interfaces (versus only on localhost, which is default) |
+| `websocket-port [port]` | Network port for connecting via non-ssl (ws://) protocols |
+| `frontend-websocket-port` | IPC JSON port for Intiface Central |
+| `server-name` | Identifying name server should emit when asked for info |
+| `device-config-file [file]` | Device configuration file to load (if omitted, uses internal) |
+| `user-device-config-file [file]` | User device configuration file to load (if omitted, none used) |
+| `max-ping-time [number]` | Milliseconds for ping time limit of server (if omitted, set to 0) |
 | `log` | Level of logs to output by default (if omitted, set to None) |
-| `allow_raw` | Allow clients to communicate using raw messages (DANGEROUS, CAN BRICK SOME DEVICES) |
-| `use_bluetooth_le` | Use the Bluetooth LE Buttplug Device Communication Manager |
-| `use_serial` | Use the Serial Port Buttplug Device Communication Manager |
-| `use_hid` | Use the HID Buttplug Device Communication Manager |
-| `use_lovense_dongle` | Use the HID Lovense Dongle Buttplug Device Communication Manager |
-| `use_xinput` | Use the XInput Buttplug Device Communication Manager |
-| `use_lovense_connect` | Use the Lovense Connect Buttplug Device Communication Manager |
-| `use_device_websocket_server` | Use the Device Websocket Server Buttplug Device Communication Manager |
-| `device_websocket_server_port` | Port for the device websocket server |
+| `allow-raw` | Allow clients to communicate using raw messages (DANGEROUS, CAN BRICK SOME DEVICES) |
+| `use_bluetooth-le` | Use the Bluetooth LE Buttplug Device Communication Manager |
+| `use-serial` | Use the Serial Port Buttplug Device Communication Manager |
+| `use-hid` | Use the HID Buttplug Device Communication Manager |
+| `use-lovense-dongle` | Use the HID Lovense Dongle Buttplug Device Communication Manager |
+| `use-xinput` | Use the XInput Buttplug Device Communication Manager |
+| `use-lovense-connect` | Use the Lovense Connect Buttplug Device Communication Manager |
+| `use-device-websocket-server` | Use the Device Websocket Server Buttplug Device Communication Manager |
+| `device-websocket-server-port` | Port for the device websocket server |
 
 For example, to run the server on websockets at port 12345 with bluetooth device support:
 
-`intiface-engine --wsinsecureport 12345 --use_bluetooth_le`
+`intiface-engine --weboscket-port 12345 --use-bluetooth-le`
 
 ## Compiling
 
