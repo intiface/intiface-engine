@@ -254,7 +254,7 @@ async fn main() -> Result<(), IntifaceEngineError> {
   let options = EngineOptions::try_from(args).map_err(IntifaceEngineError::from)?;
   let engine = IntifaceEngine::default();
   select! {
-    _ = engine.run(&options, None) => {
+    _ = engine.run(&options, None, true) => {
 
     }
     _ = ctrl_c() => {

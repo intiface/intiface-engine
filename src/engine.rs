@@ -134,6 +134,7 @@ impl IntifaceEngine {
     &self,
     options: &EngineOptions,
     external_frontend: Option<Arc<dyn Frontend>>,
+    skip_logging_setup: bool
   ) -> Result<(), IntifaceEngineError> {
     // At this point we will have received and validated options.
 
@@ -173,10 +174,13 @@ impl IntifaceEngine {
         frontend_external_event_loop(frontend, stop_token).await;
       });
     }
+
     frontend.connect().await.unwrap();
     frontend.send(EngineMessage::EngineStarted {}).await;
-    if let Some(level) = options.log_level() {
-      setup_frontend_logging(tracing::Level::from_str(level).unwrap(), frontend.clone());
+    if !skip_logging_setup {
+      if let Some(level) = options.log_level() {
+        setup_frontend_logging(tracing::Level::from_str(level).unwrap(), frontend.clone());
+      }
     }
 
     // Set up crash logging for the duration of the server session.
