@@ -9,6 +9,8 @@ use crate::{
   logging::setup_frontend_logging,
   options::EngineOptions,
   IntifaceError,
+  ButtplugRemoteServer,
+  ButtplugServerConnectorError
 };
 use buttplug::{
   core::{
@@ -19,7 +21,7 @@ use buttplug::{
     },
     message::serializer::ButtplugServerJSONSerializer,
   },
-  server::{ButtplugRemoteServer, ButtplugServerBuilder, ButtplugServerConnectorError},
+  server::{ButtplugServerBuilder},
 };
 use once_cell::sync::OnceCell;
 use std::{str::FromStr, sync::Arc, time::Duration};
@@ -115,7 +117,7 @@ async fn run_server(
       ))
       .await
   } else {
-    panic!("Websocket port not set, cannot create transport.");
+    panic!("Websocket port not set, cannot create transport. Please specify a websocket port in arguments.");
   }
 }
 

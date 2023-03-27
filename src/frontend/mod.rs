@@ -2,7 +2,7 @@ pub mod process_messages;
 mod websocket_frontend;
 use crate::{error::IntifaceError, options::EngineOptions};
 use async_trait::async_trait;
-use buttplug::server::ButtplugRemoteServerEvent;
+use crate::remote_server::ButtplugRemoteServerEvent;
 use futures::{pin_mut, Stream, StreamExt};
 pub use process_messages::{EngineMessage, IntifaceMessage};
 use std::sync::Arc;
