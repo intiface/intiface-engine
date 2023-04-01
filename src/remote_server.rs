@@ -19,20 +19,31 @@ use buttplug::{
     },
   },
   server::{ButtplugServer, ButtplugServerBuilder},
-  util::{async_manager, stream::convert_broadcast_receiver_to_stream, device_configuration::UserConfigDeviceIdentifier},
+  util::{
+    async_manager, device_configuration::UserConfigDeviceIdentifier,
+    stream::convert_broadcast_receiver_to_stream,
+  },
 };
-use futures::{future::Future, select, FutureExt, Stream, StreamExt, pin_mut};
+use futures::{future::Future, pin_mut, select, FutureExt, Stream, StreamExt};
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::{broadcast, mpsc, Notify};
 
 // Clone derived here to satisfy tokio broadcast requirements.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum ButtplugRemoteServerEvent {
   ClientConnected(String),
   ClientDisconnected,
-  DeviceAdded{ index: u32, identifier: UserConfigDeviceIdentifier, name: String, display_name: Option<String> },
-  DeviceRemoved{ index: u32 },
+  DeviceAdded {
+    index: u32,
+    identifier: UserConfigDeviceIdentifier,
+    name: String,
+    display_name: Option<String>,
+  },
+  DeviceRemoved {
+    index: u32,
+  },
   //DeviceCommand(ButtplugDeviceCommandMessageUnion)
 }
 
@@ -46,6 +57,50 @@ pub struct ButtplugRemoteServer {
   server: Arc<ButtplugServer>,
   event_sender: broadcast::Sender<ButtplugRemoteServerEvent>,
   disconnect_notifier: Arc<Notify>,
+}
+
+async fn run_device_event_stream(
+  server: Arc<ButtplugServer>,
+  remote_event_sender: broadcast::Sender<ButtplugRemoteServerEvent>,
+) {
+  let server_receiver = server.event_stream();
+  pin_mut!(server_receiver);
+  loop { 
+    match server_receiver.next().await {
+      None => {
+        info!("Server disconnected via server disappearance, exiting loop.");
+        break;
+      }
+      Some(msg) => {
+        if remote_event_sender.receiver_count() > 0 {
+          match &msg {
+            ButtplugServerMessage::DeviceAdded(da) => {
+              if let Some(device_info) = server.device_manager().device_info(da.device_index()) {
+                let added_event = ButtplugRemoteServerEvent::DeviceAdded {
+                  index: da.device_index(),
+                  name: da.device_name().clone(),
+                  identifier: device_info.identifier().clone().into(),
+                  display_name: device_info.display_name().clone(),
+                };
+                if remote_event_sender.send(added_event).is_err() {
+                  error!("Cannot send event to owner, dropping and assuming local server thread has exited.");
+                }
+              }
+            }
+            ButtplugServerMessage::DeviceRemoved(dr) => {
+              let removed_event = ButtplugRemoteServerEvent::DeviceRemoved {
+                index: dr.device_index(),
+              };
+              if remote_event_sender.send(removed_event).is_err() {
+                error!("Cannot send event to owner, dropping and assuming local server thread has exited.");
+              }
+            }
+            _ => {}
+          }
+        }
+      }
+    }
+  }
 }
 
 async fn run_server<ConnectorType>(
@@ -160,9 +215,20 @@ impl Default for ButtplugRemoteServer {
 impl ButtplugRemoteServer {
   pub fn new(server: ButtplugServer) -> Self {
     let (event_sender, _) = broadcast::channel(256);
+    let wrapped_server = Arc::new(server);
+    // Thanks to the existence of the backdoor server, device updates can happen for the lifetime to
+    // the RemoteServer instance, not just during client connect. We need to make sure these are
+    // emitted to the frontend.
+    tokio::spawn({
+      let server = wrapped_server.clone();
+      let event_sender = event_sender.clone();
+      async move {
+        run_device_event_stream(server, event_sender).await;
+      }
+    });
     Self {
       event_sender,
-      server: Arc::new(server),
+      server: wrapped_server.clone(),
       disconnect_notifier: Arc::new(Notify::new()),
     }
   }
@@ -178,18 +244,21 @@ impl ButtplugRemoteServer {
   where
     ConnectorType: ButtplugConnector<ButtplugServerMessage, ButtplugClientMessage> + 'static,
   {
-    let server_clone = self.server.clone();
-    let event_sender_clone = self.event_sender.clone();
+    let server = self.server.clone();
+    let event_sender = self.event_sender.clone();
     let disconnect_notifier = self.disconnect_notifier.clone();
     async move {
       let (connector_sender, connector_receiver) = mpsc::channel(256);
+      // Due to the connect method requiring a mutable connector, we must connect before starting up
+      // our server loop. Anything that needs to happen outside of the client connection session
+      // should happen around this. This flow is locked.
       connector
         .connect(connector_sender)
         .await
         .map_err(|e| ButtplugServerConnectorError::ConnectorError(format!("{:?}", e)))?;
       run_server(
-        server_clone,
-        event_sender_clone,
+        server,
+        event_sender,
         connector,
         connector_receiver,
         disconnect_notifier,
