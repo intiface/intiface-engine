@@ -1,3 +1,14 @@
+# Intiface Engine v1.4.0 (2023/05/21)
+
+## Features
+
+- Update to Buttplug v7.1.0
+  - Mostly device additions/updates
+  - Some fixes for user configs
+- Move ButtplugRemoteServer into Intiface Engine
+  - Gives us more flexibility to change things in development
+- Updates for user device config updates via Buttplug
+
 # Intiface Engine v1.3.0 (2023/02/19)
 
 ## Features
