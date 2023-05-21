@@ -118,6 +118,7 @@ pub fn setup_frontend_logging(log_level: Level, frontend: Arc<dyn Frontend>) {
         //.with(sentry_tracing::layer())
         .try_init()
         .unwrap();
+      info!("Logging subscriber added to registry");
     }
   }
 }
