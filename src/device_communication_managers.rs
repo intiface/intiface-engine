@@ -4,6 +4,7 @@ use buttplug::server::{
     btleplug::BtlePlugCommunicationManagerBuilder,
     lovense_connect_service::LovenseConnectServiceCommunicationManagerBuilder,
     websocket_server::websocket_server_comm_manager::WebsocketServerDeviceCommunicationManagerBuilder,
+    hid::HidCommunicationManagerBuilder
   },
   ButtplugServerBuilder,
 };
@@ -41,6 +42,10 @@ pub fn setup_server_device_comm_managers(
     if args.use_serial_port() {
       info!("Including Serial Port Support");
       server_builder.comm_manager(SerialPortCommunicationManagerBuilder::default());
+    }
+    if args.use_hid() {
+      info!("Including Hid Support");
+      server_builder.comm_manager(HidCommunicationManagerBuilder::default());
     }
     #[cfg(target_os = "windows")]
     {
