@@ -12,6 +12,8 @@ use tokio::{
 };
 use tokio_util::sync::CancellationToken;
 use websocket_frontend::WebsocketFrontend;
+use mdns_sd::{ServiceDaemon, ServiceInfo};
+use std::collections::HashMap;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -62,11 +64,53 @@ pub async fn frontend_external_event_loop(
 }
 
 pub async fn frontend_server_event_loop(
+  options: &EngineOptions,
   receiver: impl Stream<Item = ButtplugRemoteServerEvent>,
   frontend: Arc<dyn Frontend>,
   connection_cancellation_token: CancellationToken,
 ) {
   pin_mut!(receiver);
+
+  let mut mdns = None;
+
+  if options.broadcast_server_mdns() {
+  // Create a daemon
+    let mdns_daemon = ServiceDaemon::new().expect("Failed to create daemon");
+
+    // Create a service info.
+    let service_type = "_intiface._tcp.local.";
+    let instance_name = options.mdns_suffix().as_ref().unwrap_or(&"intiface_engine".to_owned()).to_owned();
+    let host_name = if options.websocket_use_all_interfaces() {
+      let my_ip_address = local_ip_address::local_ip().unwrap();
+      format!("{}.local.", my_ip_address)
+    } else {
+      "127.0.0.1.local.".to_owned()
+    };
+    let host_ipv4 = if options.websocket_use_all_interfaces() {
+      "0.0.0.0"
+    } else {
+      "127.0.0.1"
+    };
+    //let host_name = "192.168.1.12.local.";
+    let port = options.websocket_port().unwrap_or(12345);
+    let properties:HashMap<String, String> = HashMap::new();
+    //let properties = [("property_1", "test"), ("property_2", "1234")];
+    let mut my_service = ServiceInfo::new(
+      service_type,
+      &instance_name,
+      &host_name,
+      host_ipv4,
+      port,
+      properties
+    ).unwrap();
+    my_service = my_service.enable_addr_auto();
+    if options.websocket_use_all_interfaces() {
+      my_service = my_service.enable_addr_auto();
+    }
+    mdns_daemon.register(my_service).unwrap();
+    mdns = Some(mdns_daemon);
+  }
+
   loop {
     select! {
       maybe_event = receiver.next() => {
@@ -75,6 +119,9 @@ pub async fn frontend_server_event_loop(
             ButtplugRemoteServerEvent::ClientConnected(client_name) => {
               info!("Client connected: {}", client_name);
               frontend.send(EngineMessage::ClientConnected{client_name}).await;
+              if let Some(mdns_daemon) = &mdns {
+                mdns_daemon.shutdown().unwrap();
+              }
             }
             ButtplugRemoteServerEvent::ClientDisconnected => {
               info!("Client disconnected.");

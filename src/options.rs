@@ -51,6 +51,10 @@ pub struct EngineOptions {
   crash_main_thread: bool,
   #[getset(get_copy = "pub")]
   crash_task_thread: bool,
+  #[getset(get_copy = "pub")]
+  broadcast_server_mdns: bool,
+  #[getset(get = "pub")]
+  mdns_suffix: Option<String>,
 }
 
 #[derive(Default, Debug, Clone)]
@@ -79,6 +83,8 @@ pub struct EngineOptionsExternal {
   pub device_websocket_server_port: Option<u16>,
   pub crash_main_thread: bool,
   pub crash_task_thread: bool,
+  pub broadcast_server_mdns: bool,
+  pub mdns_suffix: Option<String>
 }
 
 impl From<EngineOptionsExternal> for EngineOptions {
@@ -108,6 +114,8 @@ impl From<EngineOptionsExternal> for EngineOptions {
       device_websocket_server_port: other.device_websocket_server_port,
       crash_main_thread: other.crash_main_thread,
       crash_task_thread: other.crash_task_thread,
+      broadcast_server_mdns: other.broadcast_server_mdns,
+      mdns_suffix: other.mdns_suffix
     }
   }
 }
@@ -243,6 +251,16 @@ impl EngineOptionsBuilder {
 
   pub fn log_level(&mut self, level: Level) -> &mut Self {
     self.options.log_level = Some(level.to_string());
+    self
+  }
+
+  pub fn broadcast_server_mdns(&mut self, value: bool) -> &mut Self {
+    self.options.broadcast_server_mdns = value;
+    self
+  }
+
+  pub fn mdns_suffix(&mut self, name: &str) -> &mut Self {
+    self.options.mdns_suffix = Some(name.to_owned());
     self
   }
 

@@ -136,6 +136,17 @@ pub struct IntifaceCLIArguments {
   #[getset(get_copy = "pub")]
   device_websocket_server_port: Option<u16>,
 
+  /// if set, broadcast server port/service info via mdns
+  #[argh(switch)]
+  #[getset(get_copy = "pub")]
+  broadcast_server_mdns: bool,
+
+  /// mdns suffix, will be appended to instance names for advertised mdns services (optional, ignored if broadcast_mdns is not set)
+  #[argh(option)]
+  #[getset(get = "pub")]
+  mdns_suffix: Option<String>,
+
+
   #[cfg(debug_assertions)]
   /// crash the main thread (that holds the runtime)
   #[argh(switch)]
@@ -200,7 +211,8 @@ impl TryFrom<IntifaceCLIArguments> for EngineOptions {
       .use_lovense_connect(args.use_lovense_connect())
       .use_device_websocket_server(args.use_device_websocket_server())
       .max_ping_time(args.max_ping_time())
-      .server_name(args.server_name());
+      .server_name(args.server_name())
+      .broadcast_server_mdns(args.broadcast_server_mdns());
 
     #[cfg(debug_assertions)]
     {
@@ -223,6 +235,11 @@ impl TryFrom<IntifaceCLIArguments> for EngineOptions {
     }
     if let Some(value) = args.device_websocket_server_port() {
       builder.device_websocket_server_port(value);
+    }
+    if args.broadcast_server_mdns() {
+      if let Some(value) = args.mdns_suffix() {
+        builder.mdns_suffix(value);
+      }
     }
     Ok(builder.finish())
   }

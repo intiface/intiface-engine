@@ -203,8 +203,9 @@ impl IntifaceEngine {
     let event_receiver = server.event_stream();
     let frontend_clone = frontend.clone();
     let stop_child_token = self.stop_token.child_token();
+    let options_clone = options.clone();
     tokio::spawn(async move {
-      frontend_server_event_loop(event_receiver, frontend_clone, stop_child_token).await;
+      frontend_server_event_loop(&options_clone, event_receiver, frontend_clone, stop_child_token).await;
     });
 
     loop {
