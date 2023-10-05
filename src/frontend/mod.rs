@@ -78,8 +78,8 @@ pub async fn frontend_server_event_loop(
     let mdns_daemon = ServiceDaemon::new().expect("Failed to create daemon");
 
     // Create a service info.
-    let service_type = "_intiface._tcp.local.";
-    let instance_name = options.mdns_suffix().as_ref().unwrap_or(&"intiface_engine".to_owned()).to_owned();
+    let service_type = "_intiface_engine._tcp.local.";
+    let instance_name = format!("intiface_engine{}", options.mdns_suffix().as_ref().unwrap_or(&"".to_owned()).to_owned());
     let host_name = if options.websocket_use_all_interfaces() {
       let my_ip_address = local_ip_address::local_ip().unwrap();
       format!("{}.local.", my_ip_address)
