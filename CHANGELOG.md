@@ -1,3 +1,11 @@
+# Intiface Engine v1.4.3 (2023/10/04)
+
+## Features
+
+- Update to Buttplug v7.1.5
+  - Lots of device additions, HID device manager for Joycons
+- Add mDNS broadcast capabilities
+
 # Intiface Engine v1.4.2 (2023/07/16)
 
 ## Features
