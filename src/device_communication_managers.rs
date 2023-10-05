@@ -4,7 +4,6 @@ use buttplug::server::{
     btleplug::BtlePlugCommunicationManagerBuilder,
     lovense_connect_service::LovenseConnectServiceCommunicationManagerBuilder,
     websocket_server::websocket_server_comm_manager::WebsocketServerDeviceCommunicationManagerBuilder,
-    hid::HidCommunicationManagerBuilder
   },
   ButtplugServerBuilder,
 };
@@ -29,6 +28,7 @@ pub fn setup_server_device_comm_managers(
       lovense_dongle::{
         LovenseHIDDongleCommunicationManagerBuilder, LovenseSerialDongleCommunicationManagerBuilder,
       },
+      hid::HidCommunicationManagerBuilder,
       serialport::SerialPortCommunicationManagerBuilder,
     };
     if args.use_lovense_dongle_hid() {
