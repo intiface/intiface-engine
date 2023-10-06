@@ -1329,6 +1329,7 @@ dependencies = [
  "log-panics",
  "mdns-sd",
  "once_cell",
+ "rand",
  "serde",
  "serde_json",
  "thiserror",

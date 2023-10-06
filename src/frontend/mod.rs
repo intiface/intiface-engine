@@ -14,6 +14,7 @@ use tokio_util::sync::CancellationToken;
 use websocket_frontend::WebsocketFrontend;
 use mdns_sd::{ServiceDaemon, ServiceInfo};
 use std::collections::HashMap;
+use rand::distributions::{Alphanumeric, DistString};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -79,34 +80,21 @@ pub async fn frontend_server_event_loop(
 
     // Create a service info.
     let service_type = "_intiface_engine._tcp.local.";
-    let instance_name = format!("intiface_engine{}", options.mdns_suffix().as_ref().unwrap_or(&"".to_owned()).to_owned());
-    let host_name = if options.websocket_use_all_interfaces() {
-      let my_ip_address = local_ip_address::local_ip().unwrap();
-      format!("{}.local.", my_ip_address)
-    } else {
-      "127.0.0.1.local.".to_owned()
-    };
-    let host_ipv4 = if options.websocket_use_all_interfaces() {
-      "0.0.0.0"
-    } else {
-      "127.0.0.1"
-    };
-    //let host_name = "192.168.1.12.local.";
+    let random_suffix = Alphanumeric.sample_string(&mut rand::thread_rng(), 6);
+    let instance_name = format!("intiface_engine_{}_{}", options.mdns_suffix().as_ref().unwrap_or(&"".to_owned()).to_owned(), random_suffix);
+    info!("Bringing up mDNS Advertisment using instance name {}", instance_name);
+    let host_name = format!("{}.local.", instance_name);
     let port = options.websocket_port().unwrap_or(12345);
     let properties:HashMap<String, String> = HashMap::new();
-    //let properties = [("property_1", "test"), ("property_2", "1234")];
     let mut my_service = ServiceInfo::new(
       service_type,
       &instance_name,
       &host_name,
-      host_ipv4,
+      "",
       port,
       properties
     ).unwrap();
     my_service = my_service.enable_addr_auto();
-    if options.websocket_use_all_interfaces() {
-      my_service = my_service.enable_addr_auto();
-    }
     mdns_daemon.register(my_service).unwrap();
     mdns = Some(mdns_daemon);
   }

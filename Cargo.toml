@@ -53,6 +53,7 @@ lazy_static = "1.4.0"
 console-subscriber = { version="0.2.0", optional = true }
 mdns-sd = "0.8.0"
 local-ip-address = "0.5.6"
+rand = "0.8.5"
 
 [target.'cfg(windows)'.dependencies]
 winapi = "0.3.9"
