@@ -1,3 +1,10 @@
+# Intiface Engine v1.4.4 (2023/10/05)
+
+## Bugfixes
+
+- Make mDNS actually work in all cases (but it's still considered experimental)
+- Fix compilation issues for android
+
 # Intiface Engine v1.4.3 (2023/10/04)
 
 ## Features
