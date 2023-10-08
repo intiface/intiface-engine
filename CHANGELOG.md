@@ -1,3 +1,11 @@
+# Intiface Engine v1.4.5 (2023/10/08)
+
+## Features
+
+- Update to Buttplug v7.1.6
+  - Fixes Lovense Dongle support
+  - Added Foreo device support
+
 # Intiface Engine v1.4.4 (2023/10/05)
 
 ## Bugfixes
