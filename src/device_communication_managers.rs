@@ -16,7 +16,12 @@ pub fn setup_server_device_comm_managers(
 ) {
   if args.use_bluetooth_le() {
     info!("Including Bluetooth LE (btleplug) Device Comm Manager Support");
-    server_builder.comm_manager(BtlePlugCommunicationManagerBuilder::default());
+    let mut command_manager_builder = BtlePlugCommunicationManagerBuilder::default();
+    #[cfg(target_os="ios")]
+    command_manager_builder.requires_keepalive(true);
+    #[cfg(not(target_os="ios"))]
+    command_manager_builder.requires_keepalive(false);
+    server_builder.comm_manager(command_manager_builder);
   }
   if args.use_lovense_connect() {
     info!("Including Lovense Connect App Support");
