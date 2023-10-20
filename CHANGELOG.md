@@ -1,3 +1,11 @@
+# Intiface Engine v1.4.6 (2023/10/19)
+
+## Features
+
+- Update to Buttplug v7.1.7
+  - Fixes memory leak in mDNS handling
+  - Defaults to device keepalive being on when compiling for iOS
+
 # Intiface Engine v1.4.5 (2023/10/08)
 
 ## Features
