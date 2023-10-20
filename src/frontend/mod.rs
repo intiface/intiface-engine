@@ -142,6 +142,11 @@ pub async fn frontend_server_event_loop(
       }
     }
   }
+  if let Some(mdns_daemon) = mdns {
+    if let Err(e) = mdns_daemon.shutdown() {
+      error!("{:?}", e);
+    }
+  }
   info!("Exiting server event receiver loop");
 }
 
