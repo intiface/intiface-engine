@@ -106,19 +106,38 @@ pub fn setup_frontend_logging(log_level: Level, frontend: Arc<dyn Frontend>) {
     }
     #[cfg(not(feature = "tokio_console"))]
     {
-      tracing_subscriber::registry()
-        .with(LevelFilter::from(log_level))
-        .with(
-          tracing_subscriber::fmt::layer()
-            .json()
-            //.with_max_level(log_level)
-            .with_ansi(false)
-            .with_writer(move || BroadcastWriter::new(LOG_BROADCASTER.clone())),
-        )
-        //.with(sentry_tracing::layer())
-        .try_init()
-        .unwrap();
-      info!("Logging subscriber added to registry");
+      if std::env::var("RUST_LOG").is_ok() {
+        tracing_subscriber::registry()
+          .with(
+            EnvFilter::try_from_default_env()
+              .or_else(|_| EnvFilter::try_new("info"))
+              .unwrap(),
+          )
+          .with(
+            tracing_subscriber::fmt::layer()
+              .json()
+              //.with_max_level(log_level)
+              .with_ansi(false)
+              .with_writer(move || BroadcastWriter::new(LOG_BROADCASTER.clone())),
+          )
+          //.with(sentry_tracing::layer())
+          .try_init()
+          .unwrap();
+      } else {
+        tracing_subscriber::registry()
+          .with(LevelFilter::from(log_level))
+          .with(
+            tracing_subscriber::fmt::layer()
+              .json()
+              //.with_max_level(log_level)
+              .with_ansi(false)
+              .with_writer(move || BroadcastWriter::new(LOG_BROADCASTER.clone())),
+          )
+          //.with(sentry_tracing::layer())
+          .try_init()
+          .unwrap();
+        info!("Logging subscriber added to registry");
+      }
     }
   }
 }
