@@ -49,7 +49,7 @@ pub struct IntifaceCLIArguments {
   #[argh(option)]
   #[getset(get = "pub")]
   websocket_client_address: Option<String>,
-  
+
   // Options that set up communications with intiface GUI
   /// if passed, output json for parent process via websockets
   #[argh(option)]
@@ -145,7 +145,6 @@ pub struct IntifaceCLIArguments {
   #[argh(option)]
   #[getset(get = "pub")]
   mdns_suffix: Option<String>,
-
 
   #[cfg(debug_assertions)]
   /// crash the main thread (that holds the runtime)

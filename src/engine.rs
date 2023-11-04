@@ -8,20 +8,17 @@ use crate::{
   },
   logging::setup_frontend_logging,
   options::EngineOptions,
-  IntifaceError,
-  ButtplugRemoteServer,
-  ButtplugServerConnectorError
+  ButtplugRemoteServer, ButtplugServerConnectorError, IntifaceError,
 };
 use buttplug::{
   core::{
     connector::{
-      ButtplugRemoteServerConnector,
-      ButtplugWebsocketClientTransport,
+      ButtplugRemoteServerConnector, ButtplugWebsocketClientTransport,
       ButtplugWebsocketServerTransportBuilder,
     },
     message::serializer::ButtplugServerJSONSerializer,
   },
-  server::{ButtplugServerBuilder},
+  server::ButtplugServerBuilder,
 };
 use once_cell::sync::OnceCell;
 use std::{str::FromStr, sync::Arc, time::Duration};
@@ -113,7 +110,7 @@ async fn run_server(
         _,
         ButtplugServerJSONSerializer,
       >::new(
-        ButtplugWebsocketClientTransport::new_insecure_connector(&addr)
+        ButtplugWebsocketClientTransport::new_insecure_connector(&addr),
       ))
       .await
   } else {
@@ -136,7 +133,7 @@ impl IntifaceEngine {
     &self,
     options: &EngineOptions,
     external_frontend: Option<Arc<dyn Frontend>>,
-    skip_logging_setup: bool
+    skip_logging_setup: bool,
   ) -> Result<(), IntifaceEngineError> {
     // At this point we will have received and validated options.
 
@@ -205,7 +202,13 @@ impl IntifaceEngine {
     let stop_child_token = self.stop_token.child_token();
     let options_clone = options.clone();
     tokio::spawn(async move {
-      frontend_server_event_loop(&options_clone, event_receiver, frontend_clone, stop_child_token).await;
+      frontend_server_event_loop(
+        &options_clone,
+        event_receiver,
+        frontend_clone,
+        stop_child_token,
+      )
+      .await;
     });
 
     loop {

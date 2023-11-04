@@ -1,4 +1,4 @@
-use buttplug::{util::device_configuration::UserConfigDeviceIdentifier};
+use buttplug::util::device_configuration::UserConfigDeviceIdentifier;
 use serde::{Deserialize, Serialize};
 
 // Everything in this struct is an object, even if it has null contents. This is to make other

@@ -1,10 +1,13 @@
 pub mod process_messages;
 mod websocket_frontend;
+use crate::remote_server::ButtplugRemoteServerEvent;
 use crate::{error::IntifaceError, options::EngineOptions};
 use async_trait::async_trait;
-use crate::remote_server::ButtplugRemoteServerEvent;
 use futures::{pin_mut, Stream, StreamExt};
+use mdns_sd::{ServiceDaemon, ServiceInfo};
 pub use process_messages::{EngineMessage, IntifaceMessage};
+use rand::distributions::{Alphanumeric, DistString};
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::{
   select,
@@ -12,9 +15,6 @@ use tokio::{
 };
 use tokio_util::sync::CancellationToken;
 use websocket_frontend::WebsocketFrontend;
-use mdns_sd::{ServiceDaemon, ServiceInfo};
-use std::collections::HashMap;
-use rand::distributions::{Alphanumeric, DistString};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -75,25 +75,37 @@ pub async fn frontend_server_event_loop(
   let mut mdns = None;
 
   if options.broadcast_server_mdns() {
-  // Create a daemon
+    // Create a daemon
     let mdns_daemon = ServiceDaemon::new().expect("Failed to create daemon");
 
     // Create a service info.
     let service_type = "_intiface_engine._tcp.local.";
     let random_suffix = Alphanumeric.sample_string(&mut rand::thread_rng(), 6);
-    let instance_name = format!("intiface_engine_{}_{}", options.mdns_suffix().as_ref().unwrap_or(&"".to_owned()).to_owned(), random_suffix);
-    info!("Bringing up mDNS Advertisment using instance name {}", instance_name);
+    let instance_name = format!(
+      "intiface_engine_{}_{}",
+      options
+        .mdns_suffix()
+        .as_ref()
+        .unwrap_or(&"".to_owned())
+        .to_owned(),
+      random_suffix
+    );
+    info!(
+      "Bringing up mDNS Advertisment using instance name {}",
+      instance_name
+    );
     let host_name = format!("{}.local.", instance_name);
     let port = options.websocket_port().unwrap_or(12345);
-    let properties:HashMap<String, String> = HashMap::new();
+    let properties: HashMap<String, String> = HashMap::new();
     let mut my_service = ServiceInfo::new(
       service_type,
       &instance_name,
       &host_name,
       "",
       port,
-      properties
-    ).unwrap();
+      properties,
+    )
+    .unwrap();
     my_service = my_service.enable_addr_auto();
     mdns_daemon.register(my_service).unwrap();
     mdns = Some(mdns_daemon);

@@ -84,7 +84,7 @@ pub struct EngineOptionsExternal {
   pub crash_main_thread: bool,
   pub crash_task_thread: bool,
   pub broadcast_server_mdns: bool,
-  pub mdns_suffix: Option<String>
+  pub mdns_suffix: Option<String>,
 }
 
 impl From<EngineOptionsExternal> for EngineOptions {
@@ -115,7 +115,7 @@ impl From<EngineOptionsExternal> for EngineOptions {
       crash_main_thread: other.crash_main_thread,
       crash_task_thread: other.crash_task_thread,
       broadcast_server_mdns: other.broadcast_server_mdns,
-      mdns_suffix: other.mdns_suffix
+      mdns_suffix: other.mdns_suffix,
     }
   }
 }

@@ -65,7 +65,7 @@ async fn run_device_event_stream(
 ) {
   let server_receiver = server.event_stream();
   pin_mut!(server_receiver);
-  loop { 
+  loop {
     match server_receiver.next().await {
       None => {
         info!("Server disconnected via server disappearance, exiting loop.");

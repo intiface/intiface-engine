@@ -17,9 +17,9 @@ pub fn setup_server_device_comm_managers(
   if args.use_bluetooth_le() {
     info!("Including Bluetooth LE (btleplug) Device Comm Manager Support");
     let mut command_manager_builder = BtlePlugCommunicationManagerBuilder::default();
-    #[cfg(target_os="ios")]
+    #[cfg(target_os = "ios")]
     command_manager_builder.requires_keepalive(true);
-    #[cfg(not(target_os="ios"))]
+    #[cfg(not(target_os = "ios"))]
     command_manager_builder.requires_keepalive(false);
     server_builder.comm_manager(command_manager_builder);
   }
@@ -30,10 +30,10 @@ pub fn setup_server_device_comm_managers(
   #[cfg(not(any(target_os = "android", target_os = "ios")))]
   {
     use buttplug::server::device::hardware::communication::{
+      hid::HidCommunicationManagerBuilder,
       lovense_dongle::{
         LovenseHIDDongleCommunicationManagerBuilder, LovenseSerialDongleCommunicationManagerBuilder,
       },
-      hid::HidCommunicationManagerBuilder,
       serialport::SerialPortCommunicationManagerBuilder,
     };
     if args.use_lovense_dongle_hid() {
