@@ -1,3 +1,12 @@
+# Intiface Engine v1.4.7 (2023/11/04)
+
+## Features
+
+- Allow logging to use environment variables for setup over command line prefs
+- Update to Buttplug v7.1.8
+  - Add lovense device support
+  - Fix some device support issues
+
 # Intiface Engine v1.4.6 (2023/10/19)
 
 ## Features
