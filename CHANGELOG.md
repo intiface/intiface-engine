@@ -1,3 +1,10 @@
+# Intiface Engine v1.4.8 (2023/11/16)
+
+## Features
+
+- Update to Buttplug v7.1.9
+  - Added Lovense Solace, OhMiBod Foxy, Chill support
+
 # Intiface Engine v1.4.7 (2023/11/04)
 
 ## Features
