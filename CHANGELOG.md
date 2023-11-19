@@ -1,3 +1,10 @@
+# Intiface Engine v1.4.9 (2023/11/18)
+
+## Features
+
+- Update to Buttplug v7.1.10
+  - Fixes issues with invalid bluetooth names on Android
+
 # Intiface Engine v1.4.8 (2023/11/16)
 
 ## Features
