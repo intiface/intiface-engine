@@ -1,3 +1,10 @@
+# Intiface Engine v1.4.10 (2023/11/18)
+
+## Bugfixes
+
+- Update to Buttplug v7.1.11
+  - Fixed btleplug compilation issue on macOS
+
 # Intiface Engine v1.4.9 (2023/11/18)
 
 ## Features

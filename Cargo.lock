@@ -322,9 +322,9 @@ dependencies = [
 
 [[package]]
 name = "btleplug"
-version = "0.11.2"
+version = "0.11.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd2d922edc7f1b04d9dc80f9e4f2679e64ecfd58226692f0ba4bb484d9d379eb"
+checksum = "0743700186f3d4c46f91b5ac9534e0c271a5de1c3ebd7dca1b5b4216132f72a0"
 dependencies = [
  "async-trait",
  "bitflags 2.4.1",
@@ -355,9 +355,9 @@ checksum = "7f30e7476521f6f8af1a1c4c0b8cc94f0bee37d91763d0ca2665f299b6cd8aec"
 
 [[package]]
 name = "buttplug"
-version = "7.1.10"
+version = "7.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7d77cc59267e87c0f561f9b801c45471e400e88c7afdfa60d6461505520098b"
+checksum = "937abba6af41fc7e7462aa8704ecbf8fc72f91fc318e49a7590cc1821f74c75d"
 dependencies = [
  "async-stream",
  "async-trait",
@@ -1263,7 +1263,7 @@ dependencies = [
 
 [[package]]
 name = "intiface-engine"
-version = "1.4.9"
+version = "1.4.10"
 dependencies = [
  "anyhow",
  "argh",
@@ -1291,7 +1291,6 @@ dependencies = [
  "tracing-fmt",
  "tracing-subscriber 0.3.18",
  "vergen",
- "winapi",
 ]
 
 [[package]]
