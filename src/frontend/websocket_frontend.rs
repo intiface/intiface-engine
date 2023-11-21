@@ -6,7 +6,7 @@ use crate::error::IntifaceError;
 
 use async_trait::async_trait;
 use futures::FutureExt;
-use futures::{AsyncRead, AsyncWrite, SinkExt, StreamExt};
+use futures::{SinkExt, StreamExt};
 use std::{
   sync::{
     atomic::{AtomicBool, Ordering},
@@ -16,20 +16,19 @@ use std::{
 };
 use tokio::{
   self,
-  net::TcpListener,
+  net::{TcpListener, TcpStream},
   select,
   sync::{broadcast, mpsc, Notify, OnceCell},
 };
 use tokio_util::sync::CancellationToken;
 
-async fn run_connection_loop<S>(
-  ws_stream: async_tungstenite::WebSocketStream<S>,
+async fn run_connection_loop(
+  ws_stream: tokio_tungstenite::WebSocketStream<TcpStream>,
   mut request_receiver: mpsc::Receiver<EngineMessage>,
   response_sender: broadcast::Sender<IntifaceMessage>,
   disconnect_notifier: Arc<Notify>,
   cancellation_token: Arc<CancellationToken>,
-) where
-  S: AsyncRead + AsyncWrite + Unpin,
+)
 {
   info!("Starting websocket server connection event loop.");
 
@@ -54,7 +53,7 @@ async fn run_connection_loop<S>(
         }
         pong_count = 0;
         if websocket_server_sender
-          .send(async_tungstenite::tungstenite::Message::Ping(vec!(0)))
+          .send(tokio_tungstenite::tungstenite::Message::Ping(vec!(0)))
           .await
           .is_err() {
           warn!("Cannot send ping to client, considering connection closed.");
@@ -64,7 +63,7 @@ async fn run_connection_loop<S>(
       serialized_msg = request_receiver.recv() => {
         if let Some(serialized_msg) = serialized_msg {
           if websocket_server_sender
-            .send(async_tungstenite::tungstenite::Message::Text(serde_json::to_string(&serialized_msg).unwrap()))
+            .send(tokio_tungstenite::tungstenite::Message::Text(serde_json::to_string(&serialized_msg).unwrap()))
             .await
             .is_err() {
             warn!("Cannot send text value to server, considering connection closed.");
@@ -84,14 +83,14 @@ async fn run_connection_loop<S>(
           match ws_data {
             Ok(msg) => {
               match msg {
-                async_tungstenite::tungstenite::Message::Text(text_msg) => {
+                tokio_tungstenite::tungstenite::Message::Text(text_msg) => {
                   trace!("Got text: {}", text_msg);
                   if response_sender.receiver_count() == 0 || response_sender.send(serde_json::from_str(&text_msg).unwrap()).is_err() {
                     warn!("Connector that owns transport no longer available, exiting.");
                     break;
                   }
                 }
-                async_tungstenite::tungstenite::Message::Close(_) => {
+                tokio_tungstenite::tungstenite::Message::Close(_) => {
                   info!("Closing websocket");
                   cancellation_token.cancel();
                   if websocket_server_sender.close().await.is_err() {
@@ -101,20 +100,20 @@ async fn run_connection_loop<S>(
                   //let _ = response_sender.send(ButtplugTransportIncomingMessage::Close("Websocket server closed".to_owned())).await;
                   break;
                 }
-                async_tungstenite::tungstenite::Message::Ping(_) => {
+                tokio_tungstenite::tungstenite::Message::Ping(_) => {
                   // noop
                   continue;
                 }
-                async_tungstenite::tungstenite::Message::Frame(_) => {
+                tokio_tungstenite::tungstenite::Message::Frame(_) => {
                   // noop
                   continue;
                 }
-                async_tungstenite::tungstenite::Message::Pong(_) => {
+                tokio_tungstenite::tungstenite::Message::Pong(_) => {
                   // noop
                   pong_count += 1;
                   continue;
                 }
-                async_tungstenite::tungstenite::Message::Binary(_) => {
+                tokio_tungstenite::tungstenite::Message::Binary(_) => {
                   error!("Don't know how to handle binary message types!");
                 }
               }
@@ -203,7 +202,7 @@ impl Frontend for WebsocketFrontend {
     debug!("Websocket: Listening on: {}", addr);
     if let Ok((stream, _)) = listener.accept().await {
       info!("Websocket: Got connection");
-      let ws_fut = async_tungstenite::tokio::accept_async(stream);
+      let ws_fut = tokio_tungstenite::accept_async(stream);
       let ws_stream = ws_fut.await.map_err(|err| {
         error!("Websocket server accept error: {:?}", err);
         IntifaceError::new(&format!("Websocket server accept error: {:?}", err))
