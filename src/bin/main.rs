@@ -1,5 +1,6 @@
 use argh::FromArgs;
 use getset::{CopyGetters, Getters};
+use intiface_engine::ButtplugRepeater;
 use intiface_engine::{
   setup_console_logging, EngineOptions, EngineOptionsBuilder, IntifaceEngine, IntifaceEngineError,
   IntifaceError,
@@ -146,6 +147,21 @@ pub struct IntifaceCLIArguments {
   #[getset(get = "pub")]
   mdns_suffix: Option<String>,
 
+  /// if set, use repeater mode instead of engine mode
+  #[argh(switch)]
+  #[getset(get_copy = "pub")]
+  repeater: bool,
+
+  /// if set, use repeater mode instead of engine mode
+  #[argh(option)]
+  #[getset(get_copy = "pub")]
+  repeater_port: Option<u16>,
+  
+  /// if set, use repeater mode instead of engine mode
+  #[argh(option)]
+  #[getset(get = "pub")]
+  repeater_remote_address: Option<String>,
+  
   #[cfg(debug_assertions)]
   /// crash the main thread (that holds the runtime)
   #[argh(switch)]
@@ -263,21 +279,27 @@ async fn main() -> Result<(), IntifaceEngineError> {
     return Ok(());
   }
 
-  if args.frontend_websocket_port().is_none() {
+  if args.repeater() {
     setup_console_logging(args.log());
-  }
-
-  let options = EngineOptions::try_from(args).map_err(IntifaceEngineError::from)?;
-  let engine = IntifaceEngine::default();
-  select! {
-    _ = engine.run(&options, None, true) => {
-
+    let repeater = ButtplugRepeater::new(args.repeater_port().unwrap(), &args.repeater_remote_address().as_ref().unwrap());
+    repeater.listen().await;
+  } else {
+    if args.frontend_websocket_port().is_none() {
+      setup_console_logging(args.log());
     }
-    _ = ctrl_c() => {
-      info!("Control-c hit, exiting.");
-      engine.stop();
+  
+    let options = EngineOptions::try_from(args).map_err(IntifaceEngineError::from)?;
+    let engine = IntifaceEngine::default();
+    select! {
+      _ = engine.run(&options, None, true) => {
+  
+      }
+      _ = ctrl_c() => {
+        info!("Control-c hit, exiting.");
+        engine.stop();
+      }
     }
   }
-
+  
   Ok(())
 }
