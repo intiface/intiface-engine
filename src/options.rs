@@ -55,6 +55,12 @@ pub struct EngineOptions {
   broadcast_server_mdns: bool,
   #[getset(get = "pub")]
   mdns_suffix: Option<String>,
+  #[getset(get_copy = "pub")]
+  repeater_mode: bool,
+  #[getset(get_copy = "pub")]
+  repeater_local_port: Option<u16>,
+  #[getset(get = "pub")]
+  repeater_remote_address: Option<String>,  
 }
 
 #[derive(Default, Debug, Clone)]
@@ -85,6 +91,9 @@ pub struct EngineOptionsExternal {
   pub crash_task_thread: bool,
   pub broadcast_server_mdns: bool,
   pub mdns_suffix: Option<String>,
+  pub repeater_mode: bool,
+  pub repeater_local_port: Option<u16>,
+  pub repeater_remote_address: Option<String>
 }
 
 impl From<EngineOptionsExternal> for EngineOptions {
@@ -116,6 +125,9 @@ impl From<EngineOptionsExternal> for EngineOptions {
       crash_task_thread: other.crash_task_thread,
       broadcast_server_mdns: other.broadcast_server_mdns,
       mdns_suffix: other.mdns_suffix,
+      repeater_mode: other.repeater_mode,
+      repeater_local_port: other.repeater_local_port,
+      repeater_remote_address: other.repeater_remote_address
     }
   }
 }
@@ -261,6 +273,21 @@ impl EngineOptionsBuilder {
 
   pub fn mdns_suffix(&mut self, name: &str) -> &mut Self {
     self.options.mdns_suffix = Some(name.to_owned());
+    self
+  }
+
+  pub fn use_repeater_mode(&mut self) -> &mut Self {
+    self.options.repeater_mode = true;
+    self
+  }
+
+  pub fn repeater_local_port(&mut self, port: u16) -> &mut Self {
+    self.options.repeater_local_port = Some(port);
+    self
+  }
+
+  pub fn repeater_remote_address(&mut self, addr: &str) -> &mut Self {
+    self.options.repeater_remote_address = Some(addr.to_owned());
     self
   }
 

@@ -54,6 +54,8 @@ mdns-sd = "0.8.1"
 local-ip-address = "0.5.6"
 rand = "0.8.5"
 tokio-tungstenite = "0.20.1"
+futures-util = "0.3.29"
+url = "2.4.1"
 
 [build-dependencies]
 vergen = "7.5.1"
