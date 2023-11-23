@@ -6,9 +6,8 @@ use crate::{
     frontend_external_event_loop, frontend_server_event_loop, process_messages::EngineMessage,
     setup_frontend, Frontend,
   },
-  logging::setup_frontend_logging,
   options::EngineOptions,
-  ButtplugRemoteServer, ButtplugServerConnectorError, IntifaceError,
+  ButtplugRemoteServer, ButtplugServerConnectorError, IntifaceError, ButtplugRepeater,
 };
 use buttplug::{
   core::{
@@ -21,7 +20,7 @@ use buttplug::{
   server::ButtplugServerBuilder,
 };
 use once_cell::sync::OnceCell;
-use std::{str::FromStr, sync::Arc, time::Duration};
+use std::{sync::Arc, time::Duration};
 use tokio::select;
 use tokio_util::sync::CancellationToken;
 
@@ -133,7 +132,6 @@ impl IntifaceEngine {
     &self,
     options: &EngineOptions,
     external_frontend: Option<Arc<dyn Frontend>>,
-    skip_logging_setup: bool,
   ) -> Result<(), IntifaceEngineError> {
     // At this point we will have received and validated options.
 
@@ -152,6 +150,7 @@ impl IntifaceEngine {
       None
     };
     */
+
     // Create the cancellation tokens for
     let frontend_cancellation_token = CancellationToken::new();
     let frontend_cancellation_child_token = frontend_cancellation_token.child_token();
@@ -176,10 +175,12 @@ impl IntifaceEngine {
 
     frontend.connect().await.unwrap();
     frontend.send(EngineMessage::EngineStarted {}).await;
-    if !skip_logging_setup {
-      if let Some(level) = options.log_level() {
-        setup_frontend_logging(tracing::Level::from_str(level).unwrap(), frontend.clone());
-      }
+
+    if options.repeater_mode() {
+      info!("Starting repeater");
+      let repeater = ButtplugRepeater::new(options.repeater_local_port().unwrap(), &options.repeater_remote_address().as_ref().unwrap());
+      repeater.listen().await;
+      return Ok(());
     }
 
     // Set up crash logging for the duration of the server session.

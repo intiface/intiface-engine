@@ -1,15 +1,18 @@
 use argh::FromArgs;
 use getset::{CopyGetters, Getters};
-use intiface_engine::ButtplugRepeater;
 use intiface_engine::{
-  setup_console_logging, EngineOptions, EngineOptionsBuilder, IntifaceEngine, IntifaceEngineError,
+  EngineOptions, EngineOptionsBuilder, IntifaceEngine, IntifaceEngineError,
   IntifaceError,
 };
 use std::fs;
 use tokio::{select, signal::ctrl_c};
-use tracing::debug;
-use tracing::info;
-use tracing::Level;
+use tracing::{debug, info, Level};
+use tracing_subscriber::{
+  filter::{EnvFilter, LevelFilter},
+  layer::SubscriberExt,
+  util::SubscriberInitExt,
+};
+
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -156,12 +159,12 @@ pub struct IntifaceCLIArguments {
   #[argh(option)]
   #[getset(get_copy = "pub")]
   repeater_port: Option<u16>,
-  
+
   /// if set, use repeater mode instead of engine mode
   #[argh(option)]
   #[getset(get = "pub")]
   repeater_remote_address: Option<String>,
-  
+
   #[cfg(debug_assertions)]
   /// crash the main thread (that holds the runtime)
   #[argh(switch)]
@@ -174,6 +177,29 @@ pub struct IntifaceCLIArguments {
   #[argh(switch)]
   #[getset(get_copy = "pub")]
   crash_task_thread: bool,
+}
+
+pub fn setup_console_logging(log_level: Option<Level>) {
+  if log_level.is_some() {
+    tracing_subscriber::registry()
+      .with(tracing_subscriber::fmt::layer())
+      //.with(sentry_tracing::layer())
+      .with(LevelFilter::from(log_level))
+      .try_init()
+      .unwrap();
+  } else {
+    tracing_subscriber::registry()
+      .with(tracing_subscriber::fmt::layer())
+      //.with(sentry_tracing::layer())
+      .with(
+        EnvFilter::try_from_default_env()
+          .or_else(|_| EnvFilter::try_new("info"))
+          .unwrap(),
+      )
+      .try_init()
+      .unwrap();
+  };
+  println!("Intiface Server, starting up with stdout output.");
 }
 
 impl TryFrom<IntifaceCLIArguments> for EngineOptions {
@@ -236,9 +262,6 @@ impl TryFrom<IntifaceCLIArguments> for EngineOptions {
         .crash_task_thread(args.crash_task_thread());
     }
 
-    if let Some(value) = args.log() {
-      builder.log_level(value);
-    }
     if let Some(value) = args.websocket_port() {
       builder.websocket_port(value);
     }
@@ -260,7 +283,7 @@ impl TryFrom<IntifaceCLIArguments> for EngineOptions {
   }
 }
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")] //#[tokio::main]
 async fn main() -> Result<(), IntifaceEngineError> {
   let args: IntifaceCLIArguments = argh::from_env();
   if args.server_version() {
@@ -279,27 +302,21 @@ async fn main() -> Result<(), IntifaceEngineError> {
     return Ok(());
   }
 
-  if args.repeater() {
+  if args.frontend_websocket_port().is_none() {
     setup_console_logging(args.log());
-    let repeater = ButtplugRepeater::new(args.repeater_port().unwrap(), &args.repeater_remote_address().as_ref().unwrap());
-    repeater.listen().await;
-  } else {
-    if args.frontend_websocket_port().is_none() {
-      setup_console_logging(args.log());
+  }
+
+  let options = EngineOptions::try_from(args).map_err(IntifaceEngineError::from)?;
+  let engine = IntifaceEngine::default();
+  select! {
+    _ = engine.run(&options, None) => {
+
     }
-  
-    let options = EngineOptions::try_from(args).map_err(IntifaceEngineError::from)?;
-    let engine = IntifaceEngine::default();
-    select! {
-      _ = engine.run(&options, None, true) => {
-  
-      }
-      _ = ctrl_c() => {
-        info!("Control-c hit, exiting.");
-        engine.stop();
-      }
+    _ = ctrl_c() => {
+      info!("Control-c hit, exiting.");
+      engine.stop();
     }
   }
-  
+
   Ok(())
 }

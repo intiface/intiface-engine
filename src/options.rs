@@ -1,5 +1,4 @@
 use getset::{CopyGetters, Getters};
-use tracing::Level;
 
 #[derive(CopyGetters, Getters, Default, Debug, Clone)]
 pub struct EngineOptions {
@@ -25,8 +24,6 @@ pub struct EngineOptions {
   frontend_in_process_channel: bool,
   #[getset(get_copy = "pub")]
   max_ping_time: u32,
-  #[getset(get = "pub")]
-  log_level: Option<String>,
   #[getset(get_copy = "pub")]
   allow_raw_messages: bool,
   #[getset(get_copy = "pub")]
@@ -76,7 +73,6 @@ pub struct EngineOptionsExternal {
   pub frontend_websocket_port: Option<u16>,
   pub frontend_in_process_channel: bool,
   pub max_ping_time: u32,
-  pub log_level: Option<String>,
   pub allow_raw_messages: bool,
   pub use_bluetooth_le: bool,
   pub use_serial_port: bool,
@@ -110,7 +106,6 @@ impl From<EngineOptionsExternal> for EngineOptions {
       frontend_websocket_port: other.frontend_websocket_port,
       frontend_in_process_channel: other.frontend_in_process_channel,
       max_ping_time: other.max_ping_time,
-      log_level: other.log_level,
       allow_raw_messages: other.allow_raw_messages,
       use_bluetooth_le: other.use_bluetooth_le,
       use_serial_port: other.use_serial_port,
@@ -258,11 +253,6 @@ impl EngineOptionsBuilder {
 
   pub fn max_ping_time(&mut self, value: u32) -> &mut Self {
     self.options.max_ping_time = value;
-    self
-  }
-
-  pub fn log_level(&mut self, level: Level) -> &mut Self {
-    self.options.log_level = Some(level.to_string());
     self
   }
 
