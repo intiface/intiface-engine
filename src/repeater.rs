@@ -4,33 +4,54 @@
 
 use futures_util::{future, StreamExt, TryStreamExt};
 use log::info;
-use tokio::net::{TcpListener, TcpStream};
+use tokio::{select, net::{TcpListener, TcpStream}};
 use tokio_tungstenite::connect_async;
+use tokio_util::sync::CancellationToken;
 
 pub struct ButtplugRepeater {
   local_port: u16,
   remote_address: String,
+  stop_token: CancellationToken
 }
 
 impl ButtplugRepeater {
-  pub fn new(local_port: u16, remote_address: &str) -> Self {
+  pub fn new(local_port: u16, remote_address: &str, stop_token: CancellationToken) -> Self {
     Self {
       local_port,
-      remote_address: remote_address.to_owned()
+      remote_address: remote_address.to_owned(),
+      stop_token
     }
   }
 
   pub async fn listen(&self) {
+    info!("Repeater loop starting");
     let addr = format!("127.0.0.1:{}", self.local_port);
 
     let try_socket = TcpListener::bind(&addr).await;
     let listener = try_socket.expect("Failed to bind");
     info!("Listening on: {}", addr);
 
-    while let Ok((stream, _)) = listener.accept().await {
-      let remote_address = self.remote_address.clone();
-      tokio::spawn(ButtplugRepeater::accept_connection(remote_address, stream));
+    loop {
+      select! {
+        stream_result = listener.accept() => {
+          match stream_result {
+            Ok((stream, _)) => {
+              let remote_address = self.remote_address.clone();
+              tokio::spawn(ButtplugRepeater::accept_connection(remote_address, stream));
+            },
+            Err(e) => {
+              error!("Error accepting new websocket for repeater: {:?}", e);
+              break;
+            }
+          }
+        },
+        _ = self.stop_token.cancelled() => {
+          info!("Repeater loop requested to stop, breaking.");
+          break;
+        }
+      }
     }
+    info!("Repeater loop exiting");
   }
 
   async fn accept_connection(server_addr: String, stream: TcpStream) {

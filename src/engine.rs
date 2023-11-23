@@ -178,7 +178,7 @@ impl IntifaceEngine {
 
     if options.repeater_mode() {
       info!("Starting repeater");
-      let repeater = ButtplugRepeater::new(options.repeater_local_port().unwrap(), &options.repeater_remote_address().as_ref().unwrap());
+      let repeater = ButtplugRepeater::new(options.repeater_local_port().unwrap(), &options.repeater_remote_address().as_ref().unwrap(), self.stop_token.child_token());
       repeater.listen().await;
       return Ok(());
     }
