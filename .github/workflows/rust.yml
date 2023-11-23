@@ -1,6 +1,11 @@
 name: Intiface Engine Build
 
-on: push
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - ci
 
 jobs:
   build-stable:
