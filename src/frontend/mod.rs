@@ -1,12 +1,9 @@
 pub mod process_messages;
 use crate::remote_server::ButtplugRemoteServerEvent;
-use crate::{error::IntifaceError, options::EngineOptions};
+use crate::error::IntifaceError;
 use async_trait::async_trait;
 use futures::{pin_mut, Stream, StreamExt};
-use mdns_sd::{ServiceDaemon, ServiceInfo};
 pub use process_messages::{EngineMessage, IntifaceMessage};
-use rand::distributions::{Alphanumeric, DistString};
-use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::{
   select,
@@ -63,51 +60,11 @@ pub async fn frontend_external_event_loop(
 }
 
 pub async fn frontend_server_event_loop(
-  options: &EngineOptions,
   receiver: impl Stream<Item = ButtplugRemoteServerEvent>,
   frontend: Arc<dyn Frontend>,
   connection_cancellation_token: CancellationToken,
 ) {
   pin_mut!(receiver);
-
-  let mut mdns = None;
-
-  if options.broadcast_server_mdns() {
-    // Create a daemon
-    let mdns_daemon = ServiceDaemon::new().expect("Failed to create daemon");
-
-    // Create a service info.
-    let service_type = "_intiface_engine._tcp.local.";
-    let random_suffix = Alphanumeric.sample_string(&mut rand::thread_rng(), 6);
-    let instance_name = format!(
-      "intiface_engine_{}_{}",
-      options
-        .mdns_suffix()
-        .as_ref()
-        .unwrap_or(&"".to_owned())
-        .to_owned(),
-      random_suffix
-    );
-    info!(
-      "Bringing up mDNS Advertisment using instance name {}",
-      instance_name
-    );
-    let host_name = format!("{}.local.", instance_name);
-    let port = options.websocket_port().unwrap_or(12345);
-    let properties: HashMap<String, String> = HashMap::new();
-    let mut my_service = ServiceInfo::new(
-      service_type,
-      &instance_name,
-      &host_name,
-      "",
-      port,
-      properties,
-    )
-    .unwrap();
-    my_service = my_service.enable_addr_auto();
-    mdns_daemon.register(my_service).unwrap();
-    mdns = Some(mdns_daemon);
-  }
 
   loop {
     select! {
@@ -117,9 +74,6 @@ pub async fn frontend_server_event_loop(
             ButtplugRemoteServerEvent::ClientConnected(client_name) => {
               info!("Client connected: {}", client_name);
               frontend.send(EngineMessage::ClientConnected{client_name}).await;
-              if let Some(mdns_daemon) = &mdns {
-                mdns_daemon.shutdown().unwrap();
-              }
             }
             ButtplugRemoteServerEvent::ClientDisconnected => {
               info!("Client disconnected.");
@@ -150,11 +104,6 @@ pub async fn frontend_server_event_loop(
         info!("Connection cancellation token activated, breaking from frontend server event loop");
         break;
       }
-    }
-  }
-  if let Some(mdns_daemon) = mdns {
-    if let Err(e) = mdns_daemon.shutdown() {
-      error!("{:?}", e);
     }
   }
   info!("Exiting server event receiver loop");
