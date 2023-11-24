@@ -7,7 +7,7 @@ use crate::{
     Frontend,
   },
   options::EngineOptions,
-  ButtplugRemoteServer, ButtplugServerConnectorError, IntifaceError, ButtplugRepeater,
+  ButtplugRemoteServer, ButtplugServerConnectorError, IntifaceError, ButtplugRepeater, mdns::IntifaceMdns,
 };
 use buttplug::{
   core::{
@@ -134,23 +134,6 @@ impl IntifaceEngine {
     frontend: Option<Arc<dyn Frontend>>,
   ) -> Result<(), IntifaceEngineError> {
     // Set up Frontend
-
-    // Set up mDNS
-
-    // Set up Repeater (if in repeater mode)
-
-    // Set up Engine (if in engine mode)
-
-    // At this point we will have received and validated options.
-
-    // Set up crash logging for the duration of the server session.
-    /*
-    */
-
-    // Intiface GUI communicates with its child process via json through stdio.
-    // Checking for this is the first thing we should do, as any output after this either needs to be
-    // printed strings or json messages.
-
     if let Some(frontend) = &frontend {
       let frontend_loop = frontend_external_event_loop(frontend.clone(), self.stop_token.clone());
       tokio::spawn(async move {
@@ -161,6 +144,17 @@ impl IntifaceEngine {
       frontend.send(EngineMessage::EngineStarted {}).await;
     }
 
+    // Set up mDNS
+    let _ = if options.broadcast_server_mdns() {
+      // TODO Unregister whenever we have a live connection
+
+      // TODO Support different services for engine versus repeater
+      Some(IntifaceMdns::new(&options))
+    } else {
+      None
+    };
+
+    // Set up Repeater (if in repeater mode)
     if options.repeater_mode() {
       info!("Starting repeater");
       let repeater = ButtplugRepeater::new(options.repeater_local_port().unwrap(), &options.repeater_remote_address().as_ref().unwrap(), self.stop_token.child_token());
@@ -168,15 +162,10 @@ impl IntifaceEngine {
       return Ok(());
     }
 
-    // Set up crash logging for the duration of the server session.
-    #[cfg(feature = "sentry")]
-    {
-      if sentry_guard.is_some() {
-        info!("Using sentry for crash logging.");
-      } else {
-        info!("Crash logging disabled.");
-      }
-    }
+    // Set up Engine (if in engine mode)
+
+    // At this point we will have received and validated options.
+
 
     // Hang out until those listeners get sick of listening.
     info!("Intiface CLI Setup finished, running server tasks until all joined.");
@@ -187,10 +176,8 @@ impl IntifaceEngine {
       let event_receiver = server.event_stream();
       let frontend_clone = frontend.clone();
       let stop_child_token = self.stop_token.child_token();
-      let options_clone = options.clone();
       tokio::spawn(async move {
         frontend_server_event_loop(
-          &options_clone,
           event_receiver,
           frontend_clone,
           stop_child_token,
