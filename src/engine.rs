@@ -1,24 +1,14 @@
 use crate::{
   backdoor_server::BackdoorServer,
-  device_communication_managers::setup_server_device_comm_managers,
+  buttplug_server::{setup_buttplug_server, run_server},
   error::IntifaceEngineError,
   frontend::{
     frontend_external_event_loop, frontend_server_event_loop, process_messages::EngineMessage,
     Frontend,
   },
-  options::EngineOptions,
-  ButtplugRemoteServer, ButtplugServerConnectorError, IntifaceError, ButtplugRepeater, mdns::IntifaceMdns,
+  options::EngineOptions,ButtplugRepeater, mdns::IntifaceMdns,
 };
-use buttplug::{
-  core::{
-    connector::{
-      ButtplugRemoteServerConnector, ButtplugWebsocketClientTransport,
-      ButtplugWebsocketServerTransportBuilder,
-    },
-    message::serializer::ButtplugServerJSONSerializer,
-  },
-  server::ButtplugServerBuilder,
-};
+
 use once_cell::sync::OnceCell;
 use std::{sync::Arc, time::Duration};
 use tokio::select;
@@ -39,81 +29,6 @@ pub fn maybe_crash_task_thread(options: &EngineOptions) {
       tokio::time::sleep(Duration::from_millis(100)).await;
       panic!("Crashing a task thread by request");
     });
-  }
-}
-
-async fn setup_buttplug_server(
-  options: &EngineOptions,
-  backdoor_server: &OnceCell<Arc<BackdoorServer>>,
-) -> Result<ButtplugRemoteServer, IntifaceEngineError> {
-  //options::setup_server_device_comm_managers(&mut connector_opts.server_builder);
-
-  let mut server_builder = ButtplugServerBuilder::default();
-  server_builder
-    .name(options.server_name())
-    .max_ping_time(options.max_ping_time());
-
-  if options.allow_raw_messages() {
-    server_builder.allow_raw_messages();
-  }
-
-  if let Some(device_config_json) = options.device_config_json() {
-    server_builder.device_configuration_json(Some(device_config_json.clone()));
-  }
-
-  if let Some(user_device_config_json) = &options.user_device_config_json() {
-    server_builder.user_device_configuration_json(Some(user_device_config_json.clone()));
-  }
-
-  setup_server_device_comm_managers(options, &mut server_builder);
-
-  let core_server = match server_builder.finish() {
-    Ok(server) => server,
-    Err(e) => {
-      error!("Error starting server: {:?}", e);
-      return Err(IntifaceEngineError::ButtplugServerError(e));
-    }
-  };
-  if backdoor_server
-    .set(Arc::new(BackdoorServer::new(core_server.device_manager())))
-    .is_err()
-  {
-    Err(
-      IntifaceError::new("BackdoorServer already initialized somehow! This should never happen!")
-        .into(),
-    )
-  } else {
-    Ok(ButtplugRemoteServer::new(core_server))
-  }
-}
-
-async fn run_server(
-  server: &ButtplugRemoteServer,
-  options: &EngineOptions,
-) -> Result<(), ButtplugServerConnectorError> {
-  if let Some(port) = options.websocket_port() {
-    server
-      .start(ButtplugRemoteServerConnector::<
-        _,
-        ButtplugServerJSONSerializer,
-      >::new(
-        ButtplugWebsocketServerTransportBuilder::default()
-          .port(port)
-          .listen_on_all_interfaces(options.websocket_use_all_interfaces())
-          .finish(),
-      ))
-      .await
-  } else if let Some(addr) = options.websocket_client_address() {
-    server
-      .start(ButtplugRemoteServerConnector::<
-        _,
-        ButtplugServerJSONSerializer,
-      >::new(
-        ButtplugWebsocketClientTransport::new_insecure_connector(&addr),
-      ))
-      .await
-  } else {
-    panic!("Websocket port not set, cannot create transport. Please specify a websocket port in arguments.");
   }
 }
 
