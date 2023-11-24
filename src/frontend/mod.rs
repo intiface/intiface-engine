@@ -1,5 +1,4 @@
 pub mod process_messages;
-mod websocket_frontend;
 use crate::remote_server::ButtplugRemoteServerEvent;
 use crate::{error::IntifaceError, options::EngineOptions};
 use async_trait::async_trait;
@@ -14,7 +13,6 @@ use tokio::{
   sync::{broadcast, Notify},
 };
 use tokio_util::sync::CancellationToken;
-use websocket_frontend::WebsocketFrontend;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -185,16 +183,3 @@ impl Frontend for NullFrontend {
   }
 }
 
-pub async fn setup_frontend(
-  options: &EngineOptions,
-  cancellation_token: &Arc<CancellationToken>,
-) -> Arc<dyn Frontend> {
-  if let Some(frontend_websocket_port) = options.frontend_websocket_port() {
-    Arc::new(WebsocketFrontend::new(
-      frontend_websocket_port,
-      cancellation_token.clone(),
-    ))
-  } else {
-    Arc::new(NullFrontend::default())
-  }
-}
