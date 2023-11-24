@@ -4,7 +4,7 @@ use crate::{
   error::IntifaceEngineError,
   frontend::{
     frontend_external_event_loop, frontend_server_event_loop, process_messages::EngineMessage,
-    setup_frontend, Frontend,
+    Frontend,
   },
   options::EngineOptions,
   ButtplugRemoteServer, ButtplugServerConnectorError, IntifaceError, ButtplugRepeater,
@@ -131,8 +131,19 @@ impl IntifaceEngine {
   pub async fn run(
     &self,
     options: &EngineOptions,
-    external_frontend: Option<Arc<dyn Frontend>>,
+    frontend: Option<Arc<dyn Frontend>>,
   ) -> Result<(), IntifaceEngineError> {
+
+    // Set up Sentry
+
+    // Set up Frontend
+
+    // Set up mDNS
+
+    // Set up Repeater (if in repeater mode)
+
+    // Set up Engine (if in engine mode)
+
     // At this point we will have received and validated options.
 
     // Set up crash logging for the duration of the server session.
@@ -151,30 +162,19 @@ impl IntifaceEngine {
     };
     */
 
-    // Create the cancellation tokens for
-    let frontend_cancellation_token = CancellationToken::new();
-    let frontend_cancellation_child_token = frontend_cancellation_token.child_token();
-
     // Intiface GUI communicates with its child process via json through stdio.
     // Checking for this is the first thing we should do, as any output after this either needs to be
     // printed strings or json messages.
 
-    let frontend = if let Some(frontend) = external_frontend {
-      frontend
-    } else {
-      setup_frontend(options, &self.stop_token).await
-    };
-
-    {
-      let frontend = frontend.clone();
-      let stop_token = self.stop_token.clone();
+    if let Some(frontend) = &frontend {
+      let frontend_loop = frontend_external_event_loop(frontend.clone(), self.stop_token.clone());
       tokio::spawn(async move {
-        frontend_external_event_loop(frontend, stop_token).await;
+        frontend_loop.await;
       });
+  
+      frontend.connect().await.unwrap();
+      frontend.send(EngineMessage::EngineStarted {}).await;
     }
-
-    frontend.connect().await.unwrap();
-    frontend.send(EngineMessage::EngineStarted {}).await;
 
     if options.repeater_mode() {
       info!("Starting repeater");
@@ -196,21 +196,23 @@ impl IntifaceEngine {
     // Hang out until those listeners get sick of listening.
     info!("Intiface CLI Setup finished, running server tasks until all joined.");
     let server = setup_buttplug_server(options, &self.backdoor_server).await?;
-    frontend.send(EngineMessage::EngineServerCreated {}).await;
 
-    let event_receiver = server.event_stream();
-    let frontend_clone = frontend.clone();
-    let stop_child_token = self.stop_token.child_token();
-    let options_clone = options.clone();
-    tokio::spawn(async move {
-      frontend_server_event_loop(
-        &options_clone,
-        event_receiver,
-        frontend_clone,
-        stop_child_token,
-      )
-      .await;
-    });
+    if let Some(frontend) = &frontend {
+      frontend.send(EngineMessage::EngineServerCreated {}).await;
+      let event_receiver = server.event_stream();
+      let frontend_clone = frontend.clone();
+      let stop_child_token = self.stop_token.child_token();
+      let options_clone = options.clone();
+      tokio::spawn(async move {
+        frontend_server_event_loop(
+          &options_clone,
+          event_receiver,
+          frontend_clone,
+          stop_child_token,
+        )
+        .await;
+      });
+    }
 
     loop {
       let session_connection_token = CancellationToken::new();
@@ -227,18 +229,16 @@ impl IntifaceEngine {
           info!("Owner requested process exit, exiting.");
           exit_requested = true;
         }
-        _ = frontend_cancellation_child_token.cancelled() => {
-          info!("Owner requested process exit, exiting.");
-          exit_requested = true;
-        }
         result = run_server(&server, options) => {
           match result {
             Ok(_) => info!("Connection dropped, restarting stay open loop."),
             Err(e) => {
               error!("{}", format!("Process Error: {:?}", e));
-              frontend
-                .send(EngineMessage::EngineError{ error: format!("Process Error: {:?}", e).to_owned()})
-                .await;
+              if let Some(frontend) = &frontend {
+                frontend
+                  .send(EngineMessage::EngineError{ error: format!("Process Error: {:?}", e).to_owned()})
+                  .await;
+              }
               exit_requested = true;
             }
           }
@@ -247,7 +247,9 @@ impl IntifaceEngine {
       match server.disconnect().await {
         Ok(_) => {
           info!("Client forcefully disconnected from server.");
-          frontend.send(EngineMessage::ClientDisconnected {}).await;
+          if let Some(frontend) = &frontend {
+            frontend.send(EngineMessage::ClientDisconnected {}).await;
+          }
         }
         Err(_) => info!("Client already disconnected from server."),
       };
@@ -263,9 +265,11 @@ impl IntifaceEngine {
       error!("Shutdown failed: {:?}", e);
     }
     info!("Exiting");
-    frontend.send(EngineMessage::EngineStopped {}).await;
-    tokio::time::sleep(Duration::from_millis(100)).await;
-    frontend.disconnect();
+    if let Some(frontend) = &frontend {
+      frontend.send(EngineMessage::EngineStopped {}).await;
+      tokio::time::sleep(Duration::from_millis(100)).await;
+      frontend.disconnect();
+    }
     Ok(())
   }
 
