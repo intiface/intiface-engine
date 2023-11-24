@@ -1,7 +1,6 @@
 #[macro_use]
 extern crate tracing;
 mod backdoor_server;
-mod device_communication_managers;
 mod engine;
 mod error;
 mod frontend;
@@ -9,6 +8,7 @@ mod options;
 mod remote_server;
 mod repeater;
 mod mdns;
+mod buttplug_server;
 pub use backdoor_server::BackdoorServer;
 pub use engine::IntifaceEngine;
 pub use error::*;
