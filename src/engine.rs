@@ -133,9 +133,6 @@ impl IntifaceEngine {
     options: &EngineOptions,
     frontend: Option<Arc<dyn Frontend>>,
   ) -> Result<(), IntifaceEngineError> {
-
-    // Set up Sentry
-
     // Set up Frontend
 
     // Set up mDNS
@@ -148,18 +145,6 @@ impl IntifaceEngine {
 
     // Set up crash logging for the duration of the server session.
     /*
-    const API_KEY: &str = include_str!(concat!(env!("OUT_DIR"), "/sentry_api_key.txt"));
-    let sentry_guard = if options.crash_reporting() && !API_KEY.is_empty() {
-      Some(sentry::init((
-        API_KEY,
-        sentry::ClientOptions {
-          release: sentry::release_name!(),
-          ..Default::default()
-        },
-      )))
-    } else {
-      None
-    };
     */
 
     // Intiface GUI communicates with its child process via json through stdio.

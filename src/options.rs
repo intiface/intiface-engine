@@ -3,8 +3,6 @@ use getset::{CopyGetters, Getters};
 #[derive(CopyGetters, Getters, Default, Debug, Clone)]
 pub struct EngineOptions {
   #[getset(get = "pub")]
-  sentry_api_key: Option<String>,
-  #[getset(get = "pub")]
   device_config_json: Option<String>,
   #[getset(get = "pub")]
   user_device_config_json: Option<String>,
@@ -57,7 +55,7 @@ pub struct EngineOptions {
   #[getset(get_copy = "pub")]
   repeater_local_port: Option<u16>,
   #[getset(get = "pub")]
-  repeater_remote_address: Option<String>,  
+  repeater_remote_address: Option<String>,
 }
 
 #[derive(Default, Debug, Clone)]
@@ -95,7 +93,6 @@ pub struct EngineOptionsExternal {
 impl From<EngineOptionsExternal> for EngineOptions {
   fn from(other: EngineOptionsExternal) -> Self {
     Self {
-      sentry_api_key: other.sentry_api_key,
       device_config_json: other.device_config_json,
       user_device_config_json: other.user_device_config_json,
       server_name: other.server_name,
@@ -133,11 +130,6 @@ pub struct EngineOptionsBuilder {
 }
 
 impl EngineOptionsBuilder {
-  pub fn sentry_api_key(&mut self, value: &str) -> &mut Self {
-    self.options.sentry_api_key = Some(value.to_owned());
-    self
-  }
-
   pub fn device_config_json(&mut self, value: &str) -> &mut Self {
     self.options.device_config_json = Some(value.to_owned());
     self
