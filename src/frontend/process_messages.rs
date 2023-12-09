@@ -8,9 +8,6 @@ pub enum EngineMessage {
   EngineVersion {
     version: String,
   },
-  EngineLog {
-    message: String,
-  },
   EngineStarted {},
   EngineError {
     error: String,
@@ -42,9 +39,3 @@ pub enum IntifaceMessage {
   Stop {},
 }
 
-/*
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct EngineLogMessage {
-
-}
-*/

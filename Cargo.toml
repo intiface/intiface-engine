@@ -20,10 +20,7 @@ name = "intiface-engine"
 path = "src/bin/main.rs"
 
 [features]
-default=["crash_reporting"]
-# crash_reporting=["sentry", "sentry-tracing"]
-# Make crash reporting a null feature for now.
-crash_reporting=[]
+default=[]
 tokio_console=["console-subscriber"]
 
 [dependencies]
@@ -58,9 +55,3 @@ url = "2.4.1"
 [build-dependencies]
 vergen = "7.5.1"
 anyhow = "1.0.75"
-
-[patch.crates-io]
-
-# If you want to use the bleeding edge version of `egui`:
-# sentry = { git = "https://github.com/getsentry/sentry-rust", branch = "master" }
-# sentry-tracing = { git = "https://github.com/getsentry/sentry-rust", branch = "master" }
