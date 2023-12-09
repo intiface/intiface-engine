@@ -32,11 +32,6 @@ pub struct IntifaceCLIArguments {
   #[getset(get_copy = "pub")]
   server_version: bool,
 
-  /// turn on crash reporting to sentry
-  #[argh(switch)]
-  #[getset(get_copy = "pub")]
-  crash_reporting: bool,
-
   // Options that set up the server networking
   /// if passed, websocket server listens on all interfaces. Otherwise, only
   /// listen on 127.0.0.1.
@@ -183,14 +178,12 @@ pub fn setup_console_logging(log_level: Option<Level>) {
   if log_level.is_some() {
     tracing_subscriber::registry()
       .with(tracing_subscriber::fmt::layer())
-      //.with(sentry_tracing::layer())
       .with(LevelFilter::from(log_level))
       .try_init()
       .unwrap();
   } else {
     tracing_subscriber::registry()
       .with(tracing_subscriber::fmt::layer())
-      //.with(sentry_tracing::layer())
       .with(
         EnvFilter::try_from_default_env()
           .or_else(|_| EnvFilter::try_new("info"))
