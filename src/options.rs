@@ -60,7 +60,6 @@ pub struct EngineOptions {
 
 #[derive(Default, Debug, Clone)]
 pub struct EngineOptionsExternal {
-  pub sentry_api_key: Option<String>,
   pub device_config_json: Option<String>,
   pub user_device_config_json: Option<String>,
   pub server_name: String,
