@@ -9,8 +9,6 @@ pub struct EngineOptions {
   #[getset(get = "pub")]
   server_name: String,
   #[getset(get_copy = "pub")]
-  crash_reporting: bool,
-  #[getset(get_copy = "pub")]
   websocket_use_all_interfaces: bool,
   #[getset(get_copy = "pub")]
   websocket_port: Option<u16>,
@@ -63,7 +61,6 @@ pub struct EngineOptionsExternal {
   pub device_config_json: Option<String>,
   pub user_device_config_json: Option<String>,
   pub server_name: String,
-  pub crash_reporting: bool,
   pub websocket_use_all_interfaces: bool,
   pub websocket_port: Option<u16>,
   pub websocket_client_address: Option<String>,
@@ -95,7 +92,6 @@ impl From<EngineOptionsExternal> for EngineOptions {
       device_config_json: other.device_config_json,
       user_device_config_json: other.user_device_config_json,
       server_name: other.server_name,
-      crash_reporting: other.crash_reporting,
       websocket_use_all_interfaces: other.websocket_use_all_interfaces,
       websocket_port: other.websocket_port,
       websocket_client_address: other.websocket_client_address,
@@ -159,11 +155,6 @@ impl EngineOptionsBuilder {
     {
       self.options.crash_main_thread = value;
     }
-    self
-  }
-
-  pub fn crash_reporting(&mut self, value: bool) -> &mut Self {
-    self.options.crash_reporting = value;
     self
   }
 
