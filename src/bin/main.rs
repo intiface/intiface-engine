@@ -234,7 +234,6 @@ impl TryFrom<IntifaceCLIArguments> for EngineOptions {
 
     builder
       .allow_raw_messages(args.allow_raw())
-      .crash_reporting(args.crash_reporting())
       .websocket_use_all_interfaces(args.websocket_use_all_interfaces())
       .use_bluetooth_le(args.use_bluetooth_le())
       .use_serial_port(args.use_serial())
