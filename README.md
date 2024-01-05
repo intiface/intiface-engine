@@ -50,7 +50,7 @@ Command line options are as follows:
 
 For example, to run the server on websockets at port 12345 with bluetooth device support:
 
-`intiface-engine --weboscket-port 12345 --use-bluetooth-le`
+`intiface-engine --websocket-port 12345 --use-bluetooth-le`
 
 ## Compiling
 
