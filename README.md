@@ -39,7 +39,7 @@ Command line options are as follows:
 | `max-ping-time [number]` | Milliseconds for ping time limit of server (if omitted, set to 0) |
 | `log` | Level of logs to output by default (if omitted, set to None) |
 | `allow-raw` | Allow clients to communicate using raw messages (DANGEROUS, CAN BRICK SOME DEVICES) |
-| `use_bluetooth-le` | Use the Bluetooth LE Buttplug Device Communication Manager |
+| `use-bluetooth-le` | Use the Bluetooth LE Buttplug Device Communication Manager |
 | `use-serial` | Use the Serial Port Buttplug Device Communication Manager |
 | `use-hid` | Use the HID Buttplug Device Communication Manager |
 | `use-lovense-dongle` | Use the HID Lovense Dongle Buttplug Device Communication Manager |
