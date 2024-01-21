@@ -60,10 +60,6 @@ jobs:
       run: |
         mkdir ci-output-release
         cp target/release/intiface-engine ci-output-release/intiface-engine
-    - name: Copy Info.plist (MacOS)
-      if: startsWith(matrix.os, 'macos')
-      run: |
-        cp src/Info.plist ci-output-release/Info.plist
     - name: Copy executable (Windows)
       if: startsWith(matrix.os, 'windows')
       run: |
