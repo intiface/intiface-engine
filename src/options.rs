@@ -83,7 +83,7 @@ pub struct EngineOptionsExternal {
   pub mdns_suffix: Option<String>,
   pub repeater_mode: bool,
   pub repeater_local_port: Option<u16>,
-  pub repeater_remote_address: Option<String>
+  pub repeater_remote_address: Option<String>,
 }
 
 impl From<EngineOptionsExternal> for EngineOptions {
@@ -114,7 +114,7 @@ impl From<EngineOptionsExternal> for EngineOptions {
       mdns_suffix: other.mdns_suffix,
       repeater_mode: other.repeater_mode,
       repeater_local_port: other.repeater_local_port,
-      repeater_remote_address: other.repeater_remote_address
+      repeater_remote_address: other.repeater_remote_address,
     }
   }
 }

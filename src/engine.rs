@@ -1,12 +1,14 @@
 use crate::{
   backdoor_server::BackdoorServer,
-  buttplug_server::{setup_buttplug_server, run_server},
+  buttplug_server::{run_server, setup_buttplug_server},
   error::IntifaceEngineError,
   frontend::{
     frontend_external_event_loop, frontend_server_event_loop, process_messages::EngineMessage,
     Frontend,
   },
-  options::EngineOptions,ButtplugRepeater, mdns::IntifaceMdns,
+  mdns::IntifaceMdns,
+  options::EngineOptions,
+  ButtplugRepeater,
 };
 
 use once_cell::sync::OnceCell;
@@ -54,7 +56,7 @@ impl IntifaceEngine {
       tokio::spawn(async move {
         frontend_loop.await;
       });
-  
+
       frontend.connect().await.unwrap();
       frontend.send(EngineMessage::EngineStarted {}).await;
     }
@@ -73,7 +75,11 @@ impl IntifaceEngine {
     if options.repeater_mode() {
       info!("Starting repeater");
 
-      let repeater = ButtplugRepeater::new(options.repeater_local_port().unwrap(), &options.repeater_remote_address().as_ref().unwrap(), self.stop_token.child_token());
+      let repeater = ButtplugRepeater::new(
+        options.repeater_local_port().unwrap(),
+        &options.repeater_remote_address().as_ref().unwrap(),
+        self.stop_token.child_token(),
+      );
       select! {
         _ = self.stop_token.cancelled() => {
           info!("Owner requested process exit, exiting.");
@@ -94,7 +100,6 @@ impl IntifaceEngine {
 
     // At this point we will have received and validated options.
 
-
     // Hang out until those listeners get sick of listening.
     info!("Intiface CLI Setup finished, running server tasks until all joined.");
     let server = setup_buttplug_server(options, &self.backdoor_server).await?;
@@ -105,12 +110,7 @@ impl IntifaceEngine {
       let frontend_clone = frontend.clone();
       let stop_child_token = self.stop_token.child_token();
       tokio::spawn(async move {
-        frontend_server_event_loop(
-          event_receiver,
-          frontend_clone,
-          stop_child_token,
-        )
-        .await;
+        frontend_server_event_loop(event_receiver, frontend_clone, stop_child_token).await;
       });
     }
 

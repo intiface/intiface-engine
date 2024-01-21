@@ -1,8 +1,7 @@
 use argh::FromArgs;
 use getset::{CopyGetters, Getters};
 use intiface_engine::{
-  EngineOptions, EngineOptionsBuilder, IntifaceEngine, IntifaceEngineError,
-  IntifaceError,
+  EngineOptions, EngineOptionsBuilder, IntifaceEngine, IntifaceEngineError, IntifaceError,
 };
 use std::fs;
 use tokio::{select, signal::ctrl_c};
@@ -12,7 +11,6 @@ use tracing_subscriber::{
   layer::SubscriberExt,
   util::SubscriberInitExt,
 };
-
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 

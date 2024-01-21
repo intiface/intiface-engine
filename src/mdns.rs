@@ -1,17 +1,14 @@
-use rand::distributions::{ Alphanumeric, DistString };
+use rand::distributions::{Alphanumeric, DistString};
 
 pub struct IntifaceMdns {
   _responder: libmdns::Responder,
-  _svc: libmdns::Service
+  _svc: libmdns::Service,
 }
 
 impl IntifaceMdns {
   pub fn new() -> Self {
     let random_suffix = Alphanumeric.sample_string(&mut rand::thread_rng(), 6);
-    let instance_name = format!(
-      "Intiface {}",
-      random_suffix
-    );
+    let instance_name = format!("Intiface {}", random_suffix);
     info!(
       "Bringing up mDNS Advertisment using instance name {}",
       instance_name
@@ -19,20 +16,16 @@ impl IntifaceMdns {
 
     let (_responder, task) = libmdns::Responder::with_default_handle().unwrap();
     let _svc = _responder.register(
-        "_intiface_engine._tcp".to_owned(),
-        instance_name,
-        12345,
-        &["path=/"],
+      "_intiface_engine._tcp".to_owned(),
+      instance_name,
+      12345,
+      &["path=/"],
     );
     tokio::spawn(async move {
       info!("Entering up mDNS task");
-      task.await;  
+      task.await;
       info!("Exiting mDNS task");
     });
-    Self {
-      _responder,
-      _svc
-    }
-    
+    Self { _responder, _svc }
   }
 }

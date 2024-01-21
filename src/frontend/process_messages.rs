@@ -38,4 +38,3 @@ pub enum IntifaceMessage {
   RequestEngineVersion { expected_version: u32 },
   Stop {},
 }
-

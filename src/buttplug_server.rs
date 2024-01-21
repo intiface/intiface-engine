@@ -1,14 +1,26 @@
 use std::sync::Arc;
 
-use crate::{EngineOptions, BackdoorServer, ButtplugRemoteServer, IntifaceEngineError, ButtplugServerConnectorError, IntifaceError};
-use buttplug::{server::{
-  device::hardware::communication::{
-    btleplug::BtlePlugCommunicationManagerBuilder,
-    lovense_connect_service::LovenseConnectServiceCommunicationManagerBuilder,
-    websocket_server::websocket_server_comm_manager::WebsocketServerDeviceCommunicationManagerBuilder,
+use crate::{
+  BackdoorServer, ButtplugRemoteServer, ButtplugServerConnectorError, EngineOptions,
+  IntifaceEngineError, IntifaceError,
+};
+use buttplug::{
+  core::{
+    connector::{
+      ButtplugRemoteServerConnector, ButtplugWebsocketClientTransport,
+      ButtplugWebsocketServerTransportBuilder,
+    },
+    message::serializer::ButtplugServerJSONSerializer,
   },
-  ButtplugServerBuilder,
-}, core::{message::serializer::ButtplugServerJSONSerializer, connector::{ButtplugWebsocketServerTransportBuilder, ButtplugRemoteServerConnector, ButtplugWebsocketClientTransport}}};
+  server::{
+    device::hardware::communication::{
+      btleplug::BtlePlugCommunicationManagerBuilder,
+      lovense_connect_service::LovenseConnectServiceCommunicationManagerBuilder,
+      websocket_server::websocket_server_comm_manager::WebsocketServerDeviceCommunicationManagerBuilder,
+    },
+    ButtplugServerBuilder,
+  },
+};
 use once_cell::sync::OnceCell;
 // Device communication manager setup gets its own module because the includes and platform
 // specifics are such a mess.

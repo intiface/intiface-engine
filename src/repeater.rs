@@ -4,14 +4,17 @@
 
 use futures_util::{future, StreamExt, TryStreamExt};
 use log::info;
-use tokio::{select, net::{TcpListener, TcpStream}};
+use tokio::{
+  net::{TcpListener, TcpStream},
+  select,
+};
 use tokio_tungstenite::connect_async;
 use tokio_util::sync::CancellationToken;
 
 pub struct ButtplugRepeater {
   local_port: u16,
   remote_address: String,
-  stop_token: CancellationToken
+  stop_token: CancellationToken,
 }
 
 impl ButtplugRepeater {
@@ -19,7 +22,7 @@ impl ButtplugRepeater {
     Self {
       local_port,
       remote_address: remote_address.to_owned(),
-      stop_token
+      stop_token,
     }
   }
 

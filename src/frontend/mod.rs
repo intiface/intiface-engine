@@ -1,6 +1,6 @@
 pub mod process_messages;
-use crate::remote_server::ButtplugRemoteServerEvent;
 use crate::error::IntifaceError;
+use crate::remote_server::ButtplugRemoteServerEvent;
 use async_trait::async_trait;
 use futures::{pin_mut, Stream, StreamExt};
 pub use process_messages::{EngineMessage, IntifaceMessage};
@@ -131,4 +131,3 @@ impl Frontend for NullFrontend {
     receiver
   }
 }
-
