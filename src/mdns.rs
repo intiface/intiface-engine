@@ -35,8 +35,4 @@ impl IntifaceMdns {
     }
     
   }
-
-  pub fn shutdown(&self) {
-  }
-
 }
