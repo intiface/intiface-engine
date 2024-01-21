@@ -60,11 +60,11 @@ impl IntifaceEngine {
     }
 
     // Set up mDNS
-    let _ = if options.broadcast_server_mdns() {
+    let _mdns_server = if options.broadcast_server_mdns() {
       // TODO Unregister whenever we have a live connection
 
       // TODO Support different services for engine versus repeater
-      Some(IntifaceMdns::new(&options))
+      Some(IntifaceMdns::new())
     } else {
       None
     };
@@ -72,8 +72,21 @@ impl IntifaceEngine {
     // Set up Repeater (if in repeater mode)
     if options.repeater_mode() {
       info!("Starting repeater");
+
       let repeater = ButtplugRepeater::new(options.repeater_local_port().unwrap(), &options.repeater_remote_address().as_ref().unwrap(), self.stop_token.child_token());
-      repeater.listen().await;
+      select! {
+        _ = self.stop_token.cancelled() => {
+          info!("Owner requested process exit, exiting.");
+        }
+        _ = repeater.listen() => {
+          info!("Repeater listener stopped, exiting.");
+        }
+      };
+      if let Some(frontend) = &frontend {
+        frontend.send(EngineMessage::EngineStopped {}).await;
+        tokio::time::sleep(Duration::from_millis(100)).await;
+        frontend.disconnect();
+      }
       return Ok(());
     }
 
@@ -161,6 +174,7 @@ impl IntifaceEngine {
   }
 
   pub fn stop(&self) {
+    info!("Engine stop called, cancelling token.");
     self.stop_token.cancel();
   }
 }
