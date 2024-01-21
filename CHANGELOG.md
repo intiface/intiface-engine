@@ -1,3 +1,31 @@
+# Intiface Engine v2.0.0 (2024/01/21)
+
+## Breaking Changes
+
+- Removed sentry/crash reporting
+  - This is now a library AND a CLI. If someone is using the CLI, they're using it in their own
+    setup they can wrap it in whatever crash reporter they want. Moving crash reporting up to Intiface Central.
+- Removed logging for library instances
+  - Intiface was originally built as a CLI and meant to be run only as such. Now that it's a CLI and
+    a library, we need to let applications handle their own logging. The CLI build still has logging features, but library now just exposes a log/tracing interface.
+- Removed Websocket Frontend
+  - This was used when we were letting other programs run the CLI. Now that there's a library mode,
+    we expect applications to just attach directly. This makes things more secure overall, and if users want it back, they can implement their own frontend using the trait.
+- All above changes will mostly be reflected externally in either missing CLI arguments, or updates
+  to the EngineOptions struct.
+- The v2 line may be fairly short, as the engine will once again have a major revision once Buttplug
+  moves to its new spec and therefore new major revision.
+
+## Features
+
+- Update to Buttplug v7.1.12
+  - Massive number of hardware support updates/bugfixes, just go look at the CHANGELOG
+  - Fixes bugs with streaming JSON
+- Moved to tokio-tungstenite
+  - Matched move made by Buttplug
+- Implemented repeater mode (Basic websocket proxy)
+  - Mostly needed for reflecting desktop browser apps to phone control
+
 # Intiface Engine v1.4.10 (2023/11/18)
 
 ## Bugfixes
