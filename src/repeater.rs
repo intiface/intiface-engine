@@ -69,6 +69,8 @@ impl ButtplugRepeater {
 
     info!("New WebSocket connection: {}", client_addr);
 
+    info!("Connecting to server {}", server_addr);
+
     let server_url = url::Url::parse(&server_addr).unwrap();
 
     let ws_stream = match connect_async(&server_url).await {
