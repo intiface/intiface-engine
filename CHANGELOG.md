@@ -1,3 +1,10 @@
+# Intiface Engine v2.0.3 (2024/03/17)
+
+## Features
+
+- Update to Buttplug v7.1.15
+  - Fix panics that can happen on shutdown in lovense dongle
+
 # Intiface Engine v2.0.2 (2024/03/16)
 
 ## Features
