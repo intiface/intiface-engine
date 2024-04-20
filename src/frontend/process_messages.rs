@@ -1,4 +1,4 @@
-use buttplug::util::device_configuration::UserConfigDeviceIdentifier;
+use buttplug::server::device::configuration::UserDeviceIdentifier;
 use serde::{Deserialize, Serialize};
 
 // Everything in this struct is an object, even if it has null contents. This is to make other
@@ -21,7 +21,7 @@ pub enum EngineMessage {
   DeviceConnected {
     name: String,
     index: u32,
-    identifier: UserConfigDeviceIdentifier,
+    identifier: UserDeviceIdentifier,
     #[serde(skip_serializing_if = "Option::is_none")]
     display_name: Option<String>,
   },

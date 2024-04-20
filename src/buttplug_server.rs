@@ -13,13 +13,13 @@ use buttplug::{
     message::serializer::ButtplugServerJSONSerializer,
   },
   server::{
-    device::hardware::communication::{
+    device::{hardware::communication::{
       btleplug::BtlePlugCommunicationManagerBuilder,
       lovense_connect_service::LovenseConnectServiceCommunicationManagerBuilder,
       websocket_server::websocket_server_comm_manager::WebsocketServerDeviceCommunicationManagerBuilder,
-    },
+    }, ServerDeviceManagerBuilder},
     ButtplugServerBuilder,
-  },
+  }, util::device_configuration::load_protocol_configs,
 };
 use once_cell::sync::OnceCell;
 // Device communication manager setup gets its own module because the includes and platform
@@ -27,7 +27,7 @@ use once_cell::sync::OnceCell;
 
 pub fn setup_server_device_comm_managers(
   args: &EngineOptions,
-  server_builder: &mut ButtplugServerBuilder,
+  server_builder: &mut ServerDeviceManagerBuilder,
 ) {
   if args.use_bluetooth_le() {
     info!("Including Bluetooth LE (btleplug) Device Comm Manager Support");
@@ -93,24 +93,21 @@ pub async fn setup_buttplug_server(
 ) -> Result<ButtplugRemoteServer, IntifaceEngineError> {
   //options::setup_server_device_comm_managers(&mut connector_opts.server_builder);
 
-  let mut server_builder = ButtplugServerBuilder::default();
+  let mut dcm_builder = 
+    load_protocol_configs(options.device_config_json(), options.user_device_config_json(), false)
+    .map_err(|e| IntifaceEngineError::ButtplugError(e.into()))?;
+
+  if options.allow_raw_messages() {
+    dcm_builder.allow_raw_messages();
+  }
+
+  let mut dm_builder = ServerDeviceManagerBuilder::new(dcm_builder.finish().map_err(|e| IntifaceEngineError::ButtplugError(e.into()))?);
+  setup_server_device_comm_managers(options, &mut dm_builder);
+
+  let mut server_builder = ButtplugServerBuilder::new(dm_builder.finish().map_err(|e| IntifaceEngineError::ButtplugServerError(e))?);
   server_builder
     .name(options.server_name())
     .max_ping_time(options.max_ping_time());
-
-  if options.allow_raw_messages() {
-    server_builder.allow_raw_messages();
-  }
-
-  if let Some(device_config_json) = options.device_config_json() {
-    server_builder.device_configuration_json(Some(device_config_json.clone()));
-  }
-
-  if let Some(user_device_config_json) = &options.user_device_config_json() {
-    server_builder.user_device_configuration_json(Some(user_device_config_json.clone()));
-  }
-
-  setup_server_device_comm_managers(options, &mut server_builder);
 
   let core_server = match server_builder.finish() {
     Ok(server) => server,

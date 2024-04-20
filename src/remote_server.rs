@@ -18,13 +18,14 @@ use buttplug::{
       ButtplugServerMessage,
     },
   },
-  server::{ButtplugServer, ButtplugServerBuilder},
+  server::{ButtplugServer, ButtplugServerBuilder, device::configuration::UserDeviceIdentifier},
   util::{
-    async_manager, device_configuration::UserConfigDeviceIdentifier,
+    async_manager,
     stream::convert_broadcast_receiver_to_stream,
   },
 };
 use futures::{future::Future, pin_mut, select, FutureExt, Stream, StreamExt};
+use getset::Getters;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use thiserror::Error;
@@ -37,7 +38,7 @@ pub enum ButtplugRemoteServerEvent {
   ClientDisconnected,
   DeviceAdded {
     index: u32,
-    identifier: UserConfigDeviceIdentifier,
+    identifier: UserDeviceIdentifier,
     name: String,
     display_name: Option<String>,
   },
@@ -53,7 +54,9 @@ pub enum ButtplugServerConnectorError {
   ConnectorError(String),
 }
 
+#[derive(Getters)]
 pub struct ButtplugRemoteServer {
+  #[getset(get = "pub")]
   server: Arc<ButtplugServer>,
   event_sender: broadcast::Sender<ButtplugRemoteServerEvent>,
   disconnect_notifier: Arc<Notify>,

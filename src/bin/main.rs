@@ -299,8 +299,11 @@ async fn main() -> Result<(), IntifaceEngineError> {
   let options = EngineOptions::try_from(args).map_err(IntifaceEngineError::from)?;
   let engine = IntifaceEngine::default();
   select! {
-    _ = engine.run(&options, None) => {
-
+    result = engine.run(&options, None) => {
+      if let Err(e) = result {
+        println!("Server errored while running:");
+        println!("{:?}", e);
+      }
     }
     _ = ctrl_c() => {
       info!("Control-c hit, exiting.");
