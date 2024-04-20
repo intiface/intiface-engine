@@ -1,3 +1,11 @@
+# Intiface Engine v2.0.4 (2024/04/20)
+
+## Features
+
+- Update to Buttplug v7.1.16
+  - Lots of device support for JoyHub, Kiiroo, Lioness
+  - Fix Lovense Solace issues
+
 # Intiface Engine v2.0.3 (2024/03/17)
 
 ## Features
