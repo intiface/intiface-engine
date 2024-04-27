@@ -97,9 +97,7 @@ pub async fn setup_buttplug_server(
     load_protocol_configs(options.device_config_json(), options.user_device_config_json(), false)
     .map_err(|e| IntifaceEngineError::ButtplugError(e.into()))?;
 
-  if options.allow_raw_messages() {
-    dcm_builder.allow_raw_messages();
-  }
+  dcm_builder.allow_raw_messages(options.allow_raw_messages());
 
   let mut dm_builder = ServerDeviceManagerBuilder::new(dcm_builder.finish().map_err(|e| IntifaceEngineError::ButtplugError(e.into()))?);
   setup_server_device_comm_managers(options, &mut dm_builder);

@@ -7,6 +7,8 @@ pub struct EngineOptions {
   #[getset(get = "pub")]
   user_device_config_json: Option<String>,
   #[getset(get = "pub")]
+  user_device_config_path: Option<String>,
+  #[getset(get = "pub")]
   server_name: String,
   #[getset(get_copy = "pub")]
   websocket_use_all_interfaces: bool,
@@ -60,6 +62,7 @@ pub struct EngineOptions {
 pub struct EngineOptionsExternal {
   pub device_config_json: Option<String>,
   pub user_device_config_json: Option<String>,
+  pub user_device_config_path: Option<String>,
   pub server_name: String,
   pub websocket_use_all_interfaces: bool,
   pub websocket_port: Option<u16>,
@@ -91,6 +94,7 @@ impl From<EngineOptionsExternal> for EngineOptions {
     Self {
       device_config_json: other.device_config_json,
       user_device_config_json: other.user_device_config_json,
+      user_device_config_path: other.user_device_config_path,
       server_name: other.server_name,
       websocket_use_all_interfaces: other.websocket_use_all_interfaces,
       websocket_port: other.websocket_port,
@@ -132,6 +136,11 @@ impl EngineOptionsBuilder {
 
   pub fn user_device_config_json(&mut self, value: &str) -> &mut Self {
     self.options.user_device_config_json = Some(value.to_owned());
+    self
+  }
+
+  pub fn user_device_config_path(&mut self, value: &str) -> &mut Self {
+    self.options.user_device_config_path = Some(value.to_owned());
     self
   }
 

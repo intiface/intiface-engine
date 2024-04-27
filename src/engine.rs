@@ -9,7 +9,7 @@ use buttplug::util::device_configuration::save_user_config;
 use futures::{pin_mut, StreamExt};
 use once_cell::sync::OnceCell;
 use std::{path::Path, sync::Arc, time::Duration};
-use tokio::select;
+use tokio::{fs, select};
 use tokio_util::sync::CancellationToken;
 
 #[cfg(debug_assertions)]
@@ -100,21 +100,26 @@ impl IntifaceEngine {
     info!("Intiface CLI Setup finished, running server tasks until all joined.");
     let server = setup_buttplug_server(options, &self.backdoor_server).await?;
     let dcm = server.server().device_manager().device_configuration_manager().clone();
-    let stream = server.event_stream();
-    {
-      tokio::spawn(async move {
-        pin_mut!(stream);
-        loop {
-          if let Some(event) = stream.next().await {
-            match event {
-              ButtplugRemoteServerEvent::DeviceAdded { index, identifier, name, display_name } => {
-                save_user_config(&dcm, &Path::new("./config_file.json"));
+    if let Some(config_path) = options.user_device_config_path() {
+      let stream = server.event_stream();
+      {
+        let config_path = config_path.to_owned();
+        tokio::spawn(async move {
+          pin_mut!(stream);
+          loop {
+            if let Some(event) = stream.next().await {
+              match event {
+                ButtplugRemoteServerEvent::DeviceAdded { index, identifier, name, display_name } => {
+                  if let Ok(config_str) = save_user_config(&dcm) {
+                    fs::write(&Path::new(&config_path), config_str).await;
+                  }
+                }
+                _ => continue,
               }
-              _ => continue,
-            }
-          };    
-        }
-      });
+            };
+          }
+        });
+      }
     }
     if let Some(frontend) = &frontend {
       frontend.send(EngineMessage::EngineServerCreated {}).await;
