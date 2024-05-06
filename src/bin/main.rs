@@ -299,7 +299,7 @@ async fn main() -> Result<(), IntifaceEngineError> {
   let options = EngineOptions::try_from(args).map_err(IntifaceEngineError::from)?;
   let engine = IntifaceEngine::default();
   select! {
-    result = engine.run(&options, None) => {
+    result = engine.run(&options, None, &None) => {
       if let Err(e) = result {
         println!("Server errored while running:");
         println!("{:?}", e);

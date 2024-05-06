@@ -5,7 +5,7 @@ use crate::{
   }, mdns::IntifaceMdns, options::EngineOptions, remote_server::ButtplugRemoteServerEvent, ButtplugRepeater
 };
 
-use buttplug::util::device_configuration::save_user_config;
+use buttplug::{server::device::configuration::DeviceConfigurationManager, util::device_configuration::save_user_config};
 use futures::{pin_mut, StreamExt};
 use once_cell::sync::OnceCell;
 use std::{path::Path, sync::Arc, time::Duration};
@@ -45,6 +45,7 @@ impl IntifaceEngine {
     &self,
     options: &EngineOptions,
     frontend: Option<Arc<dyn Frontend>>,
+    dcm: &Option<Arc<DeviceConfigurationManager>>,
   ) -> Result<(), IntifaceEngineError> {
     // Set up Frontend
     if let Some(frontend) = &frontend {
@@ -98,7 +99,7 @@ impl IntifaceEngine {
 
     // Hang out until those listeners get sick of listening.
     info!("Intiface CLI Setup finished, running server tasks until all joined.");
-    let server = setup_buttplug_server(options, &self.backdoor_server).await?;
+    let server = setup_buttplug_server(options, &self.backdoor_server, &dcm).await?;
     let dcm = server.server().device_manager().device_configuration_manager().clone();
     if let Some(config_path) = options.user_device_config_path() {
       let stream = server.event_stream();

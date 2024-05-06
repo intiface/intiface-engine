@@ -13,7 +13,7 @@ use buttplug::{
     message::serializer::ButtplugServerJSONSerializer,
   },
   server::{
-    device::{hardware::communication::{
+    device::{configuration::DeviceConfigurationManager, hardware::communication::{
       btleplug::BtlePlugCommunicationManagerBuilder,
       lovense_connect_service::LovenseConnectServiceCommunicationManagerBuilder,
       websocket_server::websocket_server_comm_manager::WebsocketServerDeviceCommunicationManagerBuilder,
@@ -90,16 +90,21 @@ pub fn setup_server_device_comm_managers(
 pub async fn setup_buttplug_server(
   options: &EngineOptions,
   backdoor_server: &OnceCell<Arc<BackdoorServer>>,
+  dcm: &Option<Arc<DeviceConfigurationManager>>,
 ) -> Result<ButtplugRemoteServer, IntifaceEngineError> {
-  //options::setup_server_device_comm_managers(&mut connector_opts.server_builder);
 
-  let mut dcm_builder = 
+  let mut dm_builder = if let Some(dcm) = dcm {
+    ServerDeviceManagerBuilder::new_with_arc(dcm.clone())
+  } else {
+    let mut dcm_builder = 
     load_protocol_configs(options.device_config_json(), options.user_device_config_json(), false)
-    .map_err(|e| IntifaceEngineError::ButtplugError(e.into()))?;
+      .map_err(|e| IntifaceEngineError::ButtplugError(e.into()))?;
 
-  dcm_builder.allow_raw_messages(options.allow_raw_messages());
+    dcm_builder.allow_raw_messages(options.allow_raw_messages());
 
-  let mut dm_builder = ServerDeviceManagerBuilder::new(dcm_builder.finish().map_err(|e| IntifaceEngineError::ButtplugError(e.into()))?);
+    ServerDeviceManagerBuilder::new(dcm_builder.finish().map_err(|e| IntifaceEngineError::ButtplugError(e.into()))?)
+  };
+
   setup_server_device_comm_managers(options, &mut dm_builder);
 
   let mut server_builder = ButtplugServerBuilder::new(dm_builder.finish().map_err(|e| IntifaceEngineError::ButtplugServerError(e))?);
