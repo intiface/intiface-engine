@@ -1,3 +1,18 @@
+# Intiface Engine v3.0.0 (2024/05/12)
+
+## Breaking Changes
+
+- Device Config File Compatibility
+  - This update moves to Buttplug v8, which changes our config file capabilities and adds extra API
+    calls for config file updates.
+
+## Features
+
+- Update to Buttplug v8.0.0
+  - Rewrite of the device config system
+  - Lots of device support for JoyHub, Svakom, LoveDistance, etc...
+  - Some backward compat bugfixes
+
 # Intiface Engine v2.0.4 (2024/04/20)
 
 ## Features
