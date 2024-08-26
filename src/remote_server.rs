@@ -10,15 +10,12 @@ use buttplug::{
     connector::ButtplugConnector,
     errors::ButtplugError,
     message::{
-      self,
-      //ButtplugDeviceCommandMessageUnion,
-      ButtplugClientMessage,
-      ButtplugMessage,
-      ButtplugMessageValidator,
-      ButtplugServerMessage,
+      ButtplugClientMessageVariant,
+      ButtplugServerMessageVariant,
+      ButtplugServerMessageV4,
     },
   },
-  server::{ButtplugServer, ButtplugServerBuilder, device::configuration::UserDeviceIdentifier},
+  server::{ButtplugServer, ButtplugServerBuilder, ButtplugServerDowngradeWrapper, device::configuration::UserDeviceIdentifier},
   util::{
     async_manager,
     stream::convert_broadcast_receiver_to_stream,
@@ -57,16 +54,16 @@ pub enum ButtplugServerConnectorError {
 #[derive(Getters)]
 pub struct ButtplugRemoteServer {
   #[getset(get = "pub")]
-  server: Arc<ButtplugServer>,
+  server: Arc<ButtplugServerDowngradeWrapper>,
   event_sender: broadcast::Sender<ButtplugRemoteServerEvent>,
   disconnect_notifier: Arc<Notify>,
 }
 
 async fn run_device_event_stream(
-  server: Arc<ButtplugServer>,
+  server: Arc<ButtplugServerDowngradeWrapper>,
   remote_event_sender: broadcast::Sender<ButtplugRemoteServerEvent>,
 ) {
-  let server_receiver = server.event_stream();
+  let server_receiver = server.server_version_event_stream();
   pin_mut!(server_receiver);
   loop {
     match server_receiver.next().await {
@@ -77,7 +74,7 @@ async fn run_device_event_stream(
       Some(msg) => {
         if remote_event_sender.receiver_count() > 0 {
           match &msg {
-            ButtplugServerMessage::DeviceAdded(da) => {
+            ButtplugServerMessageV4::DeviceAdded(da) => {
               if let Some(device_info) = server.device_manager().device_info(da.device_index()) {
                 let added_event = ButtplugRemoteServerEvent::DeviceAdded {
                   index: da.device_index(),
@@ -90,7 +87,7 @@ async fn run_device_event_stream(
                 }
               }
             }
-            ButtplugServerMessage::DeviceRemoved(dr) => {
+            ButtplugServerMessageV4::DeviceRemoved(dr) => {
               let removed_event = ButtplugRemoteServerEvent::DeviceRemoved {
                 index: dr.device_index(),
               };
@@ -107,18 +104,20 @@ async fn run_device_event_stream(
 }
 
 async fn run_server<ConnectorType>(
-  server: Arc<ButtplugServer>,
+  server: Arc<ButtplugServerDowngradeWrapper>,
   remote_event_sender: broadcast::Sender<ButtplugRemoteServerEvent>,
   connector: ConnectorType,
-  mut connector_receiver: mpsc::Receiver<ButtplugClientMessage>,
+  mut connector_receiver: mpsc::Receiver<ButtplugClientMessageVariant>,
   disconnect_notifier: Arc<Notify>,
 ) where
-  ConnectorType: ButtplugConnector<ButtplugServerMessage, ButtplugClientMessage> + 'static,
+  ConnectorType: ButtplugConnector<ButtplugServerMessageVariant, ButtplugClientMessageVariant> + 'static,
 {
   info!("Starting remote server loop");
   let shared_connector = Arc::new(connector);
-  let server_receiver = server.event_stream();
+  let server_receiver = server.server_version_event_stream();
+  let client_version_receiver = server.client_version_event_stream();
   pin_mut!(server_receiver);
+  pin_mut!(client_version_receiver);
   loop {
     select! {
       connector_msg = connector_receiver.recv().fuse() => match connector_msg {
@@ -132,23 +131,21 @@ async fn run_server<ConnectorType>(
         Some(client_message) => {
           trace!("Got message from connector: {:?}", client_message);
           let server_clone = server.clone();
+          let connected = server_clone.connected();
           let connector_clone = shared_connector.clone();
           let remote_event_sender_clone = remote_event_sender.clone();
           async_manager::spawn(async move {
-            if let Err(e) = client_message.is_valid() {
-              error!("Message not valid: {:?} - Error: {}", client_message, e);
-              let mut err_msg = message::Error::from(ButtplugError::from(e));
-              err_msg.set_id(client_message.id());
-              let _ = connector_clone.send(err_msg.into()).await;
-              return;
-            }
             match server_clone.parse_message(client_message.clone()).await {
               Ok(ret_msg) => {
-                if let ButtplugClientMessage::RequestServerInfo(rsi) = client_message {
-                  if remote_event_sender_clone.receiver_count() > 0 && remote_event_sender_clone.send(ButtplugRemoteServerEvent::ClientConnected(rsi.client_name().clone())).is_err() {
-                    error!("Cannot send event to owner, dropping and assuming local server thread has exited.");
+                // Only send event if we just connected. Sucks to check it on every message but the boolean check should be quick.
+                if !connected && server_clone.connected() {
+                  if remote_event_sender_clone.receiver_count() > 0 {
+                    if remote_event_sender_clone.send(ButtplugRemoteServerEvent::ClientConnected(server_clone.client_name().unwrap().clone())).is_err() {
+                      error!("Cannot send event to owner, dropping and assuming local server thread has exited.");
+                    }
                   }
                 }
+                info!("Sending back through connector");
                 if connector_clone.send(ret_msg).await.is_err() {
                   error!("Cannot send reply to server, dropping and assuming remote server thread has exited.");
                 }
@@ -174,7 +171,7 @@ async fn run_server<ConnectorType>(
         Some(msg) => {
           if remote_event_sender.receiver_count() > 0 {
             match &msg {
-              ButtplugServerMessage::DeviceAdded(da) => {
+              ButtplugServerMessageV4::DeviceAdded(da) => {
                 if let Some(device_info) = server.device_manager().device_info(da.device_index()) {
                   let added_event = ButtplugRemoteServerEvent::DeviceAdded { index: da.device_index(), name: da.device_name().clone(), identifier: device_info.identifier().clone().into(), display_name: device_info.display_name().clone() };
                   if remote_event_sender.send(added_event).is_err() {
@@ -182,7 +179,7 @@ async fn run_server<ConnectorType>(
                   }
                 }
               },
-              ButtplugServerMessage::DeviceRemoved(dr) => {
+              ButtplugServerMessageV4::DeviceRemoved(dr) => {
                 let removed_event = ButtplugRemoteServerEvent::DeviceRemoved { index: dr.device_index() };
                 if remote_event_sender.send(removed_event).is_err() {
                   error!("Cannot send event to owner, dropping and assuming local server thread has exited.");
@@ -191,12 +188,20 @@ async fn run_server<ConnectorType>(
               _ => {}
             }
           }
+        }
+      },
+      client_msg = client_version_receiver.next().fuse() => match client_msg {
+        None => {
+          info!("Server disconnected via server disappearance, exiting loop.");
+          break;
+        }
+        Some(msg) => {
           let connector_clone = shared_connector.clone();
-          if connector_clone.send(msg).await.is_err() {
+          if connector_clone.send(msg.into()).await.is_err() {
             error!("Server disappeared, exiting remote server thread.");
           }
         }
-      },
+      }
     };
   }
   if let Err(err) = server.disconnect().await {
@@ -218,7 +223,7 @@ impl Default for ButtplugRemoteServer {
 impl ButtplugRemoteServer {
   pub fn new(server: ButtplugServer) -> Self {
     let (event_sender, _) = broadcast::channel(256);
-    let wrapped_server = Arc::new(server);
+    let wrapped_server = Arc::new(ButtplugServerDowngradeWrapper::new(server));
     // Thanks to the existence of the backdoor server, device updates can happen for the lifetime to
     // the RemoteServer instance, not just during client connect. We need to make sure these are
     // emitted to the frontend.
@@ -245,7 +250,7 @@ impl ButtplugRemoteServer {
     mut connector: ConnectorType,
   ) -> impl Future<Output = Result<(), ButtplugServerConnectorError>>
   where
-    ConnectorType: ButtplugConnector<ButtplugServerMessage, ButtplugClientMessage> + 'static,
+    ConnectorType: ButtplugConnector<ButtplugServerMessageVariant, ButtplugClientMessageVariant> + 'static,
   {
     let server = self.server.clone();
     let event_sender = self.event_sender.clone();
