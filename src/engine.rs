@@ -110,9 +110,10 @@ impl IntifaceEngine {
           loop {
             if let Some(event) = stream.next().await {
               match event {
-                ButtplugRemoteServerEvent::DeviceAdded { index, identifier, name, display_name } => {
+                ButtplugRemoteServerEvent::DeviceAdded { index: _, identifier: _, name: _, display_name: _ } => {
                   if let Ok(config_str) = save_user_config(&dcm) {
-                    fs::write(&Path::new(&config_path), config_str).await;
+                    // Should probably at least log if we fail to write the config file
+                    let _ = fs::write(&Path::new(&config_path), config_str).await;
                   }
                 }
                 _ => continue,
