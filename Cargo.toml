@@ -53,5 +53,5 @@ url = "2.5.0"
 libmdns = "0.8.0"
 
 [build-dependencies]
-vergen = "7.5.1"
-anyhow = "1.0.83"
+vergen-gitcl = {version = "1.0.0", features = ["build"]}
+anyhow = "1.0.86"
