@@ -140,7 +140,7 @@ async fn run_server<ConnectorType>(
                 // Only send event if we just connected. Sucks to check it on every message but the boolean check should be quick.
                 if !connected && server_clone.connected() {
                   if remote_event_sender_clone.receiver_count() > 0 {
-                    if remote_event_sender_clone.send(ButtplugRemoteServerEvent::ClientConnected(server_clone.client_name().unwrap().clone())).is_err() {
+                    if remote_event_sender_clone.send(ButtplugRemoteServerEvent::ClientConnected(server_clone.client_name().unwrap_or("Buttplug Client (No name specified)".to_owned()).clone())).is_err() {
                       error!("Cannot send event to owner, dropping and assuming local server thread has exited.");
                     }
                   }
