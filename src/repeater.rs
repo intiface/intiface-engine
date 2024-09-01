@@ -39,7 +39,10 @@ impl ButtplugRepeater {
         stream_result = listener.accept() => {
           match stream_result {
             Ok((stream, _)) => {
-              let remote_address = self.remote_address.clone();
+              let mut remote_address = self.remote_address.clone();
+              if !remote_address.starts_with("ws://") {
+                remote_address.insert_str(0, "ws://");
+              }
               tokio::spawn(ButtplugRepeater::accept_connection(remote_address, stream));
             },
             Err(e) => {
