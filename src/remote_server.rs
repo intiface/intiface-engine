@@ -10,16 +10,14 @@ use buttplug::{
     connector::ButtplugConnector,
     errors::ButtplugError,
     message::{
-      ButtplugClientMessageVariant,
-      ButtplugServerMessageVariant,
-      ButtplugServerMessageV4,
+      ButtplugClientMessageVariant, ButtplugServerMessageV4, ButtplugServerMessageVariant,
     },
   },
-  server::{ButtplugServer, ButtplugServerBuilder, ButtplugServerDowngradeWrapper, device::configuration::UserDeviceIdentifier},
-  util::{
-    async_manager,
-    stream::convert_broadcast_receiver_to_stream,
+  server::{
+    device::configuration::UserDeviceIdentifier, ButtplugServer, ButtplugServerBuilder,
+    ButtplugServerDowngradeWrapper,
   },
+  util::{async_manager, stream::convert_broadcast_receiver_to_stream},
 };
 use futures::{future::Future, pin_mut, select, FutureExt, Stream, StreamExt};
 use getset::Getters;
@@ -110,7 +108,8 @@ async fn run_server<ConnectorType>(
   mut connector_receiver: mpsc::Receiver<ButtplugClientMessageVariant>,
   disconnect_notifier: Arc<Notify>,
 ) where
-  ConnectorType: ButtplugConnector<ButtplugServerMessageVariant, ButtplugClientMessageVariant> + 'static,
+  ConnectorType:
+    ButtplugConnector<ButtplugServerMessageVariant, ButtplugClientMessageVariant> + 'static,
 {
   info!("Starting remote server loop");
   let shared_connector = Arc::new(connector);
@@ -249,7 +248,8 @@ impl ButtplugRemoteServer {
     mut connector: ConnectorType,
   ) -> impl Future<Output = Result<(), ButtplugServerConnectorError>>
   where
-    ConnectorType: ButtplugConnector<ButtplugServerMessageVariant, ButtplugClientMessageVariant> + 'static,
+    ConnectorType:
+      ButtplugConnector<ButtplugServerMessageVariant, ButtplugClientMessageVariant> + 'static,
   {
     let server = self.server.clone();
     let event_sender = self.event_sender.clone();

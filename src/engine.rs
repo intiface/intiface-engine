@@ -1,11 +1,21 @@
 use crate::{
-  backdoor_server::BackdoorServer, buttplug_server::{run_server, setup_buttplug_server}, error::IntifaceEngineError, frontend::{
+  backdoor_server::BackdoorServer,
+  buttplug_server::{run_server, setup_buttplug_server},
+  error::IntifaceEngineError,
+  frontend::{
     frontend_external_event_loop, frontend_server_event_loop, process_messages::EngineMessage,
     Frontend,
-  }, mdns::IntifaceMdns, options::EngineOptions, remote_server::ButtplugRemoteServerEvent, ButtplugRepeater
+  },
+  mdns::IntifaceMdns,
+  options::EngineOptions,
+  remote_server::ButtplugRemoteServerEvent,
+  ButtplugRepeater,
 };
 
-use buttplug::{server::device::configuration::DeviceConfigurationManager, util::device_configuration::save_user_config};
+use buttplug::{
+  server::device::configuration::DeviceConfigurationManager,
+  util::device_configuration::save_user_config,
+};
 use futures::{pin_mut, StreamExt};
 use once_cell::sync::OnceCell;
 use std::{path::Path, sync::Arc, time::Duration};
@@ -100,7 +110,11 @@ impl IntifaceEngine {
     // Hang out until those listeners get sick of listening.
     info!("Intiface CLI Setup finished, running server tasks until all joined.");
     let server = setup_buttplug_server(options, &self.backdoor_server, &dcm).await?;
-    let dcm = server.server().device_manager().device_configuration_manager().clone();
+    let dcm = server
+      .server()
+      .device_manager()
+      .device_configuration_manager()
+      .clone();
     if let Some(config_path) = options.user_device_config_path() {
       let stream = server.event_stream();
       {
@@ -110,7 +124,12 @@ impl IntifaceEngine {
           loop {
             if let Some(event) = stream.next().await {
               match event {
-                ButtplugRemoteServerEvent::DeviceAdded { index: _, identifier: _, name: _, display_name: _ } => {
+                ButtplugRemoteServerEvent::DeviceAdded {
+                  index: _,
+                  identifier: _,
+                  name: _,
+                  display_name: _,
+                } => {
                   if let Ok(config_str) = save_user_config(&dcm) {
                     // Should probably at least log if we fail to write the config file
                     let _ = fs::write(&Path::new(&config_path), config_str).await;

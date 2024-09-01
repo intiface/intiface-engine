@@ -13,13 +13,18 @@ use buttplug::{
     message::serializer::ButtplugServerJSONSerializer,
   },
   server::{
-    device::{configuration::DeviceConfigurationManager, hardware::communication::{
-      btleplug::BtlePlugCommunicationManagerBuilder,
-      lovense_connect_service::LovenseConnectServiceCommunicationManagerBuilder,
-      websocket_server::websocket_server_comm_manager::WebsocketServerDeviceCommunicationManagerBuilder,
-    }, ServerDeviceManagerBuilder},
+    device::{
+      configuration::DeviceConfigurationManager,
+      hardware::communication::{
+        btleplug::BtlePlugCommunicationManagerBuilder,
+        lovense_connect_service::LovenseConnectServiceCommunicationManagerBuilder,
+        websocket_server::websocket_server_comm_manager::WebsocketServerDeviceCommunicationManagerBuilder,
+      },
+      ServerDeviceManagerBuilder,
+    },
     ButtplugServerBuilder,
-  }, util::device_configuration::load_protocol_configs,
+  },
+  util::device_configuration::load_protocol_configs,
 };
 use once_cell::sync::OnceCell;
 // Device communication manager setup gets its own module because the includes and platform
@@ -92,22 +97,32 @@ pub async fn setup_buttplug_server(
   backdoor_server: &OnceCell<Arc<BackdoorServer>>,
   dcm: &Option<Arc<DeviceConfigurationManager>>,
 ) -> Result<ButtplugRemoteServer, IntifaceEngineError> {
-
   let mut dm_builder = if let Some(dcm) = dcm {
     ServerDeviceManagerBuilder::new_with_arc(dcm.clone())
   } else {
-    let mut dcm_builder = 
-    load_protocol_configs(options.device_config_json(), options.user_device_config_json(), false)
-      .map_err(|e| IntifaceEngineError::ButtplugError(e.into()))?;
+    let mut dcm_builder = load_protocol_configs(
+      options.device_config_json(),
+      options.user_device_config_json(),
+      false,
+    )
+    .map_err(|e| IntifaceEngineError::ButtplugError(e.into()))?;
 
     dcm_builder.allow_raw_messages(options.allow_raw_messages());
 
-    ServerDeviceManagerBuilder::new(dcm_builder.finish().map_err(|e| IntifaceEngineError::ButtplugError(e.into()))?)
+    ServerDeviceManagerBuilder::new(
+      dcm_builder
+        .finish()
+        .map_err(|e| IntifaceEngineError::ButtplugError(e.into()))?,
+    )
   };
 
   setup_server_device_comm_managers(options, &mut dm_builder);
 
-  let mut server_builder = ButtplugServerBuilder::new(dm_builder.finish().map_err(|e| IntifaceEngineError::ButtplugServerError(e))?);
+  let mut server_builder = ButtplugServerBuilder::new(
+    dm_builder
+      .finish()
+      .map_err(|e| IntifaceEngineError::ButtplugServerError(e))?,
+  );
   server_builder
     .name(options.server_name())
     .max_ping_time(options.max_ping_time());
