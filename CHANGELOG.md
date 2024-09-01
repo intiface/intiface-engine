@@ -1,3 +1,16 @@
+# Intiface Engine v3.0.1 (2024/09/01)
+
+## Features
+
+- Update to Buttplug v9.0.0
+  - Starting the Message Spec v4 development line
+    - There is now a "allow-unstable-v4-connections" feature that will allow for testing throughout
+      v4 development. Will be removed when Buttplug v10/Message Spec v4 is released.
+  - Lots of device support for like 10 different brands. It's been more than 3 months!
+- Rebuild server backdoor system to just be another Buttplug Server instead of exposing Device
+  Manager
+  - The thing I said I'd never do!  
+
 # Intiface Engine v3.0.0 (2024/05/12)
 
 ## Breaking Changes
