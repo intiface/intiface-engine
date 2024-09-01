@@ -26,7 +26,7 @@ tokio-console=["console-subscriber"]
 
 [dependencies]
 # buttplug = { path = "../buttplug/buttplug" }
-buttplug = "8.0.0"
+buttplug = "9.0.0"
 argh = "0.1.12"
 log = "0.4.22"
 futures = "0.3.30"
