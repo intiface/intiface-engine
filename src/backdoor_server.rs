@@ -31,7 +31,7 @@ impl BackdoorServer {
     tokio::spawn(async move {
       if let Err(e) = server.start(ButtplugRemoteServerConnector::<_, ButtplugServerJSONSerializer>::new(ButtplugStreamTransport::new(s_out, r_in))).await {
         // We can't do much if the server fails, but we *can* yell into the logs!
-        error!("{:?}", e);
+        error!("Backdoor server error: {:?}", e);
       }
     });
     let sender_clone = s_stream.clone();

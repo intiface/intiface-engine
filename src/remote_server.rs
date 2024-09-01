@@ -145,7 +145,6 @@ async fn run_server<ConnectorType>(
                     }
                   }
                 }
-                info!("Sending back through connector");
                 if connector_clone.send(ret_msg).await.is_err() {
                   error!("Cannot send reply to server, dropping and assuming remote server thread has exited.");
                 }
