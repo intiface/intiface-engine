@@ -21,7 +21,8 @@ path = "src/bin/main.rs"
 
 [features]
 default=[]
-tokio_console=["console-subscriber"]
+allow-unstable-v4-connections=["buttplug/allow-unstable-v4-connections"]
+tokio-console=["console-subscriber"]
 
 [dependencies]
 # buttplug = { path = "../buttplug/buttplug" }
