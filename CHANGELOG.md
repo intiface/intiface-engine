@@ -9,7 +9,11 @@
   - Lots of device support for like 10 different brands. It's been more than 3 months!
 - Rebuild server backdoor system to just be another Buttplug Server instead of exposing Device
   Manager
-  - The thing I said I'd never do!  
+  - The thing I said I'd never do!
+
+## Bugfixes
+
+- Automatically prepend ws:// to repeater addresses if they don't have it already.
 
 # Intiface Engine v3.0.0 (2024/05/12)
 
