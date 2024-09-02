@@ -1,3 +1,10 @@
+# Intiface Engine v3.0.2 (2024/09/02)
+
+## Bugfixes
+
+- Update to Buttplug v9.0.1
+  - Fixes bug with messages IDs sometimes not getting set
+
 # Intiface Engine v3.0.1 (2024/09/01)
 
 ## Features
