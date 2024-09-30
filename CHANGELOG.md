@@ -1,3 +1,10 @@
+# Intiface Engine v3.0.3 (2024/09/29)
+
+## Features
+
+- Update to Buttplug v9.0.2
+  - Lots of device additions, look at the Buttplug changelog for more info
+
 # Intiface Engine v3.0.2 (2024/09/02)
 
 ## Bugfixes
