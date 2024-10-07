@@ -64,7 +64,7 @@ jobs:
         mkdir ci-output-release
         copy target\release\intiface-engine.exe ci-output-release\intiface-engine.exe
     - name: Upload artifacts (release)
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v4
       with:
         name: intiface-engine-${{ runner.os }}-release
         path: ci-output-release
@@ -102,7 +102,7 @@ jobs:
         mkdir ci-output-release
         copy target\release\intiface-engine.exe ci-output-release\intiface-engine.exe
     - name: Upload artifacts (release)
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v4
       with:
         name: intiface-engine-${{ runner.os }}-unstable-v4-release
         path: ci-output-release
@@ -116,19 +116,19 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Download Artifact (Linux)
-      uses: actions/download-artifact@v1
+      uses: actions/download-artifact@v4
       with:
         name: intiface-engine-Linux-release
     - name: Download Artifact (Windows)
-      uses: actions/download-artifact@v1
+      uses: actions/download-artifact@v4
       with:
         name: intiface-engine-Windows-release
     - name: Download Artifact (Windows) (v4 Unstable)
-      uses: actions/download-artifact@v1
+      uses: actions/download-artifact@v4
       with:
         name: intiface-engine-Windows-unstable-v4-release        
     - name: Download Artifact (MacOS)
-      uses: actions/download-artifact@v1
+      uses: actions/download-artifact@v4
       with:
         name: intiface-engine-macOS-release
     - name: Zip executables
