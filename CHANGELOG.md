@@ -1,3 +1,10 @@
+# Intiface Engine v3.0.5 (2024/12/21)
+
+## Features
+
+- Update to Buttplug v9.0.5
+  - Many devices additions
+
 # Intiface Engine v3.0.4 (2024/10/06)
 
 ## Features
