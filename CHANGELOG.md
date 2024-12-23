@@ -1,3 +1,10 @@
+# Intiface Engine v3.0.6 (2024/12/23)
+
+## Features
+
+- Update to Buttplug v9.0.6
+  - Lovense Gush 2/Osci 3 device support
+
 # Intiface Engine v3.0.5 (2024/12/21)
 
 ## Features
