@@ -1,6 +1,6 @@
 [package]
 name = "intiface-engine"
-version = "3.0.6"
+version = "3.0.7"
 authors = ["Nonpolynomial Labs, LLC <kyle@nonpolynomial.com>"]
 description = "CLI and Library frontend for the Buttplug sex toy control library"
 license = "BSD-3-Clause"
@@ -26,7 +26,7 @@ tokio-console=["console-subscriber"]
 
 [dependencies]
 # buttplug = { path = "../buttplug/buttplug" }
-buttplug = "9.0.6"
+buttplug = "9.0.7"
 argh = "0.1.13"
 log = "0.4.22"
 futures = "0.3.31"

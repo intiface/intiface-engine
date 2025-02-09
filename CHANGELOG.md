@@ -1,3 +1,11 @@
+# Intiface Engine v3.0.7 (2024/12/23)
+
+## Features
+
+- Update to Buttplug v9.0.7
+  - Lots of new device support
+  - Lovense devices with changed names now still connect
+
 # Intiface Engine v3.0.6 (2024/12/23)
 
 ## Features
