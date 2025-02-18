@@ -87,43 +87,43 @@ pub struct IntifaceCLIArguments {
   #[getset(get_copy = "pub")]
   allow_raw: bool,
 
-  /// turn off bluetooth le device support
+  /// enable bluetooth le device support
   #[argh(switch)]
   #[getset(get_copy = "pub")]
   use_bluetooth_le: bool,
 
-  /// turn off serial device support
+  /// enable serial device support
   #[argh(switch)]
   #[getset(get_copy = "pub")]
   use_serial: bool,
 
-  /// turn off hid device support
+  /// enable hid device support
   #[allow(dead_code)]
   #[argh(switch)]
   #[getset(get_copy = "pub")]
   use_hid: bool,
 
-  /// turn off lovense dongle serial device support
+  /// enable lovense dongle serial device support
   #[argh(switch)]
   #[getset(get_copy = "pub")]
   use_lovense_dongle_serial: bool,
 
-  /// turn off lovense dongle hid device support
+  /// enable lovense dongle hid device support
   #[argh(switch)]
   #[getset(get_copy = "pub")]
   use_lovense_dongle_hid: bool,
 
-  /// turn off xinput gamepad device support (windows only)
+  /// enable xinput gamepad device support (windows only)
   #[argh(switch)]
   #[getset(get_copy = "pub")]
   use_xinput: bool,
 
-  /// turn on lovense connect app device support (off by default)
+  /// enable lovense connect app device support
   #[argh(switch)]
   #[getset(get_copy = "pub")]
   use_lovense_connect: bool,
 
-  /// turn on websocket server device comm manager
+  /// enable websocket server device comm manager
   #[argh(switch)]
   #[getset(get_copy = "pub")]
   use_device_websocket_server: bool,
