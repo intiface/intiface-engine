@@ -1,4 +1,4 @@
-use rand::distributions::{Alphanumeric, DistString};
+use rand::distr::{Alphanumeric, SampleString};
 
 pub struct IntifaceMdns {
   _responder: libmdns::Responder,
@@ -7,7 +7,7 @@ pub struct IntifaceMdns {
 
 impl IntifaceMdns {
   pub fn new() -> Self {
-    let random_suffix = Alphanumeric.sample_string(&mut rand::thread_rng(), 6);
+    let random_suffix = Alphanumeric.sample_string(&mut rand::rng(), 6);
     let instance_name = format!("Intiface {}", random_suffix);
     info!(
       "Bringing up mDNS Advertisment using instance name {}",
