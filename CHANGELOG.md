@@ -1,3 +1,9 @@
+# Intiface Engine v3.0.8 (2025/04/20)
+
+- Update to Buttplug v9.0.8
+  - Lots of new device support
+  - Bug fixes for serial ports, device limits
+
 # Intiface Engine v3.0.7 (2024/12/23)
 
 ## Features
