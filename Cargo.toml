@@ -21,12 +21,11 @@ path = "src/bin/main.rs"
 
 [features]
 default=[]
-allow-unstable-v4-connections=["buttplug/allow-unstable-v4-connections"]
 tokio-console=["console-subscriber"]
 
 [dependencies]
-# buttplug = { path = "../buttplug/buttplug" }
-buttplug = "9.0.8"
+buttplug = { path = "../buttplug/buttplug" }
+# buttplug = "9.0.8"
 argh = "0.1.13"
 log = "0.4.27"
 futures = "0.3.31"
