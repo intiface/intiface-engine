@@ -5,15 +5,12 @@ use crate::{
   IntifaceEngineError, IntifaceError,
 };
 use buttplug::{
-  core::{
-    connector::{
-      ButtplugRemoteServerConnector, ButtplugWebsocketClientTransport,
+  core::connector::{
+       ButtplugWebsocketClientTransport,
       ButtplugWebsocketServerTransportBuilder,
     },
-    message::serializer::ButtplugServerJSONSerializer,
-  },
   server::{
-    device::{
+    connector::ButtplugRemoteServerConnector, device::{
       configuration::DeviceConfigurationManager,
       hardware::communication::{
         btleplug::BtlePlugCommunicationManagerBuilder,
@@ -21,8 +18,7 @@ use buttplug::{
         websocket_server::websocket_server_comm_manager::WebsocketServerDeviceCommunicationManagerBuilder,
       },
       ServerDeviceManagerBuilder,
-    },
-    ButtplugServerBuilder,
+    }, message::serializer::ButtplugServerJSONSerializer, ButtplugServerBuilder
   },
   util::device_configuration::load_protocol_configs,
 };

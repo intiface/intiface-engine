@@ -1,9 +1,9 @@
 use buttplug::{
   core::{
-    connector::{transport::ButtplugStreamTransport, ButtplugRemoteServerConnector},
-    message::serializer::{ButtplugSerializedMessage, ButtplugServerJSONSerializer},
+    connector::transport::ButtplugStreamTransport,
+    message::serializer::ButtplugSerializedMessage,
   },
-  server::{device::ServerDeviceManager, ButtplugServerBuilder},
+  server::{connector::ButtplugRemoteServerConnector, device::ServerDeviceManager, message::serializer::ButtplugServerJSONSerializer, ButtplugServerBuilder},
   util::stream::convert_broadcast_receiver_to_stream,
 };
 use std::sync::Arc;

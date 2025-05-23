@@ -9,13 +9,10 @@ use buttplug::{
   core::{
     connector::ButtplugConnector,
     errors::ButtplugError,
-    message::{
-      ButtplugClientMessageVariant, ButtplugServerMessageV4, ButtplugServerMessageVariant,
-    },
+    message::ButtplugServerMessageV4,
   },
   server::{
-    device::configuration::UserDeviceIdentifier, ButtplugServer, ButtplugServerBuilder,
-    ButtplugServerDowngradeWrapper,
+    device::configuration::UserDeviceIdentifier, message::{ButtplugClientMessageVariant, ButtplugServerMessageVariant}, ButtplugServer, ButtplugServerBuilder
   },
   util::{async_manager, stream::convert_broadcast_receiver_to_stream},
 };
@@ -52,13 +49,13 @@ pub enum ButtplugServerConnectorError {
 #[derive(Getters)]
 pub struct ButtplugRemoteServer {
   #[getset(get = "pub")]
-  server: Arc<ButtplugServerDowngradeWrapper>,
+  server: Arc<ButtplugServer>,
   event_sender: broadcast::Sender<ButtplugRemoteServerEvent>,
   disconnect_notifier: Arc<Notify>,
 }
 
 async fn run_device_event_stream(
-  server: Arc<ButtplugServerDowngradeWrapper>,
+  server: Arc<ButtplugServer>,
   remote_event_sender: broadcast::Sender<ButtplugRemoteServerEvent>,
 ) {
   let server_receiver = server.server_version_event_stream();
@@ -102,7 +99,7 @@ async fn run_device_event_stream(
 }
 
 async fn run_server<ConnectorType>(
-  server: Arc<ButtplugServerDowngradeWrapper>,
+  server: Arc<ButtplugServer>,
   remote_event_sender: broadcast::Sender<ButtplugRemoteServerEvent>,
   connector: ConnectorType,
   mut connector_receiver: mpsc::Receiver<ButtplugClientMessageVariant>,
@@ -114,7 +111,7 @@ async fn run_server<ConnectorType>(
   info!("Starting remote server loop");
   let shared_connector = Arc::new(connector);
   let server_receiver = server.server_version_event_stream();
-  let client_version_receiver = server.client_version_event_stream();
+  let client_version_receiver = server.event_stream();
   pin_mut!(server_receiver);
   pin_mut!(client_version_receiver);
   loop {
@@ -221,20 +218,23 @@ impl Default for ButtplugRemoteServer {
 impl ButtplugRemoteServer {
   pub fn new(server: ButtplugServer) -> Self {
     let (event_sender, _) = broadcast::channel(256);
-    let wrapped_server = Arc::new(ButtplugServerDowngradeWrapper::new(server));
     // Thanks to the existence of the backdoor server, device updates can happen for the lifetime to
     // the RemoteServer instance, not just during client connect. We need to make sure these are
     // emitted to the frontend.
-    tokio::spawn({
-      let server = wrapped_server.clone();
-      let event_sender = event_sender.clone();
-      async move {
-        run_device_event_stream(server, event_sender).await;
-      }
-    });
+    let server = Arc::new(server);
+    {
+      let server = server.clone();
+      tokio::spawn({
+        let server = server;
+        let event_sender = event_sender.clone();
+        async move {
+          run_device_event_stream(server, event_sender).await;
+        }
+      });
+    }
     Self {
       event_sender,
-      server: wrapped_server.clone(),
+      server: server,
       disconnect_notifier: Arc::new(Notify::new()),
     }
   }
