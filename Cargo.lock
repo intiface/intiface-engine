@@ -379,6 +379,7 @@ dependencies = [
  "instant",
  "jsonschema",
  "lazy_static",
+ "log",
  "once_cell",
  "os_info",
  "paste",
