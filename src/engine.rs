@@ -172,12 +172,12 @@ impl IntifaceEngine {
             Ok(_) => info!("Connection dropped, restarting stay open loop."),
             Err(e) => {
               error!("{}", format!("Process Error: {:?}", e));
+
               if let Some(frontend) = &frontend {
                 frontend
                   .send(EngineMessage::EngineError{ error: format!("Process Error: {:?}", e).to_owned()})
                   .await;
               }
-              exit_requested = true;
             }
           }
         }
