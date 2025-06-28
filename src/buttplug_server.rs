@@ -103,8 +103,6 @@ pub async fn setup_buttplug_server(
     )
     .map_err(|e| IntifaceEngineError::ButtplugError(e.into()))?;
 
-    dcm_builder.allow_raw_messages(options.allow_raw_messages());
-
     ServerDeviceManagerBuilder::new(
       dcm_builder
         .finish()

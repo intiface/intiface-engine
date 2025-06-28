@@ -23,8 +23,6 @@ pub struct EngineOptions {
   #[getset(get_copy = "pub")]
   max_ping_time: u32,
   #[getset(get_copy = "pub")]
-  allow_raw_messages: bool,
-  #[getset(get_copy = "pub")]
   use_bluetooth_le: bool,
   #[getset(get_copy = "pub")]
   use_serial_port: bool,
@@ -70,7 +68,6 @@ pub struct EngineOptionsExternal {
   pub frontend_websocket_port: Option<u16>,
   pub frontend_in_process_channel: bool,
   pub max_ping_time: u32,
-  pub allow_raw_messages: bool,
   pub use_bluetooth_le: bool,
   pub use_serial_port: bool,
   pub use_hid: bool,
@@ -102,7 +99,6 @@ impl From<EngineOptionsExternal> for EngineOptions {
       frontend_websocket_port: other.frontend_websocket_port,
       frontend_in_process_channel: other.frontend_in_process_channel,
       max_ping_time: other.max_ping_time,
-      allow_raw_messages: other.allow_raw_messages,
       use_bluetooth_le: other.use_bluetooth_le,
       use_serial_port: other.use_serial_port,
       use_hid: other.use_hid,
@@ -169,11 +165,6 @@ impl EngineOptionsBuilder {
 
   pub fn websocket_use_all_interfaces(&mut self, value: bool) -> &mut Self {
     self.options.websocket_use_all_interfaces = value;
-    self
-  }
-
-  pub fn allow_raw_messages(&mut self, value: bool) -> &mut Self {
-    self.options.allow_raw_messages = value;
     self
   }
 

@@ -82,11 +82,6 @@ pub struct IntifaceCLIArguments {
   #[getset(get_copy = "pub")]
   log: Option<Level>,
 
-  /// allow raw messages (dangerous, only use for development)
-  #[argh(switch)]
-  #[getset(get_copy = "pub")]
-  allow_raw: bool,
-
   /// turn off bluetooth le device support
   #[argh(switch)]
   #[getset(get_copy = "pub")]
@@ -231,7 +226,6 @@ impl TryFrom<IntifaceCLIArguments> for EngineOptions {
     }
 
     builder
-      .allow_raw_messages(args.allow_raw())
       .websocket_use_all_interfaces(args.websocket_use_all_interfaces())
       .use_bluetooth_le(args.use_bluetooth_le())
       .use_serial_port(args.use_serial())
