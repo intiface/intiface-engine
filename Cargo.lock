@@ -357,9 +357,9 @@ checksum = "79296716171880943b8470b5f8d03aa55eb2e645a4874bdbb28adb49162e012c"
 
 [[package]]
 name = "buttplug"
-version = "9.0.8"
+version = "9.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62953e007afb6b8498fccde9744a8540ca2dbb328fa315ebb61b1f1481e91cf8"
+checksum = "6436601fd48d3d8f816602ab3ebb5ced4f8c5037b86c6622e09c0d21b40acfe0"
 dependencies = [
  "aes",
  "ahash",
@@ -1451,7 +1451,7 @@ dependencies = [
 
 [[package]]
 name = "intiface-engine"
-version = "3.0.8"
+version = "3.0.9"
 dependencies = [
  "anyhow",
  "argh",

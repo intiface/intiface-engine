@@ -1,3 +1,8 @@
+# Intiface Engine v3.0.9 (2025/09/06)
+
+- Update to Buttplug v9.0.9
+  - Lots of new device support, including Kiiroo Keon Wifi
+
 # Intiface Engine v3.0.8 (2025/04/20)
 
 - Update to Buttplug v9.0.8
