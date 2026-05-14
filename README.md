@@ -13,7 +13,11 @@
   <img src="https://raw.githubusercontent.com/buttplugio/buttplug/dev/images/buttplug_rust_docs.png">
 </p>
 
-CLI and Library frontend for Buttplug
+# DEPRECATED - Use Main Buttplug Repo
+
+Intiface Engine has been absorbed back into the [main buttplug repo](https://github.com/buttplugio/buttplug). This repo is only kept for archival purposes, and will no longer work with the latest versions of buttplug. Please check the [main buttplug repo](https://github.com/buttplugio/buttplug) for the latest code and builds. 
+
+## CLI and Library frontend for Buttplug
 
 Intiface Engine is just a front-end for [Buttplug](https://github.com/buttplugio/buttplug),
 but since we're trying to not make people install a program named "Buttplug", here we are.
